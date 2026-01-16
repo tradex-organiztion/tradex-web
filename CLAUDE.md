@@ -16,52 +16,140 @@ Tradex는 AI 기반 트레이딩 분석 및 매매일지 관리 서비스입니�
 
 ## 디자인 시스템
 
+> **Figma**: https://www.figma.com/design/bIuxiR3Mqy0PfLkxIQv4Oa
+
+### ⚠️ 디자인 구현 원칙 (필수)
+
+**Figma 디자인이 모든 UI 구현의 Single Source of Truth입니다.**
+
+1. **Figma 우선**: 페이지/컴포넌트 구현 시 반드시 Figma 디자인을 먼저 확인
+2. **라이브러리 기본값 무시**: shadcn/ui, Radix UI 등 라이브러리의 기본 스타일이 Figma와 다르면 **Figma 디자인대로 수정**
+3. **스타일 충돌 시**: 라이브러리 기본값 vs Figma → **항상 Figma 우선**
+4. **컴포넌트 재작성**: 필요시 라이브러리 컴포넌트를 Figma에 맞게 완전히 재작성
+
+#### Figma 디자인 확인 워크플로우
+
+```
+1. 작업할 페이지의 Figma 노드 URL 확인
+2. Figma MCP 도구로 디자인 컨텍스트 및 스크린샷 조회
+3. 현재 구현과 Figma 디자인 비교
+4. 차이점 식별 및 Figma 기준으로 수정
+5. 스크린샷과 비교하여 검증
+```
+
+#### 예시: 잘못된 접근 vs 올바른 접근
+
+```tsx
+// ❌ 잘못된 접근: 라이브러리 기본 스타일 그대로 사용
+<TabsList className="bg-muted rounded-lg p-1">
+  <TabsTrigger>탭1</TabsTrigger>
+</TabsList>
+
+// ✅ 올바른 접근: Figma 디자인에 맞게 수정
+<TabsList className="bg-transparent">
+  <TabsTrigger className="h-[56px] border-b-2 data-[state=active]:border-[#131416]">
+    탭1
+  </TabsTrigger>
+</TabsList>
+```
+
 ### 폰트
 
 - **Primary**: Pretendard Variable
 - **CDN**: jsdelivr (layout.tsx에서 로드)
+- **Line Height**: 1.4 (기본값)
+
+### Typography
+
+| 스타일 | 사이즈 | Weight | 클래스 |
+|--------|--------|--------|--------|
+| Display 1 | 64px | Bold(700) / Medium(500) / Regular(400) | `text-display-1-bold`, `text-display-1-medium`, `text-display-1-regular` |
+| Display 2 | 48px | Bold(700) / Medium(500) / Regular(400) | `text-display-2-bold`, `text-display-2-medium`, `text-display-2-regular` |
+| Title 1 | 24px | SemiBold(600) / Medium(500) / Regular(400) | `text-title-1-bold`, `text-title-1-medium`, `text-title-1-regular` |
+| Title 2 | 20px | SemiBold(600) / Medium(500) / Regular(400) | `text-title-2-bold`, `text-title-2-medium`, `text-title-2-regular` |
+| Body 1 | 16px | SemiBold(600) / Medium(500) / Regular(400) | `text-body-1-bold`, `text-body-1-medium`, `text-body-1-regular` |
+| Body 2 | 14px | SemiBold(600) / Medium(500) / Regular(400) | `text-body-2-bold`, `text-body-2-medium`, `text-body-2-regular` |
+| Caption | 12px | SemiBold(600) / Medium(500) / Regular(400) | `text-caption-bold`, `text-caption-medium`, `text-caption-regular` |
 
 ### 색상 팔레트
 
 Tailwind CSS v4 `@theme inline`에서 정의됨 (`globals.css`)
 
-#### Primary Colors
+#### Gray Colors
 
-| 이름 | Tailwind Class | HEX |
-|------|----------------|-----|
-| Black | `bg-black` | #000000 |
-| Black Light | `bg-black-light` | #323232 |
-| White | `bg-white` | #FFFFFF |
-| White Dark | `bg-white-dark` | #D7D7D7 |
-| Gray 500 | `bg-gray-500` | #8F8F8F |
-| Gray 300 | `bg-gray-300` | #C9C9C9 |
-| Gray 200 | `bg-gray-200` | #DBDBDB |
-| Navy 900 | `bg-navy-900` | #0F172A |
-| Navy 700 | `bg-navy-700` | #475569 |
-| Navy 500 | `bg-navy-500` | #666F8D |
-| Navy 300 | `bg-navy-300` | #A7B0B9 |
+| 단계 | HEX | Tailwind Class |
+|------|-----|----------------|
+| 0 | #FFFFFF | `bg-gray-0`, `text-gray-0` |
+| 50 | #F4F5F6 | `bg-gray-50`, `text-gray-50` |
+| 100 | #E6E8EA | `bg-gray-100`, `text-gray-100` |
+| 200 | #CDD1D5 | `bg-gray-200`, `text-gray-200` |
+| 300 | #8A949E | `bg-gray-300`, `text-gray-300` |
+| 400 | #6D7882 | `bg-gray-400`, `text-gray-400` |
+| 500 | #58616A | `bg-gray-500`, `text-gray-500` |
+| 600 | #464C53 | `bg-gray-600`, `text-gray-600` |
+| 700 | #1E2124 | `bg-gray-700`, `text-gray-700` |
+| 800 | #131416 | `bg-gray-800`, `text-gray-800` |
+| 900 | #000000 | `bg-gray-900`, `text-gray-900` |
 
 #### System Colors
 
-| 용도 | 500 (Main) | 300 | 200 | 100 (Light) |
+| 용도 | 500 (Main) | 400 | 300 | 100 (Light) |
 |------|------------|-----|-----|-------------|
-| Success | #13C34E | #B1DED6 | #CAF1D8 | #F8FCFB |
-| Error | #FF0015 | #FBBEC3 | #FFC7CB | #FFF9F9 |
-| Info | #0070FF | #BFDBFF | #E4EFFF | #FCFDFF |
-| Warning | #FFF152 | #FEF9C2 | #FCFBF1 | #FFFEF7 |
+| Green (Success) | #13C34E | #5FD98B | #A8EAC0 | #E7F8ED |
+| Red (Error) | #FF0015 | #FF4D5E | #FF9AA3 | #FFE6E8 |
+| Blue (Info) | #0070FF | #4D94FF | #99C2FF | #E6F0FF |
+| Yellow (Warning) | #FFDA22 | #FFE066 | #FFED99 | #FFF8D6 |
 
-#### 사용 예시
+#### Symbol Colors
+
+| 이름 | HEX | Tailwind Class |
+|------|-----|----------------|
+| Cyan | #0FDD99 | `bg-symbol-cyan`, `text-symbol-cyan` |
+| Lime | #9FF91E | `bg-symbol-lime`, `text-symbol-lime` |
+
+### Shadow
+
+| 이름 | 값 | 클래스 |
+|------|-----|--------|
+| Normal | 0px 0px 8px rgba(0,0,0,0.1) | `shadow-normal` |
+| Emphasize | 0px 0px 12px rgba(0,0,0,0.1) | `shadow-emphasize` |
+| Strong | 0px 0px 16px rgba(0,0,0,0.1) | `shadow-strong` |
+| Heavy | 0px 0px 24px rgba(0,0,0,0.1) | `shadow-heavy` |
+
+### Grid System
+
+| 디바이스 | 너비 | Columns | Margin | Gutter |
+|----------|------|---------|--------|--------|
+| Desktop | 1920px | 12 | 40px | 24px |
+| Tablet | 1024px | 6 | 24px | 16px |
+| Mobile | ~412px | 4 | 16px | 16px |
+
+### 사용 예시
 
 ```tsx
-// Primary colors
-<div className="bg-navy-900 text-white">Navy Background</div>
-<div className="text-gray-500">Muted Text</div>
+// Typography
+<h1 className="text-display-1-bold">대제목</h1>
+<h2 className="text-title-1-medium">중제목</h2>
+<p className="text-body-1-regular">본문 텍스트</p>
+<span className="text-caption-medium">캡션</span>
+
+// Gray colors
+<div className="bg-gray-50 text-gray-900">Light Background</div>
+<div className="bg-gray-800 text-gray-0">Dark Background</div>
 
 // System colors
-<span className="text-success-500">+12.5%</span>
-<span className="text-error-500">-3.2%</span>
-<div className="bg-info-100 text-info-500">Info Alert</div>
-<div className="bg-warning-100 text-warning-500">Warning</div>
+<span className="text-green-500">+12.5%</span>
+<span className="text-red-500">-3.2%</span>
+<div className="bg-blue-100 text-blue-500">Info Alert</div>
+<div className="bg-yellow-100 text-yellow-500">Warning</div>
+
+// Symbol colors
+<span className="text-symbol-cyan">Symbol Cyan</span>
+<span className="text-symbol-lime">Symbol Lime</span>
+
+// Shadows
+<div className="shadow-normal rounded-xl">Normal Shadow</div>
+<div className="shadow-heavy rounded-xl">Heavy Shadow</div>
 
 // Semantic colors
 <div className="bg-background text-foreground">Default</div>
@@ -263,6 +351,7 @@ npm run lint     # ESLint 검사
 7. **Tailwind CSS**: 인라인 스타일 대신 Tailwind 클래스 사용
 8. **App Router**: 서버 컴포넌트 우선, 필요시 'use client' 사용
 9. **미결 사항**: 스펙 문서의 미결 사항 섹션 확인 후 작업
+10. **API 작업**: API 관련 작업 시 `https://api.tradex.so/v3/api-docs`에서 최신 스펙 실시간 조회
 
 ## 로드맵 트래킹 워크플로우
 
@@ -420,16 +509,58 @@ npm run lint     # ESLint 검사
 
 ---
 
-## API 연동 (예정)
+## API 연동
 
-API 서버 연동 시 다음 구조 참고:
+### API 문서 (Swagger)
+
+> **중요**: API 관련 작업 시 반드시 최신 API 문서를 실시간으로 확인할 것
+
+| 항목 | 값 |
+|------|-----|
+| Swagger UI | https://api.tradex.so/swagger-ui/index.html#/ |
+| OpenAPI Spec | https://api.tradex.so/v3/api-docs |
+| Base URL | https://api.tradex.so |
+| 인증 방식 | Bearer Token (JWT) |
+
+### API 작업 시 워크플로우
+
+API 연동, 수정, 디버깅 등 API 관련 작업을 수행할 때:
+
+1. **최신 API 스펙 조회**: `https://api.tradex.so/v3/api-docs` URL을 WebFetch로 호출하여 최신 OpenAPI 스펙 확인
+2. **엔드포인트 확인**: 필요한 엔드포인트의 path, method, request/response 스키마 파악
+3. **타입 정의**: API 스펙에 맞춰 TypeScript 타입 정의
+4. **구현**: API 클라이언트 함수 구현
+
+```typescript
+// API 문서 조회 예시 (Claude가 수행)
+// WebFetch: https://api.tradex.so/v3/api-docs
+// → 최신 엔드포인트, 스키마 정보 획득
+```
+
+### API 파일 구조
 
 ```
 src/lib/api/
-├── client.ts      # API 클라이언트 설정
-├── auth.ts        # 인증 API
+├── client.ts      # API 클라이언트 설정 (axios instance, interceptors)
+├── auth.ts        # 인증 API (login, signup, refresh, logout)
 ├── trading.ts     # 매매 관련 API
 ├── chart.ts       # 차트 데이터 API
 ├── analysis.ts    # 분석 API
+├── portfolio.ts   # 포트폴리오 API
+├── notification.ts # 알림 API
 └── user.ts        # 사용자 API
 ```
+
+### 현재 확인된 API 엔드포인트
+
+> 아래는 참고용이며, 실제 작업 시에는 반드시 실시간으로 API 문서를 조회할 것
+
+#### 인증 (Auth)
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/api/auth/signup` | 회원가입 |
+| POST | `/api/auth/login` | 로그인 |
+| POST | `/api/auth/refresh` | 토큰 갱신 |
+| POST | `/api/auth/logout` | 로그아웃 |
+| POST | `/api/auth/complete-profile` | 프로필 완성 (거래소 API 등록) |
+| GET | `/api/auth/me` | 현재 사용자 정보 |

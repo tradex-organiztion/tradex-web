@@ -58,7 +58,7 @@ export function Header({ title, icon }: HeaderProps) {
       <div className="flex items-center gap-2">
         {/* AI Chat Button */}
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={toggleAIPanel}
           className="gap-2"

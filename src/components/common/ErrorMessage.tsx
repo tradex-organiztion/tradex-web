@@ -28,7 +28,7 @@ export function ErrorMessage({
       <h3 className="mb-2 text-lg font-semibold text-navy-900">{title}</h3>
       <p className="mb-6 max-w-sm text-sm text-gray-500">{message}</p>
       {onRetry && (
-        <Button variant="outline" onClick={onRetry} className="gap-2">
+        <Button variant="secondary" onClick={onRetry} className="gap-2">
           <RefreshCw className="h-4 w-4" />
           다시 시도
         </Button>
