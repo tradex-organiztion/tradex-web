@@ -36,6 +36,7 @@ export interface SignupRequest {
   email: string
   password: string
   name: string
+  phone?: string  // 휴대폰 번호 (인증 완료된 번호)
 }
 
 export interface SignupResponse {

@@ -19,6 +19,21 @@ export const apiClient = axios.create({
   withCredentials: true, // CORS 요청에서 쿠키 포함
 })
 
+// 토큰 갱신 중인지 추적
+let isRefreshing = false
+let refreshSubscribers: ((token: string) => void)[] = []
+
+// 토큰 갱신 완료 후 대기 중인 요청들 처리
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((callback) => callback(token))
+  refreshSubscribers = []
+}
+
+// 토큰 갱신 대기 큐에 추가
+const addRefreshSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback)
+}
+
 // Request interceptor - Add auth token
 apiClient.interceptors.request.use(
   (config) => {
@@ -49,7 +64,20 @@ apiClient.interceptors.response.use(
 
     // 401 에러이고 재시도하지 않은 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // 이미 토큰 갱신 중인 경우
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+            }
+            resolve(apiClient(originalRequest))
+          })
+        })
+      }
+
       originalRequest._retry = true
+      isRefreshing = true
 
       // refreshToken으로 accessToken 갱신 시도
       if (typeof window !== 'undefined') {
@@ -58,18 +86,44 @@ apiClient.interceptors.response.use(
           try {
             const { state } = JSON.parse(authStorage)
             if (state?.refreshToken) {
-              // TODO: Token refresh API 호출
-              // const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {
-              //   refreshToken: state.refreshToken
-              // })
-              // 새 토큰으로 재시도
+              // Token refresh API 호출
+              const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {
+                refreshToken: state.refreshToken
+              })
+
+              const { accessToken, refreshToken } = response.data
+
+              // 새 토큰 저장
+              const newState = {
+                ...state,
+                accessToken,
+                refreshToken,
+              }
+              localStorage.setItem('tradex-auth', JSON.stringify({ state: newState }))
+
+              isRefreshing = false
+              onRefreshed(accessToken)
+
+              // 원래 요청 재시도
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`
+              }
+              return apiClient(originalRequest)
             }
-          } catch {
+          } catch (refreshError) {
             // Refresh 실패 시 로그아웃
+            console.error('Token refresh failed:', refreshError)
+            isRefreshing = false
+            refreshSubscribers = []
+
+            // 토큰 삭제 및 로그인 페이지로 이동
+            localStorage.removeItem('tradex-auth')
+            window.location.href = '/login'
+            return Promise.reject(refreshError)
           }
         }
 
-        // 토큰 갱신 실패 시 로그아웃 처리
+        // refreshToken이 없는 경우 로그아웃
         localStorage.removeItem('tradex-auth')
         window.location.href = '/login'
       }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Bell, MessageSquare, Search, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore, useUIStore } from '@/stores'
+import { authApi } from '@/lib/api/auth'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -23,10 +25,24 @@ interface HeaderProps {
 export function Header({ title, icon }: HeaderProps) {
   const { user, logout } = useAuthStore()
   const { toggleAIPanel, isSidebarCollapsed } = useUIStore()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const handleLogout = () => {
-    logout()
-    window.location.href = '/login'
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+
+    try {
+      // 서버에 로그아웃 요청 (선택적 - 실패해도 로컬 로그아웃 진행)
+      await authApi.logout()
+    } catch (error) {
+      console.error('Logout API error:', error)
+      // API 실패해도 로컬 로그아웃은 진행
+    } finally {
+      // 로컬 상태 초기화
+      logout()
+      // 로그인 페이지로 이동
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -102,8 +118,12 @@ export function Header({ title, icon }: HeaderProps) {
               <a href="/settings/subscription">구독 관리</a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-error-500">
-              로그아웃
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-error-500"
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
