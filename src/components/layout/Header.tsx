@@ -80,9 +80,9 @@ export function Header({ title, icon }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.profileImage} alt={user?.name} />
+                <AvatarImage src={user?.profileImage} alt={user?.username} />
                 <AvatarFallback className="bg-navy-900 text-white">
-                  {user?.name?.charAt(0) || <User className="h-4 w-4" />}
+                  {user?.username?.charAt(0) || <User className="h-4 w-4" />}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -90,7 +90,7 @@ export function Header({ title, icon }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="font-medium">{user?.name || '사용자'}</span>
+                <span className="font-medium">{user?.username || '사용자'}</span>
                 <span className="text-xs text-gray-500">{user?.email}</span>
               </div>
             </DropdownMenuLabel>

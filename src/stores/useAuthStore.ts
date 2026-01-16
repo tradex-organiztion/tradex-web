@@ -1,35 +1,52 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
+
+/**
+ * Auth Store - 인증 상태 관리
+ *
+ * OAuth2 로그인 플로우:
+ * 1. 소셜 로그인 버튼 클릭 → OAuth URL로 리다이렉트
+ * 2. 로그인 성공 → /oauth2/redirect?accessToken=xxx&refreshToken=xxx&profileCompleted=false
+ * 3. 토큰 저장 → profileCompleted에 따라 라우팅
+ *    - profileCompleted=false → /additional-info (추가 정보 입력)
+ *    - profileCompleted=true → /home (메인 페이지)
+ */
 
 export interface User {
-  id: string
-  email: string
-  name: string
+  id?: string
+  email?: string
+  username?: string
   profileImage?: string
-  createdAt: string
+  profileCompleted: boolean
+  createdAt?: string
 }
 
 interface AuthState {
   // State
   user: User | null
   accessToken: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
 
   // Actions
   setUser: (user: User | null) => void
+  setTokens: (accessToken: string, refreshToken: string, profileCompleted?: boolean) => void
   setAccessToken: (token: string | null) => void
-  login: (user: User, token: string) => void
+  setRefreshToken: (token: string | null) => void
+  setProfileCompleted: (completed: boolean) => void
+  login: (user: User, accessToken: string, refreshToken?: string) => void
   logout: () => void
   setLoading: (loading: boolean) => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       user: null,
       accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
 
@@ -40,13 +57,38 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: !!user,
         }),
 
+      setTokens: (accessToken, refreshToken, profileCompleted = false) =>
+        set({
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+          isLoading: false,
+          user: {
+            ...get().user,
+            profileCompleted,
+          },
+        }),
+
       setAccessToken: (accessToken) =>
         set({ accessToken }),
 
-      login: (user, accessToken) =>
+      setRefreshToken: (refreshToken) =>
+        set({ refreshToken }),
+
+      setProfileCompleted: (completed) => {
+        const currentUser = get().user
+        set({
+          user: currentUser
+            ? { ...currentUser, profileCompleted: completed }
+            : { profileCompleted: completed },
+        })
+      },
+
+      login: (user, accessToken, refreshToken) =>
         set({
           user,
           accessToken,
+          refreshToken: refreshToken || null,
           isAuthenticated: true,
           isLoading: false,
         }),
@@ -55,6 +97,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
         }),
 
@@ -63,8 +106,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'tradex-auth',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
     }
   )

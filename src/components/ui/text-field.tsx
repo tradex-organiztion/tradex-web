@@ -32,7 +32,7 @@ const messageVariants = cva(
 
 export interface TextFieldProps extends Omit<InputProps, "state"> {
   /** Label text displayed above the input */
-  label?: string
+  label?: React.ReactNode
   /** Hint text displayed below the label */
   hint?: string
   /** Message displayed below the input */

@@ -86,32 +86,35 @@ export function AuthCard({ children, title, className }: AuthCardProps) {
 
 /**
  * Social Login Buttons
+ *
+ * OAuth2 소셜 로그인 버튼
+ * - Kakao: https://api.tradex.so/oauth2/authorization/kakao
+ * - Google: https://api.tradex.so/oauth2/authorization/google
  */
+import { startOAuthLogin, type OAuthProvider } from "@/lib/api/auth"
+
 export function SocialLoginButtons() {
+  const handleSocialLogin = (provider: OAuthProvider) => {
+    startOAuthLogin(provider)
+  }
+
   return (
     <div className="flex items-center justify-center gap-4">
       {/* Kakao */}
       <button
         type="button"
+        onClick={() => handleSocialLogin("kakao")}
         className="flex size-[54px] items-center justify-center rounded-full bg-[#FEE500] transition-opacity hover:opacity-90"
         aria-label="카카오로 로그인"
       >
         <KakaoIcon />
       </button>
 
-      {/* Naver */}
-      <button
-        type="button"
-        className="flex size-[54px] items-center justify-center rounded-full bg-[#03C75A] transition-opacity hover:opacity-90"
-        aria-label="네이버로 로그인"
-      >
-        <NaverIcon />
-      </button>
-
       {/* Google */}
       <button
         type="button"
-        className="flex size-[54px] items-center justify-center rounded-full border border-gray-200 bg-gray-0 transition-opacity hover:opacity-90"
+        onClick={() => handleSocialLogin("google")}
+        className="flex size-[54px] items-center justify-center rounded-full border border-[#CDD1D5] bg-[#FFFFFF] transition-opacity hover:opacity-90"
         aria-label="구글로 로그인"
       >
         <GoogleIcon />

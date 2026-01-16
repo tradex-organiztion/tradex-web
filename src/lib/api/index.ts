@@ -6,7 +6,8 @@ export type {
   LoginRequest,
   LoginResponse,
   SignupRequest,
-  AdditionalInfoRequest,
+  CompleteProfileRequest,
+  CompleteProfileResponse,
 } from './auth'
 
 export { principlesApi, journalApi } from './trading'
