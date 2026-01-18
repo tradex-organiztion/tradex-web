@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 interface DataPoint {
   date: string;
   value: number;
@@ -7,6 +9,7 @@ interface DataPoint {
 
 interface WeeklyProfitChartProps {
   data?: DataPoint[];
+  className?: string;
 }
 
 const defaultData: DataPoint[] = [
@@ -18,7 +21,20 @@ const defaultData: DataPoint[] = [
   { date: "1/4", value: 7200 },
 ];
 
-export function WeeklyProfitChart({ data = defaultData }: WeeklyProfitChartProps) {
+/**
+ * WeeklyProfitChart - Figma 디자인 기준
+ * - 너비: 669px (고정)
+ * - 배경: white
+ * - 테두리 반경: 10px
+ * - 그림자: shadow-normal
+ * - 패딩: px-24, py-20
+ * - 타이틀: text-body-1-bold, color: label-normal
+ * - 설명: text-body-2-regular, color: label-neutral
+ * - 섹션 간격: 24px
+ * - 차트 라벨: text-caption-regular, color: label-assistive
+ * - 툴팁: white, border-line-normal, rounded-[6px], shadow-heavy
+ */
+export function WeeklyProfitChart({ data = defaultData, className }: WeeklyProfitChartProps) {
   const maxValue = Math.max(...data.map((d) => d.value));
   const minValue = Math.min(...data.map((d) => d.value));
   const range = maxValue - minValue || 1;
@@ -52,11 +68,11 @@ export function WeeklyProfitChart({ data = defaultData }: WeeklyProfitChartProps
   const highlightedPoint = points[highlightedIndex];
 
   return (
-    <div className="bg-white rounded-[10px] shadow-normal px-6 py-5 w-full">
+    <div className={cn("bg-white rounded-[10px] shadow-normal px-6 py-5", className)}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-0.5">
-          <p className="text-body-1-bold text-gray-800">주간 수익 곡선</p>
-          <p className="text-body-2-regular text-gray-600">
+          <p className="text-body-1-bold text-label-normal">주간 수익 곡선</p>
+          <p className="text-body-2-regular text-label-neutral">
             최근 7일간의 누적 수익금 추이입니다.
           </p>
         </div>
@@ -99,7 +115,8 @@ export function WeeklyProfitChart({ data = defaultData }: WeeklyProfitChartProps
                 x={padding.left - 10}
                 y={padding.top + (i / 4) * innerHeight + 4}
                 textAnchor="end"
-                className="text-[12px] fill-gray-400"
+                className="text-[12px]"
+                fill="#6D7882"
               >
                 {label}
               </text>
@@ -146,7 +163,8 @@ export function WeeklyProfitChart({ data = defaultData }: WeeklyProfitChartProps
                 x={p.x}
                 y={chartHeight + 20}
                 textAnchor="middle"
-                className="text-[12px] fill-gray-400"
+                className="text-[12px]"
+                fill="#6D7882"
               >
                 {p.date}
               </text>
@@ -155,15 +173,15 @@ export function WeeklyProfitChart({ data = defaultData }: WeeklyProfitChartProps
 
           {/* Tooltip */}
           <div
-            className="absolute bg-white border border-gray-200 rounded-md shadow-heavy px-4 py-2"
+            className="absolute bg-white border border-line-normal rounded-[6px] shadow-heavy px-4 py-2"
             style={{
               left: `${(highlightedPoint.x / chartWidth) * 100 + 10}%`,
               top: `${((highlightedPoint.y - 20) / (chartHeight + 30)) * 100}%`,
               transform: "translateX(-50%)",
             }}
           >
-            <p className="text-caption-medium text-gray-400">2026. 01. 01</p>
-            <p className="text-title-2-bold text-gray-800">$3,890.00</p>
+            <p className="text-caption-medium text-label-assistive">2026. 01. 01</p>
+            <p className="text-title-2-bold text-label-normal">$3,890.00</p>
           </div>
         </div>
       </div>
