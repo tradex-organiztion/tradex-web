@@ -128,6 +128,22 @@ primary/secondary를 element로 통합하고, positive·danger·warning·info �
 | info-default | blue-400 | `bg-element-info-default`, `text-element-info-default` |
 | info-lighter | blue-100 | `bg-element-info-lighter` |
 
+#### Label Colors (텍스트/라벨용 시맨틱 색상)
+
+텍스트와 라벨에 사용되는 시맨틱 색상 시스템입니다.
+
+| 이름 | 참조 값 | Tailwind Class | 용도 |
+|------|---------|----------------|------|
+| normal | gray-800 | `text-label-normal` | 기본 텍스트 |
+| neutral | gray-600 | `text-label-neutral` | 보조 텍스트 |
+| assistive | gray-400 | `text-label-assistive` | 부가 설명, 힌트 |
+| disabled | gray-300 | `text-label-disabled` | 비활성화 텍스트 |
+| inverse | gray-0 | `text-label-inverse` | 어두운 배경 위 텍스트 |
+| positive | green-400 | `text-label-positive` | 긍정적 상태 (수익, 성공) |
+| danger | red-400 | `text-label-danger` | 위험 상태 (손실, 에러) |
+| warning | yellow-400 | `text-label-warning` | 경고 상태 |
+| info | blue-400 | `text-label-info` | 정보 상태 |
+
 ### Shadow
 
 | 이름 | 값 | 클래스 |
@@ -175,6 +191,16 @@ primary/secondary를 element로 통합하고, positive·danger·warning·info �
 <span className="bg-element-danger-lighter text-element-danger-default">-3.2%</span>
 <div className="bg-element-warning-lighter text-element-warning-default">Warning Badge</div>
 <div className="bg-element-info-lighter text-element-info-default">Info Badge</div>
+
+// Label colors (텍스트용)
+<p className="text-label-normal">기본 텍스트</p>
+<p className="text-label-neutral">보조 텍스트</p>
+<p className="text-label-assistive">부가 설명</p>
+<span className="text-label-positive">+12.5%</span>
+<span className="text-label-danger">-3.2%</span>
+<span className="text-label-warning">경고</span>
+<span className="text-label-info">정보</span>
+<div className="bg-gray-800 text-label-inverse">어두운 배경 위 텍스트</div>
 
 // Shadows
 <div className="shadow-normal rounded-xl">Normal Shadow</div>

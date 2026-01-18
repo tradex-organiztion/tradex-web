@@ -78,6 +78,17 @@
   --color-element-info-default: var(--color-blue-400);
   --color-element-info-lighter: var(--color-blue-100);
 
+  /* ===== Label Colors (텍스트/라벨용) ===== */
+  --color-label-normal: var(--color-gray-800);
+  --color-label-neutral: var(--color-gray-600);
+  --color-label-assistive: var(--color-gray-400);
+  --color-label-disabled: var(--color-gray-300);
+  --color-label-inverse: var(--color-gray-0);
+  --color-label-positive: var(--color-green-400);
+  --color-label-danger: var(--color-red-400);
+  --color-label-warning: var(--color-yellow-400);
+  --color-label-info: var(--color-blue-400);
+
   /* ===== Semantic Colors ===== */
   --color-background: var(--color-gray-0);
   --color-foreground: var(--color-gray-900);
