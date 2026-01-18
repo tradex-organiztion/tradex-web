@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuthStore } from "@/stores/useAuthStore"
+import { authApi } from "@/lib/api/auth"
 
 /**
  * OAuth2 리다이렉트 페이지
@@ -17,7 +18,8 @@ import { useAuthStore } from "@/stores/useAuthStore"
  * Flow:
  * 1. URL에서 토큰과 profileCompleted 파라미터 추출
  * 2. Zustand store에 토큰 저장
- * 3. profileCompleted에 따라 라우팅:
+ * 3. authApi.me()로 사용자 정보 조회 및 저장
+ * 4. profileCompleted에 따라 라우팅:
  *    - false → /additional-info (추가 정보 입력)
  *    - true → /home (메인 페이지)
  */
@@ -41,11 +43,11 @@ function LoadingScreen() {
 function OAuth2RedirectHandler() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { setTokens } = useAuthStore()
+  const { setTokens, setUser } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const handleOAuthCallback = () => {
+    const handleOAuthCallback = async () => {
       // URL에서 파라미터 추출
       const accessToken = searchParams.get("accessToken")
       const refreshToken = searchParams.get("refreshToken")
@@ -70,6 +72,15 @@ function OAuth2RedirectHandler() {
       // 토큰 저장
       setTokens(accessToken, refreshToken, profileCompleted)
 
+      // 사용자 정보 조회 (authApi.me)
+      try {
+        const userInfo = await authApi.me()
+        setUser(userInfo)
+      } catch (err) {
+        console.error("Failed to fetch user info:", err)
+        // 사용자 정보 조회 실패해도 로그인은 진행
+      }
+
       // 라우팅
       if (profileCompleted) {
         // 기존 사용자 → 메인 페이지
@@ -81,7 +92,7 @@ function OAuth2RedirectHandler() {
     }
 
     handleOAuthCallback()
-  }, [searchParams, router, setTokens])
+  }, [searchParams, router, setTokens, setUser])
 
   // 에러 화면
   if (error) {

@@ -1,8 +1,8 @@
 # Tradex 8주 개발 로드맵
 
-> **최종 업데이트**: 2025-01-17
+> **최종 업데이트**: 2026-01-18
 > **현재 주차**: Week 2
-> **전체 진행률**: 17% (Week 1: 100%, Week 2: 33%)
+> **전체 진행률**: 24% (Week 1: 100%, Week 2: 100% - 백엔드 API 대기 항목 제외)
 
 ---
 
@@ -36,7 +36,7 @@
 | 주차 | 목표 | 상태 | 진행률 |
 |------|------|------|--------|
 | [Week 1](#week-1-프로젝트-기반-구축) | 프로젝트 기반 구축 | ✅ 완료 | 100% |
-| [Week 2](#week-2-인증-시스템) | 인증 시스템 | 🔄 진행중 | 33% |
+| [Week 2](#week-2-인증-시스템) | 인증 시스템 | ✅ 완료 | 100% (7/9, 2개 백엔드 API 대기) |
 | [Week 3](#week-3-홈-대시보드--tradex-ai) | 홈 대시보드 + Tradex AI | ⬜ 미시작 | 0% |
 | [Week 4](#week-4-매매-관리) | 매매 관리 | ⬜ 미시작 | 0% |
 | [Week 5](#week-5-차트-분석) | 차트 분석 | ⬜ 미시작 | 0% |
@@ -84,34 +84,43 @@
 ## Week 2: 인증 시스템
 
 **목표**: 로그인/회원가입 플로우 완성
-**상태**: 🔄 진행중
-**진행률**: 2/6 (33%)
+**상태**: ✅ 완료 (백엔드 API 대기 항목 제외)
+**진행률**: 7/9 (78%) - 2개 백엔드 API 대기
 
 ### 태스크
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 2.1 | 로그인 페이지 UI | 🔴 Critical | ✅ | `app/(auth)/login/` | 이메일/비밀번호 로그인, SNS 버튼 포함 |
-| 2.2 | 회원가입 페이지 UI | 🔴 Critical | ✅ | `app/(auth)/signup/` | 3단계 플로우 (정보입력→거래소→완료), 아이디/비밀번호 찾기 포함 |
-| 2.3 | 소셜 로그인 연동 | 🟡 High | ⬜ | `lib/api/auth.ts` | Google, Apple |
-| 2.4 | 추가 정보 입력 페이지 | 🟡 High | ⬜ | `app/(auth)/additional-info/` | 신규 회원용 |
-| 2.5 | 인증 상태 관리 | 🔴 Critical | ⬜ | `stores/useAuthStore.ts` | Zustand + 토큰 |
-| 2.6 | Protected Route 구현 | 🔴 Critical | ⬜ | `middleware.ts` | Next.js 미들웨어 |
+| 2.1 | 로그인 페이지 UI + API 연동 | 🔴 Critical | ✅ | `app/(auth)/login/` | 이메일/비밀번호 로그인, authApi.login() 연동 |
+| 2.2 | 회원가입 페이지 UI + API 연동 | 🔴 Critical | ✅ | `app/(auth)/signup/` | Swagger 기준: username(2-100자), password(최소 8자) - 휴대폰 인증 API 없음 |
+| 2.3 | 소셜 로그인 연동 | 🟡 High | ✅ | `app/oauth2/redirect/`, `lib/api/auth.ts` | Google, Kakao OAuth2 플로우 완료 |
+| 2.4 | 추가 정보 입력 페이지 | 🟡 High | ✅ | `app/(auth)/additional-info/` | authApi.completeProfile() 연동 완료 |
+| 2.5 | 인증 상태 관리 + 로그아웃 | 🔴 Critical | ✅ | `stores/useAuthStore.ts`, `lib/api/client.ts`, `components/layout/Header.tsx` | Zustand persist + Token Refresh + 로그아웃 API 연동 |
+| 2.6 | Protected Route 구현 | 🔴 Critical | ✅ | `middleware.ts`, `components/providers/AuthProvider.tsx` | 클라이언트 사이드 Auth Guard |
+| 2.7 | 아이디/비밀번호 찾기 API 연동 | 🟡 High | ⏸️ | `app/(auth)/find-account/` | **백엔드 API 대기** - Swagger에 findId, forgotPassword API 없음 |
+| 2.8 | OAuth2 사용자 정보 조회 | 🟡 High | ✅ | `app/oauth2/redirect/` | authApi.me() 호출 구현 완료 |
+| 2.9 | 비밀번호 재설정 페이지 | 🟢 Medium | ⏸️ | `app/(auth)/reset-password/` | **백엔드 API 대기** - Swagger에 resetPassword API 없음 |
 
 ### 완료 조건
 
-- [ ] 이메일/비밀번호 로그인 동작
-- [ ] 소셜 로그인 버튼 동작 (1개 이상)
-- [ ] 회원가입 → 추가정보 → 홈 플로우 완성
-- [ ] 로그아웃 동작
-- [ ] 비인증 사용자 리다이렉트 동작
+- [x] 이메일/비밀번호 로그인 동작
+- [x] 소셜 로그인 버튼 동작 (Google, Kakao)
+- [x] 회원가입 → 추가정보 → 홈 플로우 완성
+- [x] 로그아웃 동작
+- [x] 비인증 사용자 리다이렉트 동작
+- [x] OAuth2 로그인 시 사용자 정보 조회 (authApi.me)
+- [ ] 아이디/비밀번호 찾기 동작 - ⏸️ 백엔드 API 대기
+- [ ] 비밀번호 재설정 동작 - ⏸️ 백엔드 API 대기
 
 ### 산출물
 
-- `app/(auth)/` - 인증 페이지들
-- `stores/useAuthStore.ts` - 인증 상태 관리
-- `lib/api/auth.ts` - 인증 API
+- `app/(auth)/` - 인증 페이지들 (login, signup, find-account, additional-info)
+- `app/oauth2/redirect/` - OAuth2 리다이렉트 처리
+- `stores/useAuthStore.ts` - 인증 상태 관리 (Zustand + persist)
+- `lib/api/auth.ts` - 인증 API (login, signup, OAuth, 휴대폰 인증 등)
+- `lib/api/client.ts` - API 클라이언트 (Token Refresh 포함)
 - `middleware.ts` - 라우트 보호
+- `components/providers/AuthProvider.tsx` - 클라이언트 사이드 Auth Guard
 
 ### 의존성
 
@@ -347,13 +356,13 @@
 
 > 상세 내용은 [DECISIONS.md](./DECISIONS.md) 참조
 
-| 주차 | 차단 요소 | 결정 필요 항목 |
-|------|----------|----------------|
-| Week 2 | 소셜 로그인 | #1 소셜 로그인 제공자 |
-| Week 3 | AI 모델 | #3 AI 모델 |
-| Week 5 | 차트 라이브러리 | #7 차트 라이브러리 |
-| Week 6 | 거래소 연동 | #5 지원 거래소, #6 실시간 데이터 방식 |
-| Week 8 | 결제 | #9 결제 시스템, #10 구독 플랜 구성 |
+| 주차 | 차단 요소 | 결정 필요 항목 | 상태 |
+|------|----------|----------------|------|
+| Week 2 | 소셜 로그인 | #1 소셜 로그인 제공자 | ✅ 해결 (Google, Kakao) |
+| Week 3 | AI 모델 | #3 AI 모델 | ⬜ 미정 |
+| Week 5 | 차트 라이브러리 | #7 차트 라이브러리 | ⬜ 미정 |
+| Week 6 | 거래소 연동 | #5 지원 거래소, #6 실시간 데이터 방식 | ⬜ 미정 |
+| Week 8 | 결제 | #9 결제 시스템, #10 구독 플랜 구성 | ⬜ 미정 |
 
 ---
 
@@ -361,6 +370,10 @@
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2026-01-18 | Week 2: Swagger 기준 재검토 - 2.7, 2.9 백엔드 API 대기로 변경, 2.8 완료 |
+| 2026-01-18 | Week 2: 회원가입 페이지 Swagger 스펙 기준 수정 (username 필드, 휴대폰 인증 제거) |
+| 2025-01-18 | Week 2: 인증 API 연동 완료 (로그인, 회원가입, OAuth2, Token Refresh, Auth Guard) |
+| 2025-01-18 | Week 2: 미구현 태스크 추가 (2.7~2.9: 아이디/비밀번호 찾기, OAuth2 사용자 조회, 비밀번호 재설정) |
 | 2025-01-17 | Week 2: 로그인/회원가입/아이디·비밀번호 찾기 UI 구현 완료 |
 | 2024-12-31 | 8주 로드맵 초안 작성 |
 

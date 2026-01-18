@@ -12,13 +12,16 @@ import { persist, createJSONStorage } from 'zustand/middleware'
  *    - profileCompleted=true → /home (메인 페이지)
  */
 
+/**
+ * User 타입 - Swagger /api/auth/me 응답 기준
+ */
 export interface User {
-  id?: string
+  userId?: number
   email?: string
   username?: string
-  profileImage?: string
+  profileImageUrl?: string | null
+  socialProvider?: 'LOCAL' | 'GOOGLE' | 'KAKAO' | 'NAVER'
   profileCompleted: boolean
-  createdAt?: string
 }
 
 interface AuthState {

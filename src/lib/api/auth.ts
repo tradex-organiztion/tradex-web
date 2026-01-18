@@ -32,11 +32,14 @@ export interface LoginResponse {
   refreshToken: string
 }
 
+/**
+ * 회원가입 요청 - Swagger 기준
+ * POST /api/auth/signup
+ */
 export interface SignupRequest {
   email: string
-  password: string
-  name: string
-  phone?: string  // 휴대폰 번호 (인증 완료된 번호)
+  password: string    // 최소 8자
+  username: string    // 2-100자
 }
 
 export interface SignupResponse {
@@ -94,23 +97,27 @@ export const authApi = {
   refreshToken: (data: RefreshTokenRequest) =>
     post<RefreshTokenResponse>('/api/auth/refresh', data),
 
-  // 비밀번호 찾기/재설정
-  forgotPassword: (email: string) =>
-    post<void>('/api/auth/forgot-password', { email }),
+  // ============================================================
+  // 아래 API들은 Swagger에 존재하지 않음 (백엔드 개발 대기)
+  // ============================================================
 
-  resetPassword: (token: string, password: string) =>
-    post<void>('/api/auth/reset-password', { token, password }),
+  // 비밀번호 찾기/재설정 (백엔드 API 없음)
+  // forgotPassword: (email: string) =>
+  //   post<void>('/api/auth/forgot-password', { email }),
 
-  // 아이디 찾기
-  findId: (name: string, phone: string) =>
-    post<{ email: string }>('/api/auth/find-id', { name, phone }),
+  // resetPassword: (token: string, password: string) =>
+  //   post<void>('/api/auth/reset-password', { token, password }),
 
-  // 휴대폰 인증
-  sendVerificationCode: (phone: string) =>
-    post<{ success: boolean }>('/api/auth/send-verification', { phone }),
+  // 아이디 찾기 (백엔드 API 없음)
+  // findId: (name: string, phone: string) =>
+  //   post<{ email: string }>('/api/auth/find-id', { name, phone }),
 
-  verifyCode: (phone: string, code: string) =>
-    post<{ success: boolean }>('/api/auth/verify-code', { phone, code }),
+  // 휴대폰 인증 (백엔드 API 없음)
+  // sendVerificationCode: (phone: string) =>
+  //   post<{ success: boolean }>('/api/auth/send-verification', { phone }),
+
+  // verifyCode: (phone: string, code: string) =>
+  //   post<{ success: boolean }>('/api/auth/verify-code', { phone, code }),
 }
 
 /**

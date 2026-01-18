@@ -514,6 +514,8 @@ npm run lint     # ESLint 검사
 ### API 문서 (Swagger)
 
 > **중요**: API 관련 작업 시 반드시 최신 API 문서를 실시간으로 확인할 것
+>
+> **필수 규칙**: "API Docs 기준", "API 문서 기준", "현재 API 기준" 등의 표현이 나오면 **반드시 Swagger(OpenAPI Spec)를 WebFetch로 조회**하여 실제 존재하는 API만 기준으로 분석할 것. 코드에 정의된 API 함수가 아닌, Swagger에 실제로 존재하는 엔드포인트만 "구현 가능"으로 판단해야 함.
 
 | 항목 | 값 |
 |------|-----|
