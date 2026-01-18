@@ -12,7 +12,7 @@ interface MainLayoutProps {
 
 /**
  * MainLayout - Figma 디자인 기준
- * - 사이드바: 180px (접힌 상태 64px)
+ * - 사이드바: 200px (접힌 상태 64px)
  * - 헤더: 40px
  * - 콘텐츠 padding: 36px 좌우, 32px 위아래
  * - gap: 32px
@@ -28,7 +28,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <main
         className={cn(
           'pt-10 transition-all duration-300',
-          isSidebarCollapsed ? 'pl-16' : 'pl-[180px]',
+          isSidebarCollapsed ? 'pl-16' : 'pl-[200px]',
           isAIPanelOpen && 'pr-96'
         )}
       >

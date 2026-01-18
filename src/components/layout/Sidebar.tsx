@@ -156,7 +156,7 @@ export function Sidebar() {
       <aside
         className={cn(
           'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-line-normal bg-white shadow-[0px_0px_8px_0px_rgba(0,0,0,0.1)] transition-all duration-300',
-          isSidebarCollapsed ? 'w-16' : 'w-[180px]'
+          isSidebarCollapsed ? 'w-16' : 'w-[200px]'
         )}
       >
         {/* Header: Logo + Toggle */}
