@@ -6,22 +6,13 @@
 
 ## 개요
 
-Tradex 프론트엔드의 CI/CD 파이프라인은 GitHub Actions를 사용하여 자동화됩니다.
+Tradex 프론트엔드의 CI/CD는 플랫폼 자동 배포를 사용합니다.
 
 ### 배포 플로우
 
 ```
-develop branch (push)
-    │
-    ├── Vercel Preview 배포 (Vercel 자동)
-    │
-    └── production.yml 워크플로우
-            │
-            ├── 1. develop → main 자동 merge
-            │
-            ├── 2. Docker 이미지 빌드 → ghcr.io 푸시
-            │
-            └── 3. EC2 프로덕션 배포
+develop branch (push) → Vercel Preview 배포 (자동)
+main branch (push)    → AWS Amplify 배포 (자동)
 ```
 
 ---
@@ -30,7 +21,7 @@ develop branch (push)
 
 | 브랜치 | 용도 | 배포 환경 |
 |--------|------|----------|
-| `main` | 프로덕션 릴리즈 | EC2 (Docker) |
+| `main` | 프로덕션 릴리즈 | AWS Amplify |
 | `develop` | 개발/스테이징 | Vercel Preview |
 | `feature/*` | 기능 개발 | - |
 | `fix/*` | 버그 수정 | - |
@@ -41,121 +32,54 @@ develop branch (push)
 2. 작업 완료 후 `develop`으로 PR & 머지
 3. `develop` 푸시 시 Vercel Preview 자동 배포
 4. QA 완료 후 `develop` → `main` PR 생성
-5. `main` 머지 시 프로덕션 자동 배포
+5. `main` 머지 시 AWS Amplify 프로덕션 자동 배포
 
 ---
 
-## GitHub Actions 워크플로우
+## 배포 설정
 
-### 1. Develop - Vercel Preview (자동)
+### Vercel (develop)
 
-**트리거**: `develop` 브랜치 push
+1. [Vercel](https://vercel.com)에서 GitHub 레포지토리 연결
+2. `vercel.json` 파일로 빌드 설정 관리
+3. develop 브랜치 push 시 자동 Preview 배포
 
-**동작**: Vercel GitHub 연동으로 자동 배포 (별도 워크플로우 불필요)
-- Vercel이 GitHub 레포지토리를 직접 감지
-- develop 브랜치 push 시 Preview 환경에 자동 배포
-- PR 생성 시 Preview URL 자동 코멘트
+### AWS Amplify (main)
 
-### 2. Production - Merge and Deploy (`production.yml`)
-
-**트리거**: `develop` 브랜치 push
-
-**동작** (순차 실행):
-1. **merge-to-main**: develop → main 자동 merge
-2. **build-and-push**: Docker 이미지 빌드 → ghcr.io 푸시
-3. **deploy**: SSH로 EC2 접속 → docker-compose 배포 → 헬스체크
+1. AWS Amplify에서 GitHub 레포지토리 연결
+2. main 브랜치 push 시 자동 프로덕션 배포
 
 ---
 
-## 필수 설정
+## 환경변수
 
-### GitHub Secrets
+### Vercel
 
-Repository Settings → Secrets and variables → Actions에서 설정:
+`vercel.json` 또는 Vercel 대시보드에서 설정:
 
-| Secret | 설명 | 예시 |
-|--------|------|------|
-| `EC2_HOST` | EC2 퍼블릭 IP/도메인 | `52.78.xxx.xxx` |
-| `EC2_USER` | SSH 사용자명 | `ubuntu` |
-| `EC2_SSH_KEY` | SSH 프라이빗 키 (전체) | `-----BEGIN OPENSSH...` |
+| Variable | 값 |
+|----------|-----|
+| `NEXT_PUBLIC_API_URL` | `https://api.tradex.so` |
 
-> **참고**: Vercel 관련 시크릿은 GitHub 레포지토리 직접 연동으로 불필요
+### AWS Amplify
 
-### GitHub Variables
+Amplify 콘솔 → 환경 변수에서 설정:
 
-Repository Settings → Secrets and variables → Actions → Variables:
+| Variable | 값 |
+|----------|-----|
+| `NEXT_PUBLIC_API_URL` | `https://api.tradex.so` |
 
-| Variable | 설명 | 예시 |
-|----------|------|------|
-| `NEXT_PUBLIC_API_URL` | API 서버 URL | `https://api.tradex.so` |
+---
 
-### Vercel 설정
-
-1. [Vercel](https://vercel.com)에서 GitHub 레포지토리 직접 연결
-2. 레포지토리 연결 시 자동 배포 활성화됨
-3. `vercel.json` 파일로 빌드 설정 관리
-
-### EC2 서버 설정
+## 로컬 개발
 
 ```bash
-# Ubuntu 22.04 기준
+# 개발 서버 실행
+npm run dev
 
-# Docker 설치
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Docker Compose 설치 (이미 포함됨)
-docker compose version
-
-# 앱 디렉토리 생성
-mkdir -p ~/tradex-web
-
-# 방화벽 설정 (AWS Security Group에서)
-# - 22 (SSH)
-# - 80 (HTTP)
-# - 443 (HTTPS)
-# - 3000 (Next.js)
-```
-
----
-
-## Docker 구성
-
-### Dockerfile
-
-멀티스테이지 빌드로 최적화된 이미지 생성:
-- **deps**: 의존성 설치
-- **builder**: Next.js 빌드 (standalone)
-- **runner**: 프로덕션 실행 (경량화)
-
-### docker-compose.yml
-
-```yaml
-services:
-  tradex-web:
-    image: ghcr.io/tradex-organiztion/tradex-web:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=https://api.tradex.so
-```
-
----
-
-## 로컬 테스트
-
-### Docker 빌드 테스트
-
-```bash
-# 이미지 빌드
-docker build -t tradex-web .
-
-# 컨테이너 실행
-docker run -p 3000:3000 tradex-web
-
-# 또는 docker-compose 사용
-docker compose up --build
+# 프로덕션 빌드 테스트
+npm run build
+npm run start
 ```
 
 ### 환경변수
@@ -163,101 +87,23 @@ docker compose up --build
 ```bash
 # .env.local (로컬 개발)
 NEXT_PUBLIC_API_URL=https://api.tradex.so
-
-# docker-compose.yml 또는 GitHub Variables (프로덕션)
-NEXT_PUBLIC_API_URL=https://api.tradex.so
 ```
 
 ---
 
 ## 트러블슈팅
 
-### Docker 빌드 실패
-
-```bash
-# 캐시 정리 후 재빌드
-docker builder prune -af
-docker build --no-cache -t tradex-web .
-```
-
-### EC2 배포 실패
-
-```bash
-# SSH 접속 테스트
-ssh -i ~/.ssh/your-key.pem ubuntu@<EC2_HOST>
-
-# 컨테이너 로그 확인
-docker logs tradex-web
-
-# 수동 배포
-cd ~/tradex-web
-docker compose pull
-docker compose up -d
-```
-
 ### Vercel 배포 실패
 
-```bash
-# Vercel 대시보드에서 확인
-# Project → Deployments → 실패한 배포 클릭 → 빌드 로그 확인
+1. Vercel 대시보드 → Deployments → 실패한 배포 클릭
+2. 빌드 로그 확인
+3. 로컬에서 `npm run build` 테스트
 
-# 로컬에서 빌드 테스트
-npm run build
-```
+### AWS Amplify 배포 실패
 
----
-
-## 모니터링
-
-### 컨테이너 상태 확인
-
-```bash
-# 실행 중인 컨테이너
-docker ps
-
-# 헬스체크
-curl http://localhost:3000
-
-# 리소스 사용량
-docker stats tradex-web
-```
-
-### 로그 확인
-
-```bash
-# 실시간 로그
-docker logs -f tradex-web
-
-# 최근 100줄
-docker logs --tail 100 tradex-web
-```
-
----
-
-## 롤백
-
-### 이전 버전으로 롤백
-
-```bash
-# EC2에서 실행
-cd ~/tradex-web
-
-# 특정 버전으로 변경
-# docker-compose.yml의 image 태그를 변경
-# ghcr.io/tradex-organiztion/tradex-web:latest
-# → ghcr.io/tradex-organiztion/tradex-web:sha-abc1234
-
-docker compose pull
-docker compose up -d
-```
-
-### GitHub에서 이전 커밋 확인
-
-```bash
-# 이미지 태그는 커밋 SHA 기반
-git log --oneline main
-# sha-abc1234 형식으로 이미지 태그 사용
-```
+1. Amplify 콘솔 → 빌드 기록 확인
+2. 빌드 로그에서 에러 확인
+3. 로컬에서 `npm run build` 테스트
 
 ---
 
