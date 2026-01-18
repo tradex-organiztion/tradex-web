@@ -26,7 +26,7 @@ const inputVariants = cva(
     variants: {
       state: {
         default: "border-gray-200 focus:border-gray-400 focus:border-[1.5px]",
-        error: "border-red-500 border-[1.5px] focus:border-red-500",
+        error: "border-red-400 border-[1.5px] focus:border-red-400",
         success: "border-gray-200 focus:border-gray-400 focus:border-[1.5px]",
       },
     },

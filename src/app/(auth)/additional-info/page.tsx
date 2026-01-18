@@ -170,7 +170,7 @@ export default function AdditionalInfoPage() {
               <SelectTrigger
                 className={`w-full h-[50px] px-4 rounded-[8px] border bg-gray-0 text-body-1-regular ${
                   errors.exchangeName
-                    ? "border-red-500 border-[1.5px]"
+                    ? "border-red-400 border-[1.5px]"
                     : "border-gray-200"
                 }`}
               >
@@ -185,7 +185,7 @@ export default function AdditionalInfoPage() {
               </SelectContent>
             </Select>
             {errors.exchangeName && (
-              <p className="text-body-2-regular text-red-500">
+              <p className="text-body-2-regular text-red-400">
                 {errors.exchangeName}
               </p>
             )}

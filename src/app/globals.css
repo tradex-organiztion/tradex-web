@@ -24,32 +24,32 @@
   --color-gray-900: #000000;
 
   /* ===== System Colors - Green (Success) ===== */
-  --color-green-500: #13C34E;
-  --color-green-400: #5FD98B;
-  --color-green-300: #A8EAC0;
+  --color-green-400: #13C34E;
+  --color-green-300: #5FD98B;
+  --color-green-200: #A8EAC0;
   --color-green-100: #E7F8ED;
 
   /* ===== System Colors - Red (Error) ===== */
-  --color-red-500: #FF0015;
-  --color-red-400: #FF4D5E;
-  --color-red-300: #FF9AA3;
+  --color-red-400: #FF0015;
+  --color-red-300: #FF4D5E;
+  --color-red-200: #FF9AA3;
   --color-red-100: #FFE6E8;
 
   /* ===== System Colors - Blue (Info) ===== */
-  --color-blue-500: #0070FF;
-  --color-blue-400: #4D94FF;
-  --color-blue-300: #99C2FF;
-  --color-blue-100: #E6F0FF;
+  --color-blue-400: #0070FF;
+  --color-blue-300: #BFDBFF;
+  --color-blue-200: #E4EFFF;
+  --color-blue-100: #FCFDFF;
 
   /* ===== System Colors - Yellow (Warning) ===== */
-  --color-yellow-500: #FFDA22;
-  --color-yellow-400: #FFE066;
-  --color-yellow-300: #FFED99;
+  --color-yellow-400: #FEC700;
+  --color-yellow-300: #FFE066;
+  --color-yellow-200: #FFED99;
   --color-yellow-100: #FFF8D6;
 
   /* ===== Symbol Colors ===== */
-  --color-symbol-cyan: #0FDD99;
-  --color-symbol-lime: #9FF91E;
+  --color-symbol-main: #0FDD99;
+  --color-symbol-sub: #9FF91E;
 
   /* ===== Semantic Colors ===== */
   --color-background: var(--color-gray-0);
@@ -60,10 +60,10 @@
   --color-border: var(--color-gray-100);
 
   /* Semantic System Colors */
-  --color-success: var(--color-green-500);
-  --color-error: var(--color-red-500);
-  --color-info: var(--color-blue-500);
-  --color-warning: var(--color-yellow-500);
+  --color-success: var(--color-green-400);
+  --color-error: var(--color-red-400);
+  --color-info: var(--color-blue-400);
+  --color-warning: var(--color-yellow-400);
 
   /* ===== Typography - Font Sizes ===== */
   --font-size-display-1: 64px;

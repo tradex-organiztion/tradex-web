@@ -93,19 +93,19 @@ Tailwind CSS v4 `@theme inline`에서 정의됨 (`globals.css`)
 
 #### System Colors
 
-| 용도 | 500 (Main) | 400 | 300 | 100 (Light) |
+| 용도 | 400 (Main) | 300 | 200 | 100 (Light) |
 |------|------------|-----|-----|-------------|
 | Green (Success) | #13C34E | #5FD98B | #A8EAC0 | #E7F8ED |
 | Red (Error) | #FF0015 | #FF4D5E | #FF9AA3 | #FFE6E8 |
-| Blue (Info) | #0070FF | #4D94FF | #99C2FF | #E6F0FF |
-| Yellow (Warning) | #FFDA22 | #FFE066 | #FFED99 | #FFF8D6 |
+| Blue (Info) | #0070FF | #BFDBFF | #E4EFFF | #FCFDFF |
+| Yellow (Warning) | #FEC700 | #FFE066 | #FFED99 | #FFF8D6 |
 
 #### Symbol Colors
 
 | 이름 | HEX | Tailwind Class |
 |------|-----|----------------|
-| Cyan | #0FDD99 | `bg-symbol-cyan`, `text-symbol-cyan` |
-| Lime | #9FF91E | `bg-symbol-lime`, `text-symbol-lime` |
+| Main | #0FDD99 | `bg-symbol-main`, `text-symbol-main` |
+| Sub | #9FF91E | `bg-symbol-sub`, `text-symbol-sub` |
 
 ### Shadow
 
@@ -138,14 +138,14 @@ Tailwind CSS v4 `@theme inline`에서 정의됨 (`globals.css`)
 <div className="bg-gray-800 text-gray-0">Dark Background</div>
 
 // System colors
-<span className="text-green-500">+12.5%</span>
-<span className="text-red-500">-3.2%</span>
-<div className="bg-blue-100 text-blue-500">Info Alert</div>
-<div className="bg-yellow-100 text-yellow-500">Warning</div>
+<span className="text-green-400">+12.5%</span>
+<span className="text-red-400">-3.2%</span>
+<div className="bg-blue-100 text-blue-400">Info Alert</div>
+<div className="bg-yellow-100 text-yellow-400">Warning</div>
 
 // Symbol colors
-<span className="text-symbol-cyan">Symbol Cyan</span>
-<span className="text-symbol-lime">Symbol Lime</span>
+<span className="text-symbol-main">Symbol Main</span>
+<span className="text-symbol-sub">Symbol Sub</span>
 
 // Shadows
 <div className="shadow-normal rounded-xl">Normal Shadow</div>
