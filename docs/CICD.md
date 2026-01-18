@@ -49,14 +49,14 @@ EC2 프로덕션 배포
 
 ## GitHub Actions 워크플로우
 
-### 1. Develop - Vercel Preview (`develop.yml`)
+### 1. Develop - Vercel Preview (자동)
 
 **트리거**: `develop` 브랜치 push
 
-**동작**:
-1. Vercel CLI로 프리뷰 빌드
-2. Vercel Preview 환경에 배포
-3. PR이 있으면 프리뷰 URL 코멘트
+**동작**: Vercel GitHub 연동으로 자동 배포 (별도 워크플로우 불필요)
+- Vercel이 GitHub 레포지토리를 직접 감지
+- develop 브랜치 push 시 Preview 환경에 자동 배포
+- PR 생성 시 Preview URL 자동 코멘트
 
 ### 2. Production - EC2 Deploy (`production.yml`)
 
@@ -82,9 +82,8 @@ Repository Settings → Secrets and variables → Actions에서 설정:
 | `EC2_HOST` | EC2 퍼블릭 IP/도메인 | `52.78.xxx.xxx` |
 | `EC2_USER` | SSH 사용자명 | `ubuntu` |
 | `EC2_SSH_KEY` | SSH 프라이빗 키 (전체) | `-----BEGIN OPENSSH...` |
-| `VERCEL_TOKEN` | Vercel 액세스 토큰 | `xxxxx` |
-| `VERCEL_ORG_ID` | Vercel 조직 ID | `team_xxxxx` |
-| `VERCEL_PROJECT_ID` | Vercel 프로젝트 ID | `prj_xxxxx` |
+
+> **참고**: Vercel 관련 시크릿은 GitHub 레포지토리 직접 연동으로 불필요
 
 ### GitHub Variables
 
@@ -96,11 +95,9 @@ Repository Settings → Secrets and variables → Actions → Variables:
 
 ### Vercel 설정
 
-1. [Vercel](https://vercel.com)에서 프로젝트 생성
-2. Settings → General에서 ID 확인:
-   - `VERCEL_ORG_ID`: 팀/개인 ID
-   - `VERCEL_PROJECT_ID`: 프로젝트 ID
-3. Settings → Tokens에서 액세스 토큰 생성
+1. [Vercel](https://vercel.com)에서 GitHub 레포지토리 직접 연결
+2. 레포지토리 연결 시 자동 배포 활성화됨
+3. `vercel.json` 파일로 빌드 설정 관리
 
 ### EC2 서버 설정
 
@@ -205,10 +202,11 @@ docker compose up -d
 ### Vercel 배포 실패
 
 ```bash
-# 로컬에서 Vercel CLI 테스트
-npm i -g vercel
-vercel login
-vercel --prod
+# Vercel 대시보드에서 확인
+# Project → Deployments → 실패한 배포 클릭 → 빌드 로그 확인
+
+# 로컬에서 빌드 테스트
+npm run build
 ```
 
 ---
