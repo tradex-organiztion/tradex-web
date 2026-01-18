@@ -37,8 +37,8 @@
 |------|------|------|--------|
 | [Week 1](#week-1-프로젝트-기반-구축) | 프로젝트 기반 구축 | ✅ 완료 | 100% |
 | [Week 2](#week-2-인증-시스템) | 인증 시스템 | ✅ 완료 | 100% (7/9, 2개 백엔드 API 대기) |
-| [Week 3](#week-3-홈-대시보드--tradex-ai) | 홈 대시보드 + Tradex AI | ⬜ 미시작 | 0% |
-| [Week 4](#week-4-매매-관리) | 매매 관리 | ⬜ 미시작 | 0% |
+| [Week 3](#week-3-홈-대시보드--매매-관리) | 홈 대시보드 + 매매 관리 | ⬜ 미시작 | 0% |
+| [Week 4](#week-4-tradex-ai) | Tradex AI | ⬜ 미시작 | 0% |
 | [Week 5](#week-5-차트-분석) | 차트 분석 | ⬜ 미시작 | 0% |
 | [Week 6](#week-6-분석--수익-관리) | 분석 + 수익 관리 | ⬜ 미시작 | 0% |
 | [Week 7](#week-7-수신함--설정) | 수신함 + 설정 | ⬜ 미시작 | 0% |
@@ -128,11 +128,11 @@
 
 ---
 
-## Week 3: 홈 대시보드 + Tradex AI
+## Week 3: 홈 대시보드 + 매매 관리
 
-**목표**: 메인 화면 및 AI 채팅 기반 구축
+**목표**: 메인 화면 및 매매 원칙/매매일지 CRUD
 **상태**: ⬜ 미시작
-**진행률**: 0/6 (0%)
+**진행률**: 0/8 (0%)
 
 ### 태스크
 
@@ -140,24 +140,28 @@
 |---|--------|---------|------|-----------|------|
 | 3.1 | 홈 대시보드 레이아웃 | 🔴 Critical | ⬜ | `app/(main)/home/` | - |
 | 3.2 | 요약 카드 컴포넌트 | 🟡 High | ⬜ | `components/home/` | 수익률, 최근 매매 등 |
-| 3.3 | Tradex AI 사이드 패널 UI | 🔴 Critical | ⬜ | `components/layout/TradexAISide.tsx` | - |
-| 3.4 | 채팅 인터페이스 구현 | 🔴 Critical | ⬜ | `components/ai/` | 메시지 리스트, 입력창 |
-| 3.5 | 메시지 입력/전송 기능 | 🟡 High | ⬜ | `lib/api/ai.ts` | - |
-| 3.6 | AI 응답 스트리밍 표시 | 🟢 Medium | ⬜ | `components/ai/ChatMessage.tsx` | SSE/WebSocket |
+| 3.3 | 매매 원칙 등록/수정 페이지 | 🔴 Critical | ⬜ | `app/(main)/trading/principles/` | - |
+| 3.4 | 매매 원칙 목록 페이지 | 🟡 High | ⬜ | `app/(main)/trading/principles/` | - |
+| 3.5 | 매매일지 작성 폼 | 🔴 Critical | ⬜ | `app/(main)/trading/journal/new/` | - |
+| 3.6 | 매매일지 목록 (필터링) | 🟡 High | ⬜ | `app/(main)/trading/journal/` | 기간, 포지션, 수익/손실 |
+| 3.7 | 매매일지 상세 보기 | 🟡 High | ⬜ | `app/(main)/trading/journal/[id]/` | - |
+| 3.8 | 대시보드 API 연동 | 🟢 Medium | ⬜ | `lib/api/dashboard.ts` | 요약 데이터, 알림 |
 
 ### 완료 조건
 
 - [ ] 홈 대시보드 카드 렌더링
-- [ ] AI 사이드 패널 열기/닫기
-- [ ] 메시지 전송 및 응답 표시
-- [ ] 채팅 히스토리 유지
+- [ ] 매매 원칙 CRUD 동작
+- [ ] 매매일지 CRUD 동작
+- [ ] 필터링 동작 (3개 이상)
 
 ### 산출물
 
 - `app/(main)/home/` - 홈 페이지
 - `components/home/` - 대시보드 컴포넌트
-- `components/ai/` - AI 채팅 컴포넌트
-- `components/layout/TradexAISide.tsx` - AI 사이드 패널
+- `app/(main)/trading/` - 매매 관련 페이지
+- `components/trading/` - 매매 컴포넌트
+- `lib/api/trading.ts` - 매매 API
+- `lib/api/dashboard.ts` - 대시보드 API
 
 ### 의존성
 
@@ -165,9 +169,9 @@
 
 ---
 
-## Week 4: 매매 관리
+## Week 4: Tradex AI
 
-**목표**: 매매 원칙 및 매매일지 CRUD
+**목표**: AI 채팅 기능 구축
 **상태**: ⬜ 미시작
 **진행률**: 0/6 (0%)
 
@@ -175,29 +179,30 @@
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 4.1 | 매매 원칙 등록/수정 페이지 | 🔴 Critical | ⬜ | `app/(main)/trading/principles/` | - |
-| 4.2 | 매매 원칙 목록 페이지 | 🟡 High | ⬜ | `app/(main)/trading/principles/` | - |
-| 4.3 | 매매일지 작성 폼 | 🔴 Critical | ⬜ | `app/(main)/trading/journal/new/` | - |
-| 4.4 | 매매일지 목록 (필터링) | 🟡 High | ⬜ | `app/(main)/trading/journal/` | 기간, 포지션, 수익/손실 |
-| 4.5 | 매매일지 상세 보기 | 🟡 High | ⬜ | `app/(main)/trading/journal/[id]/` | - |
-| 4.6 | AI 매매 원칙 추천 연동 | 🟢 Medium | ⬜ | `components/trading/` | Tradex AI 연동 |
+| 4.1 | Tradex AI 사이드 패널 UI | 🔴 Critical | ⬜ | `components/layout/TradexAISide.tsx` | - |
+| 4.2 | 채팅 인터페이스 구현 | 🔴 Critical | ⬜ | `components/ai/` | 메시지 리스트, 입력창 |
+| 4.3 | 메시지 입력/전송 기능 | 🟡 High | ⬜ | `lib/api/ai.ts` | - |
+| 4.4 | AI 응답 스트리밍 표시 | 🟡 High | ⬜ | `components/ai/ChatMessage.tsx` | SSE 스트리밍 |
+| 4.5 | 대화 목록/히스토리 관리 | 🟡 High | ⬜ | `components/ai/ConversationList.tsx` | - |
+| 4.6 | AI 매매 원칙 추천 연동 | 🟢 Medium | ⬜ | `components/trading/` | 매매 관리와 연동 |
 
 ### 완료 조건
 
-- [ ] 매매 원칙 CRUD 동작
-- [ ] 매매일지 CRUD 동작
-- [ ] 필터링 동작 (3개 이상)
+- [ ] AI 사이드 패널 열기/닫기
+- [ ] 메시지 전송 및 응답 표시
+- [ ] 채팅 히스토리 유지
 - [ ] AI 추천 기능 연동
 
 ### 산출물
 
-- `app/(main)/trading/` - 매매 관련 페이지
-- `components/trading/` - 매매 컴포넌트
-- `lib/api/trading.ts` - 매매 API
+- `components/ai/` - AI 채팅 컴포넌트
+- `components/layout/TradexAISide.tsx` - AI 사이드 패널
+- `lib/api/ai.ts` - AI API
 
 ### 의존성
 
 - Week 1, 2, 3 완료 필요
+- AI 모델 결정 필요 (DECISIONS.md #3)
 
 ---
 
@@ -359,7 +364,7 @@
 | 주차 | 차단 요소 | 결정 필요 항목 | 상태 |
 |------|----------|----------------|------|
 | Week 2 | 소셜 로그인 | #1 소셜 로그인 제공자 | ✅ 해결 (Google, Kakao) |
-| Week 3 | AI 모델 | #3 AI 모델 | ⬜ 미정 |
+| Week 4 | AI 모델 | #3 AI 모델 | ⬜ 미정 |
 | Week 5 | 차트 라이브러리 | #7 차트 라이브러리 | ⬜ 미정 |
 | Week 6 | 거래소 연동 | #5 지원 거래소, #6 실시간 데이터 방식 | ⬜ 미정 |
 | Week 8 | 결제 | #9 결제 시스템, #10 구독 플랜 구성 | ⬜ 미정 |
@@ -370,6 +375,7 @@
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2026-01-18 | Week 3/4 순서 변경: Week 3 = 홈 대시보드 + 매매 관리, Week 4 = Tradex AI |
 | 2026-01-18 | Week 2: Swagger 기준 재검토 - 2.7, 2.9 백엔드 API 대기로 변경, 2.8 완료 |
 | 2026-01-18 | Week 2: 회원가입 페이지 Swagger 스펙 기준 수정 (username 필드, 휴대폰 인증 제거) |
 | 2025-01-18 | Week 2: 인증 API 연동 완료 (로그인, 회원가입, OAuth2, Token Refresh, Auth Guard) |
