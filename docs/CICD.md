@@ -12,18 +12,16 @@ Tradex 프론트엔드의 CI/CD 파이프라인은 GitHub Actions를 사용하�
 
 ```
 develop branch (push)
-    ↓
-    ├── Vercel Preview 배포 (자동)
     │
-    └── Auto Merge 워크플로우
-            ↓
-        main branch (자동 merge)
-            ↓
-        Production 워크플로우
-            ↓
-        Docker 이미지 빌드 → ghcr.io 푸시
-            ↓
-        EC2 프로덕션 배포
+    ├── Vercel Preview 배포 (Vercel 자동)
+    │
+    └── production.yml 워크플로우
+            │
+            ├── 1. develop → main 자동 merge
+            │
+            ├── 2. Docker 이미지 빌드 → ghcr.io 푸시
+            │
+            └── 3. EC2 프로덕션 배포
 ```
 
 ---
@@ -58,24 +56,14 @@ develop branch (push)
 - develop 브랜치 push 시 Preview 환경에 자동 배포
 - PR 생성 시 Preview URL 자동 코멘트
 
-### 2. Auto Merge (`auto-merge.yml`)
+### 2. Production - Merge and Deploy (`production.yml`)
 
 **트리거**: `develop` 브랜치 push
 
-**동작**:
-1. develop 브랜치를 main 브랜치에 자동 merge
-2. merge 완료 시 production.yml 워크플로우 자동 트리거
-
-### 3. Production - EC2 Deploy (`production.yml`)
-
-**트리거**: `main` 브랜치 push
-
-**동작**:
-1. Docker 이미지 빌드
-2. GitHub Container Registry(ghcr.io)에 푸시
-3. SSH로 EC2 접속
-4. docker-compose로 컨테이너 교체
-5. 헬스체크
+**동작** (순차 실행):
+1. **merge-to-main**: develop → main 자동 merge
+2. **build-and-push**: Docker 이미지 빌드 → ghcr.io 푸시
+3. **deploy**: SSH로 EC2 접속 → docker-compose 배포 → 헬스체크
 
 ---
 
