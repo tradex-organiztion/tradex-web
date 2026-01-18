@@ -171,34 +171,6 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        {/* Demo Mode Button */}
-        <div className="pt-4 border-t border-gray-100">
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            className="w-full text-gray-500 hover:text-gray-800"
-            onClick={() => {
-              login(
-                {
-                  userId: 0,
-                  email: 'demo@tradex.kr',
-                  username: 'Demo User',
-                  profileCompleted: true,
-                  socialProvider: 'LOCAL',
-                },
-                'demo-token'
-              )
-              useAuthStore.getState().startDemoMode()
-              router.replace("/home")
-            }}
-          >
-            🎮 데모 체험하기
-          </Button>
-          <p className="text-caption-regular text-gray-400 text-center mt-2">
-            로그인 없이 UI를 미리 체험해보세요
-          </p>
-        </div>
       </AuthCard>
     </AuthLayout>
   )

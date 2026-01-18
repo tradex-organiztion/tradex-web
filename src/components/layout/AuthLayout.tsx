@@ -2,8 +2,10 @@
 
 import { ReactNode } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/stores/useAuthStore"
 
 /**
  * Auth Layout - Figma Design에 맞춘 인증 페이지 레이아웃
@@ -17,6 +19,24 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children }: AuthLayoutProps) {
+  const router = useRouter()
+  const { login, startDemoMode } = useAuthStore()
+
+  const handleDemoMode = () => {
+    login(
+      {
+        userId: 0,
+        email: 'demo@tradex.kr',
+        username: 'Demo User',
+        profileCompleted: true,
+        socialProvider: 'LOCAL',
+      },
+      'demo-token'
+    )
+    startDemoMode()
+    router.replace("/home")
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F5F6]">
       {/* Header */}
@@ -38,7 +58,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 
           {/* Header Buttons */}
           <div className="flex items-center gap-4">
-            <Button variant="secondary" size="md">
+            <Button variant="secondary" size="md" onClick={handleDemoMode}>
               데모 체험하기
             </Button>
             <Button variant="primary" size="md">
