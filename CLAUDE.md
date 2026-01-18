@@ -417,6 +417,39 @@ npm run start    # 프로덕션 서버 실행
 npm run lint     # ESLint 검사
 ```
 
+## 배포
+
+프로젝트는 Git 브랜치 기반 자동 배포가 설정되어 있습니다.
+
+| 브랜치 | 배포 환경 | 플랫폼 |
+|--------|----------|--------|
+| `develop` | Preview/Staging | Vercel |
+| `main` | Production | AWS |
+
+### 배포 프로세스
+
+사용자가 "배포해줘"라고 요청하면 다음 단계를 수행합니다:
+
+```bash
+# 1. develop 브랜치에 커밋 및 푸시 (Vercel 자동 배포)
+git add .
+git commit -m "커밋 메시지"
+git push origin develop
+
+# 2. main 브랜치에 merge 및 푸시 (AWS 자동 배포)
+git checkout main
+git pull origin main
+git merge develop
+git push origin main
+git checkout develop
+```
+
+### 주의사항
+
+- 배포 전 반드시 `npm run build`로 빌드 성공 여부 확인
+- develop push 후 Vercel Preview에서 동작 확인 권장
+- main merge는 Production 배포이므로 신중하게 진행
+
 ## 작업 시 참고사항
 
 1. **로드맵 확인**: 작업 시작 전 `docs/ROADMAP.md`에서 현재 주차 태스크 확인
