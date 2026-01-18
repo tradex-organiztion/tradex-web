@@ -144,6 +144,20 @@ primary/secondary를 element로 통합하고, positive·danger·warning·info �
 | warning | yellow-400 | `text-label-warning` | 경고 상태 |
 | info | blue-400 | `text-label-info` | 정보 상태 |
 
+#### Line Colors (보더/구분선용 시맨틱 색상)
+
+보더와 구분선에 사용되는 시맨틱 색상 시스템입니다.
+
+| 이름 | 참조 값 | Tailwind Class | 용도 |
+|------|---------|----------------|------|
+| normal | gray-200 | `border-line-normal` | 기본 보더 |
+| focused | gray-400 | `border-line-focused` | 포커스 상태 |
+| primary | gray-800 | `border-line-primary` | 강조 보더 |
+| **positive** | green-400 | `border-line-positive` | 긍정적 상태 |
+| **danger** | red-400 | `border-line-danger` | 위험 상태 |
+| **warning** | yellow-400 | `border-line-warning` | 경고 상태 |
+| **info** | blue-400 | `border-line-info` | 정보 상태 |
+
 ### Shadow
 
 | 이름 | 값 | 클래스 |
@@ -201,6 +215,13 @@ primary/secondary를 element로 통합하고, positive·danger·warning·info �
 <span className="text-label-warning">경고</span>
 <span className="text-label-info">정보</span>
 <div className="bg-gray-800 text-label-inverse">어두운 배경 위 텍스트</div>
+
+// Line colors (보더/구분선용)
+<div className="border border-line-normal">기본 보더</div>
+<input className="border border-line-normal focus:border-line-focused" />
+<div className="border-2 border-line-primary">강조 보더</div>
+<div className="border border-line-positive">성공 상태</div>
+<div className="border border-line-danger">에러 상태</div>
 
 // Shadows
 <div className="shadow-normal rounded-xl">Normal Shadow</div>

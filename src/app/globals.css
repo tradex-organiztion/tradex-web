@@ -89,6 +89,15 @@
   --color-label-warning: var(--color-yellow-400);
   --color-label-info: var(--color-blue-400);
 
+  /* ===== Line Colors (보더/구분선용) ===== */
+  --color-line-normal: var(--color-gray-200);
+  --color-line-focused: var(--color-gray-400);
+  --color-line-primary: var(--color-gray-800);
+  --color-line-positive: var(--color-green-400);
+  --color-line-danger: var(--color-red-400);
+  --color-line-warning: var(--color-yellow-400);
+  --color-line-info: var(--color-blue-400);
+
   /* ===== Semantic Colors ===== */
   --color-background: var(--color-gray-0);
   --color-foreground: var(--color-gray-900);
