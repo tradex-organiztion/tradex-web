@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "./Badge";
+import { Badge } from "@/components/ui/badge";
 
 interface StatCardProps {
   title: string;
@@ -9,7 +9,7 @@ interface StatCardProps {
   subValue?: string;
   badge?: {
     label: string;
-    variant: "positive" | "negative";
+    variant: "positive" | "danger";
   };
   className?: string;
 }
@@ -33,7 +33,7 @@ export function StatCard({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <p className="text-title-1-bold text-gray-800">{value}</p>
-            {badge && <Badge label={badge.label} variant={badge.variant} />}
+            {badge && <Badge variant={badge.variant} size="sm">{badge.label}</Badge>}
           </div>
           {subValue && (
             <p className="text-body-2-regular text-gray-400">{subValue}</p>

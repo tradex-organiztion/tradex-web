@@ -45,7 +45,7 @@ export default function HomePage() {
             title="최근 7일 승률(Win Rate)"
             value="64.2%"
             subValue="6,306,575 KRW"
-            badge={{ label: "- 2.1%", variant: "negative" }}
+            badge={{ label: "- 2.1%", variant: "danger" }}
             className="flex-1"
           />
           <TradexAIInsightCard />

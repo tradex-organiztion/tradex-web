@@ -1,4 +1,3 @@
-export { Badge } from "./Badge";
 export { StatCard } from "./StatCard";
 export { TradexAIInsightCard } from "./TradexAIInsightCard";
 export { WeeklyProfitChart } from "./WeeklyProfitChart";
