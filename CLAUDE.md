@@ -578,7 +578,7 @@ src/lib/api/
 
 | 브랜치 | 용도 | 배포 환경 |
 |--------|------|----------|
-| `main` | 프로덕션 릴리즈 | AWS EC2 (Docker) |
+| `main` | 프로덕션 릴리즈 | AWS Amplify |
 | `develop` | 개발/스테이징 | Vercel Preview |
 | `feature/*` | 기능 개발 | - |
 | `fix/*` | 버그 수정 | - |
@@ -587,51 +587,22 @@ src/lib/api/
 
 ```
 develop push → Vercel Preview 자동 배포
-main merge → Docker 빌드 → ghcr.io → EC2 자동 배포
+main push    → AWS Amplify 자동 배포
 ```
 
-### 개발 명령어 (배포 관련)
+### develop → main Merge 작업
+
+사용자가 "main에 develop merge 해줘" 또는 유사한 요청을 하면 다음 명령어를 순차 실행:
 
 ```bash
-# 로컬 Docker 빌드 테스트
-docker build -t tradex-web .
-docker run -p 3000:3000 tradex-web
-
-# Docker Compose로 실행
-docker compose up --build
-
-# develop 브랜치 생성 및 이동
-git checkout -b develop
-git push -u origin develop
+git checkout main
+git pull origin main
+git merge develop
+git push origin main
+git checkout develop
 ```
 
 ### 배포 작업 시 주의사항
 
 1. **develop 브랜치에서 작업**: 기능 개발은 `develop` 또는 `feature/*` 브랜치에서 진행
-2. **PR을 통한 main 머지**: `main` 브랜치 직접 푸시 금지, 반드시 PR을 통해 머지
-3. **환경변수 확인**: 새로운 환경변수 추가 시 GitHub Secrets/Variables에 등록 필요
-4. **빌드 확인**: PR 전 로컬에서 `npm run build` 및 Docker 빌드 테스트 권장
-
-### GitHub Secrets 목록
-
-| Secret | 설명 |
-|--------|------|
-| `EC2_HOST` | EC2 퍼블릭 IP |
-| `EC2_USER` | SSH 사용자명 (ubuntu) |
-| `EC2_SSH_KEY` | SSH 프라이빗 키 |
-| `VERCEL_TOKEN` | Vercel 액세스 토큰 |
-| `VERCEL_ORG_ID` | Vercel 조직 ID |
-| `VERCEL_PROJECT_ID` | Vercel 프로젝트 ID |
-
-### 파일 구조
-
-```
-/
-├── Dockerfile              # Docker 이미지 빌드
-├── docker-compose.yml      # 프로덕션 컨테이너 구성
-├── .dockerignore           # Docker 빌드 제외 파일
-└── .github/
-    └── workflows/
-        ├── develop.yml     # develop → Vercel Preview
-        └── production.yml  # main → EC2 배포
-```
+2. **빌드 확인**: merge 전 `npm run build`로 빌드 확인 권장
