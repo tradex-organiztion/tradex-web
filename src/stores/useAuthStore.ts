@@ -31,6 +31,7 @@ interface AuthState {
   refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  isDemoMode: boolean
 
   // Actions
   setUser: (user: User | null) => void
@@ -41,6 +42,8 @@ interface AuthState {
   login: (user: User, accessToken: string, refreshToken?: string) => void
   logout: () => void
   setLoading: (loading: boolean) => void
+  startDemoMode: () => void
+  exitDemoMode: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -52,6 +55,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
+      isDemoMode: false,
 
       // Actions
       setUser: (user) =>
@@ -102,10 +106,34 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          isDemoMode: false,
         }),
 
       setLoading: (isLoading) =>
         set({ isLoading }),
+
+      startDemoMode: () =>
+        set({
+          isDemoMode: true,
+          isAuthenticated: false,
+          isLoading: false,
+          user: {
+            userId: 0,
+            email: 'demo@tradex.kr',
+            username: 'Demo User',
+            profileCompleted: true,
+            socialProvider: 'LOCAL',
+          },
+        }),
+
+      exitDemoMode: () =>
+        set({
+          isDemoMode: false,
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        }),
     }),
     {
       name: 'tradex-auth',
@@ -115,6 +143,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        isDemoMode: state.isDemoMode,
       }),
     }
   )

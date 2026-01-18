@@ -39,7 +39,7 @@ const allowedWithIncompleteProfile = ["/additional-info", "/oauth2/redirect", "/
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isAuthenticated, user, isLoading, setLoading } = useAuthStore()
+  const { isAuthenticated, user, isLoading, setLoading, isDemoMode } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
@@ -64,6 +64,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       pathname.startsWith(path)
     )
 
+    // 데모 모드인 경우 보호된 경로 접근 허용
+    if (isDemoMode) {
+      // 데모 모드에서 인증 페이지 접근 시 홈으로 리다이렉트
+      if (isAuthPath) {
+        router.replace("/home")
+      }
+      return
+    }
+
     // 보호된 경로에 미인증 사용자가 접근
     if (isProtectedPath && !isAuthenticated) {
       router.replace("/login")
@@ -87,7 +96,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         router.replace("/additional-info")
       }
     }
-  }, [isChecking, isLoading, isAuthenticated, user, pathname, router])
+  }, [isChecking, isLoading, isAuthenticated, user, pathname, router, isDemoMode])
 
   // 초기 로딩 중
   if (isChecking || isLoading) {
