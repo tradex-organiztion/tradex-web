@@ -51,6 +51,33 @@
   --color-symbol-main: #0FDD99;
   --color-symbol-sub: #9FF91E;
 
+  /* ===== Element Colors ===== */
+  /* Primary (버튼, 주요 인터랙티브 요소) */
+  --color-element-primary-default: var(--color-gray-800);
+  --color-element-primary-pressed: var(--color-gray-700);
+  --color-element-primary-disabled: var(--color-gray-100);
+
+  /* Secondary (보조 버튼, 카드 등) */
+  --color-element-secondary-default: var(--color-gray-0);
+  --color-element-secondary-pressed: var(--color-gray-100);
+  --color-element-secondary-disabled: var(--color-gray-200);
+
+  /* Positive (성공, 수익, 긍정적 상태) */
+  --color-element-positive-default: var(--color-green-400);
+  --color-element-positive-lighter: var(--color-green-100);
+
+  /* Danger (에러, 손실, 위험 상태) */
+  --color-element-danger-default: var(--color-red-400);
+  --color-element-danger-lighter: var(--color-red-100);
+
+  /* Warning (경고, 주의 상태) */
+  --color-element-warning-default: var(--color-yellow-400);
+  --color-element-warning-lighter: var(--color-yellow-100);
+
+  /* Info (정보, 안내 상태) */
+  --color-element-info-default: var(--color-blue-400);
+  --color-element-info-lighter: var(--color-blue-100);
+
   /* ===== Semantic Colors ===== */
   --color-background: var(--color-gray-0);
   --color-foreground: var(--color-gray-900);

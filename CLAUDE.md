@@ -107,6 +107,27 @@ Tailwind CSS v4 `@theme inline`에서 정의됨 (`globals.css`)
 | Main | #0FDD99 | `bg-symbol-main`, `text-symbol-main` |
 | Sub | #9FF91E | `bg-symbol-sub`, `text-symbol-sub` |
 
+#### Element Colors (UI 요소용 시맨틱 색상)
+
+primary/secondary를 element로 통합하고, positive·danger·warning·info 상태를 추가한 시맨틱 색상 시스템입니다.
+
+| 이름 | 참조 값 | Tailwind Class |
+|------|---------|----------------|
+| primary-default | gray-800 | `bg-element-primary-default`, `text-element-primary-default` |
+| primary-pressed | gray-700 | `bg-element-primary-pressed` |
+| primary-disabled | gray-100 | `bg-element-primary-disabled` |
+| secondary-default | gray-0 | `bg-element-secondary-default` |
+| secondary-pressed | gray-100 | `bg-element-secondary-pressed` |
+| secondary-disabled | gray-200 | `bg-element-secondary-disabled` |
+| positive-default | green-400 | `bg-element-positive-default`, `text-element-positive-default` |
+| positive-lighter | green-100 | `bg-element-positive-lighter` |
+| danger-default | red-400 | `bg-element-danger-default`, `text-element-danger-default` |
+| danger-lighter | red-100 | `bg-element-danger-lighter` |
+| warning-default | yellow-400 | `bg-element-warning-default`, `text-element-warning-default` |
+| warning-lighter | yellow-100 | `bg-element-warning-lighter` |
+| info-default | blue-400 | `bg-element-info-default`, `text-element-info-default` |
+| info-lighter | blue-100 | `bg-element-info-lighter` |
+
 ### Shadow
 
 | 이름 | 값 | 클래스 |
@@ -146,6 +167,14 @@ Tailwind CSS v4 `@theme inline`에서 정의됨 (`globals.css`)
 // Symbol colors
 <span className="text-symbol-main">Symbol Main</span>
 <span className="text-symbol-sub">Symbol Sub</span>
+
+// Element colors (UI 요소용)
+<button className="bg-element-primary-default hover:bg-element-primary-pressed">Primary Button</button>
+<button className="bg-element-secondary-default hover:bg-element-secondary-pressed border">Secondary Button</button>
+<span className="bg-element-positive-lighter text-element-positive-default">+12.5%</span>
+<span className="bg-element-danger-lighter text-element-danger-default">-3.2%</span>
+<div className="bg-element-warning-lighter text-element-warning-default">Warning Badge</div>
+<div className="bg-element-info-lighter text-element-info-default">Info Badge</div>
 
 // Shadows
 <div className="shadow-normal rounded-xl">Normal Shadow</div>
