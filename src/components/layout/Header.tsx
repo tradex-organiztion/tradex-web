@@ -49,7 +49,7 @@ export function Header({ title, icon }: HeaderProps) {
     <header
       className={cn(
         'fixed right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 transition-all duration-300',
-        isSidebarCollapsed ? 'left-16' : 'left-60'
+        isSidebarCollapsed ? 'left-16' : 'left-[180px]'
       )}
     >
       {/* Left: Title & Search */}
