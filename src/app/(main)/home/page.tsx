@@ -1,35 +1,63 @@
-import { Header } from "@/components/layout";
+"use client";
+
+import {
+  StatCard,
+  TradexAIInsightCard,
+  WeeklyProfitChart,
+  RiskScoreCard,
+} from "@/components/home";
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen">
-      <Header
-        title="홈"
-        icon={
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        }
-      />
+  // TODO: Replace with actual user data from API
+  const userName = "Jay";
 
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-navy-900">홈</h1>
-          <p className="text-gray-500 mt-1">대시보드 페이지입니다. (구현 예정)</p>
+  return (
+    <div className="flex flex-col gap-8">
+      {/* Greeting Section */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-title-1-bold text-gray-800">
+          안녕하세요 {userName}님!
+        </h1>
+        <p className="text-body-1-regular text-gray-600">
+          오늘도 성공적인 트레이딩 되세요. 현재 시장 변동성이 확대되고 있습니다.
+        </p>
+      </div>
+
+      {/* Stats Section */}
+      <div className="flex flex-col gap-6">
+        {/* Top Stats Row */}
+        <div className="flex gap-5">
+          <StatCard
+            title="총 자산 (Total Assets)"
+            value="$124,500.00"
+            subValue="184,720,650 KRW"
+            badge={{ label: "+25%", variant: "positive" }}
+            className="flex-1"
+          />
+          <StatCard
+            title="이번 달 실현 손익(PnL)"
+            value="+$4,250.00"
+            subValue="6,306,575 KRW"
+            badge={{ label: "+ 8.2%", variant: "positive" }}
+            className="flex-1"
+          />
+          <StatCard
+            title="최근 7일 승률(Win Rate)"
+            value="64.2%"
+            subValue="6,306,575 KRW"
+            badge={{ label: "- 2.1%", variant: "negative" }}
+            className="flex-1"
+          />
+          <TradexAIInsightCard />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <p className="text-sm text-gray-500">총 수익</p>
-            <p className="text-2xl font-bold text-success-500 mt-1">+12.5%</p>
+        {/* Bottom Section - Chart and Risk Score */}
+        <div className="flex gap-5">
+          <div className="flex-[2]">
+            <WeeklyProfitChart />
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <p className="text-sm text-gray-500">총 거래</p>
-            <p className="text-2xl font-bold text-navy-900 mt-1">143회</p>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <p className="text-sm text-gray-500">승률</p>
-            <p className="text-2xl font-bold text-navy-900 mt-1">68.5%</p>
+          <div className="flex-1">
+            <RiskScoreCard />
           </div>
         </div>
       </div>

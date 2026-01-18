@@ -1,0 +1,172 @@
+"use client";
+
+interface DataPoint {
+  date: string;
+  value: number;
+}
+
+interface WeeklyProfitChartProps {
+  data?: DataPoint[];
+}
+
+const defaultData: DataPoint[] = [
+  { date: "12/30", value: 3200 },
+  { date: "12/31", value: 4500 },
+  { date: "1/1", value: 3890 },
+  { date: "1/2", value: 5200 },
+  { date: "1/3", value: 6800 },
+  { date: "1/4", value: 7200 },
+];
+
+export function WeeklyProfitChart({ data = defaultData }: WeeklyProfitChartProps) {
+  const maxValue = Math.max(...data.map((d) => d.value));
+  const minValue = Math.min(...data.map((d) => d.value));
+  const range = maxValue - minValue || 1;
+
+  // Chart dimensions
+  const chartWidth = 572;
+  const chartHeight = 200;
+  const padding = { left: 40, right: 20, top: 20, bottom: 40 };
+  const innerWidth = chartWidth - padding.left - padding.right;
+  const innerHeight = chartHeight - padding.top - padding.bottom;
+
+  // Generate path for the line chart
+  const points = data.map((d, i) => {
+    const x = padding.left + (i / (data.length - 1)) * innerWidth;
+    const y = padding.top + innerHeight - ((d.value - minValue) / range) * innerHeight;
+    return { x, y, ...d };
+  });
+
+  const linePath = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
+    .join(" ");
+
+  // Generate area path (for gradient fill)
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + innerHeight} L ${padding.left} ${padding.top + innerHeight} Z`;
+
+  // Y-axis labels
+  const yLabels = ["9k", "7k", "5k", "3k", "1k"];
+
+  // Tooltip data (highlighted point - middle point)
+  const highlightedIndex = 2; // 1/1
+  const highlightedPoint = points[highlightedIndex];
+
+  return (
+    <div className="bg-white rounded-[10px] shadow-normal px-6 py-5 w-full">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-0.5">
+          <p className="text-body-1-bold text-gray-800">주간 수익 곡선</p>
+          <p className="text-body-2-regular text-gray-600">
+            최근 7일간의 누적 수익금 추이입니다.
+          </p>
+        </div>
+
+        <div className="relative">
+          <svg
+            width="100%"
+            height={chartHeight + 30}
+            viewBox={`0 0 ${chartWidth} ${chartHeight + 30}`}
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(19, 20, 22, 0.1)" />
+                <stop offset="100%" stopColor="rgba(19, 20, 22, 0)" />
+              </linearGradient>
+            </defs>
+
+            {/* Y-axis grid lines */}
+            {[0, 1, 2, 3, 4].map((i) => {
+              const y = padding.top + (i / 4) * innerHeight;
+              return (
+                <line
+                  key={i}
+                  x1={padding.left}
+                  y1={y}
+                  x2={chartWidth - padding.right}
+                  y2={y}
+                  stroke="#CDD1D5"
+                  strokeWidth="0.5"
+                  strokeDasharray="4 4"
+                />
+              );
+            })}
+
+            {/* Y-axis labels */}
+            {yLabels.map((label, i) => (
+              <text
+                key={i}
+                x={padding.left - 10}
+                y={padding.top + (i / 4) * innerHeight + 4}
+                textAnchor="end"
+                className="text-[12px] fill-gray-400"
+              >
+                {label}
+              </text>
+            ))}
+
+            {/* Area fill */}
+            <path d={areaPath} fill="url(#areaGradient)" />
+
+            {/* Line */}
+            <path
+              d={linePath}
+              fill="none"
+              stroke="#131416"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Vertical line at highlighted point */}
+            <line
+              x1={highlightedPoint.x}
+              y1={padding.top}
+              x2={highlightedPoint.x}
+              y2={padding.top + innerHeight}
+              stroke="#CDD1D5"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+            />
+
+            {/* Highlighted point */}
+            <circle
+              cx={highlightedPoint.x}
+              cy={highlightedPoint.y}
+              r="6"
+              fill="#131416"
+              stroke="white"
+              strokeWidth="2"
+            />
+
+            {/* X-axis labels */}
+            {points.map((p, i) => (
+              <text
+                key={i}
+                x={p.x}
+                y={chartHeight + 20}
+                textAnchor="middle"
+                className="text-[12px] fill-gray-400"
+              >
+                {p.date}
+              </text>
+            ))}
+          </svg>
+
+          {/* Tooltip */}
+          <div
+            className="absolute bg-white border border-gray-200 rounded-md shadow-heavy px-4 py-2"
+            style={{
+              left: `${(highlightedPoint.x / chartWidth) * 100 + 10}%`,
+              top: `${((highlightedPoint.y - 20) / (chartHeight + 30)) * 100}%`,
+              transform: "translateX(-50%)",
+            }}
+          >
+            <p className="text-caption-medium text-gray-400">2026. 01. 01</p>
+            <p className="text-title-2-bold text-gray-800">$3,890.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
