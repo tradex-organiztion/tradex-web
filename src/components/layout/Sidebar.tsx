@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
 import { useAuthStore } from '@/stores/useAuthStore'
@@ -142,8 +142,14 @@ const navSections: NavSection[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { isSidebarCollapsed, setSidebarCollapsed } = useUIStore()
-  const { user } = useAuthStore()
+  const { user, isDemoMode, logout } = useAuthStore()
+
+  const handleLoginClick = () => {
+    logout() // 데모 모드 해제 및 상태 초기화
+    router.push('/login')
+  }
 
   const isActive = (href: string) => {
     if (href === '/home') return pathname === '/home'
@@ -257,52 +263,85 @@ export function Sidebar() {
 
         {/* Profile Section */}
         <div className="border-t border-line-normal px-5 py-3">
-          {!isSidebarCollapsed ? (
-            <Link href="/settings/account" className="flex items-center gap-3">
-              <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
-                {user?.profileImageUrl ? (
-                  <Image
-                    src={user.profileImageUrl}
-                    alt={user.username || 'User'}
-                    width={28}
-                    height={28}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <span className="text-caption-medium text-gray-500">
-                    {user?.username?.charAt(0) || 'U'}
-                  </span>
-                )}
-              </div>
-              <span className="text-body-2-bold text-label-normal">
-                {user?.username || 'User'}
-              </span>
-            </Link>
+          {isDemoMode ? (
+            // 데모 모드일 때: 로그인 버튼 표시
+            !isSidebarCollapsed ? (
+              <button
+                onClick={handleLoginClick}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-body-2-medium text-white transition-colors hover:bg-black-light"
+              >
+                로그인
+              </button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleLoginClick}
+                    className="flex w-full justify-center"
+                  >
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-black text-white">
+                      <svg className="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 2H12.6667C13.0203 2 13.3594 2.14048 13.6095 2.39052C13.8595 2.64057 14 2.97971 14 3.33333V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M6.66667 11.3333L10 8L6.66667 4.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M10 8H2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  로그인
+                </TooltipContent>
+              </Tooltip>
+            )
           ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/settings/account" className="flex justify-center">
-                  <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
-                    {user?.profileImageUrl ? (
-                      <Image
-                        src={user.profileImageUrl}
-                        alt={user.username || 'User'}
-                        width={28}
-                        height={28}
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-caption-medium text-gray-500">
-                        {user?.username?.charAt(0) || 'U'}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {user?.username || 'User'}
-              </TooltipContent>
-            </Tooltip>
+            // 로그인 상태일 때: 유저 프로필 표시
+            !isSidebarCollapsed ? (
+              <Link href="/settings/account" className="flex items-center gap-3">
+                <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+                  {user?.profileImageUrl ? (
+                    <Image
+                      src={user.profileImageUrl}
+                      alt={user.username || 'User'}
+                      width={28}
+                      height={28}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-caption-medium text-gray-500">
+                      {user?.username?.charAt(0) || 'U'}
+                    </span>
+                  )}
+                </div>
+                <span className="text-body-2-bold text-label-normal">
+                  {user?.username || 'User'}
+                </span>
+              </Link>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/settings/account" className="flex justify-center">
+                    <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+                      {user?.profileImageUrl ? (
+                        <Image
+                          src={user.profileImageUrl}
+                          alt={user.username || 'User'}
+                          width={28}
+                          height={28}
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-caption-medium text-gray-500">
+                          {user?.username?.charAt(0) || 'U'}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {user?.username || 'User'}
+                </TooltipContent>
+              </Tooltip>
+            )
           )}
         </div>
       </aside>

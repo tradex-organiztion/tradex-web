@@ -391,6 +391,88 @@ export const entityApi = {
 };
 ```
 
+### API 에러 처리 패턴 (필수)
+
+API 호출 시 반드시 상황에 맞는 에러 메시지를 표시해야 합니다.
+
+#### 에러 유형별 메시지
+
+| 에러 상황 | 메시지 예시 |
+|----------|------------|
+| Network Error (서버 연결 불가) | "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요." |
+| 401 Unauthorized | 상황에 맞는 메시지 (예: "이메일 또는 비밀번호가 올바르지 않습니다.") |
+| 404 Not Found | 상황에 맞는 메시지 (예: "등록되지 않은 이메일입니다.") |
+| 서버 에러 메시지 존재 | 서버에서 보낸 메시지 표시 |
+| 기타 에러 | 일반적인 실패 메시지 |
+
+#### 에러 처리 코드 패턴
+
+```typescript
+// 폼 제출 등 사용자 인터랙션이 있는 API 호출
+try {
+  const response = await someApi.action(data)
+  // 성공 처리
+} catch (err: unknown) {
+  console.warn("Action error:", err) // console.error 대신 console.warn 사용 (Next.js dev overlay 방지)
+
+  if (err && typeof err === "object") {
+    const axiosError = err as {
+      response?: { status?: number; data?: { message?: string } }
+      message?: string
+    }
+
+    // Network Error (서버 연결 불가)
+    if (axiosError.message === "Network Error" || !axiosError.response) {
+      setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+    } else if (axiosError.response?.status === 401) {
+      setError("인증에 실패했습니다.") // 상황에 맞게 수정
+    } else if (axiosError.response?.status === 404) {
+      setError("요청한 리소스를 찾을 수 없습니다.") // 상황에 맞게 수정
+    } else if (axiosError.response?.data?.message) {
+      setError(axiosError.response.data.message)
+    } else {
+      setError("작업에 실패했습니다. 다시 시도해주세요.")
+    }
+  } else {
+    setError("작업에 실패했습니다. 다시 시도해주세요.")
+  }
+}
+```
+
+```typescript
+// 페이지 로드 시 데이터 fetching (useEffect 내)
+useEffect(() => {
+  const fetchData = async () => {
+    setIsLoading(true)
+
+    // .catch() 패턴 사용 (try-catch 대신) - Next.js dev overlay 방지
+    const data = await someApi.getData().catch((err) => {
+      console.warn("Data fetch error:", err.message)
+      return null
+    })
+
+    if (data) {
+      setData(data)
+    } else {
+      setError("서버에 연결할 수 없습니다.")
+      // 또는 기본 데이터 표시
+    }
+
+    setIsLoading(false)
+  }
+
+  fetchData()
+}, [])
+```
+
+#### 주요 원칙
+
+1. **console.error → console.warn**: Next.js 개발 모드에서 error overlay가 뜨지 않도록 `console.warn` 사용
+2. **Network Error 우선 체크**: `axiosError.message === "Network Error"` 또는 `!axiosError.response`로 서버 연결 불가 상태 먼저 확인
+3. **상황별 맞춤 메시지**: 401, 404 등 HTTP 상태 코드에 따라 사용자가 이해하기 쉬운 메시지 제공
+4. **서버 메시지 활용**: `axiosError.response?.data?.message`가 있으면 서버가 제공하는 메시지 표시
+5. **데이터 fetching은 .catch() 패턴**: useEffect 내 API 호출은 `.catch()`로 처리하여 에러 시 null 반환
+
 ### 상태 관리 패턴 (Zustand)
 
 ```typescript

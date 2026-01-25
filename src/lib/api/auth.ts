@@ -20,7 +20,11 @@ export const OAUTH_URLS = {
 
 export type OAuthProvider = keyof typeof OAUTH_URLS
 
+// ============================================================
 // Request/Response Types
+// ============================================================
+
+// 로그인
 export interface LoginRequest {
   email: string
   password: string
@@ -35,11 +39,13 @@ export interface LoginResponse {
 /**
  * 회원가입 요청 - Swagger 기준
  * POST /api/auth/signup
+ * 전화번호 인증이 선행되어야 합니다
  */
 export interface SignupRequest {
   email: string
-  password: string    // 최소 8자
-  username: string    // 2-100자
+  password: string      // 최소 8자
+  username: string      // 2-100자
+  phoneNumber: string   // 패턴: ^01[0-9]{8,9}$
 }
 
 export interface SignupResponse {
@@ -54,9 +60,9 @@ export interface SignupResponse {
  */
 export interface CompleteProfileRequest {
   username?: string        // 선택
-  exchangeName: string     // 필수: binance, upbit, etc.
+  exchangeName: string     // 필수: BYBIT 등
   apiKey: string           // 필수
-  apiSecret: string        // 필수
+  apiSecret?: string       // 선택
 }
 
 export interface CompleteProfileResponse {
@@ -64,6 +70,7 @@ export interface CompleteProfileResponse {
   user: User
 }
 
+// 토큰 갱신
 export interface RefreshTokenRequest {
   refreshToken: string
 }
@@ -73,51 +80,134 @@ export interface RefreshTokenResponse {
   refreshToken: string
 }
 
+// ============================================================
+// SMS 인증 관련
+// ============================================================
+
+export type SmsVerificationType = 'SIGNUP' | 'FIND_EMAIL'
+
+/**
+ * SMS 인증코드 발송 요청
+ * POST /api/auth/send-sms
+ */
+export interface SendSmsRequest {
+  phoneNumber: string   // 패턴: ^01[0-9]{8,9}$
+  type: SmsVerificationType
+}
+
+/**
+ * SMS 인증코드 확인 요청
+ * POST /api/auth/verify-sms
+ */
+export interface VerifySmsRequest {
+  phoneNumber: string   // 패턴: ^01[0-9]{8,9}$
+  code: string          // 6자리
+  type: SmsVerificationType
+}
+
+// ============================================================
+// 비밀번호 찾기/재설정
+// ============================================================
+
+/**
+ * 비밀번호 찾기 요청 (이메일로 재설정 링크 발송)
+ * POST /api/auth/forgot-password
+ */
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+/**
+ * 비밀번호 재설정 요청
+ * POST /api/auth/reset-password
+ */
+export interface ResetPasswordRequest {
+  token: string
+  newPassword: string   // 최소 8자
+}
+
+// ============================================================
+// 이메일(아이디) 찾기
+// ============================================================
+
+/**
+ * 이메일 찾기 요청 (휴대폰 인증 후)
+ * POST /api/auth/find-email
+ */
+export interface FindEmailRequest {
+  phoneNumber: string   // 패턴: ^01[0-9]{8,9}$
+}
+
+export interface FindEmailResponse {
+  maskedEmail: string | null
+}
+
+// 공통 메시지 응답
+export interface MessageResponse {
+  message: string
+}
+
 // Auth API
 export const authApi = {
+  // ============================================================
   // 기본 로그인/회원가입
+  // ============================================================
+
+  /** 이메일/비밀번호 로그인 */
   login: (data: LoginRequest) =>
     post<LoginResponse>('/api/auth/login', data),
 
+  /** 회원가입 (휴대폰 인증 필수) */
   signup: (data: SignupRequest) =>
     post<SignupResponse>('/api/auth/signup', data),
 
+  /** 로그아웃 */
   logout: () =>
     post<void>('/api/auth/logout'),
 
-  // 현재 사용자 정보
+  /** 현재 사용자 정보 조회 */
   me: () =>
     get<User>('/api/auth/me'),
 
-  // 프로필 완성 (추가 정보 입력)
+  /** 프로필 완성 (거래소 API 연동) */
   completeProfile: (data: CompleteProfileRequest) =>
     post<CompleteProfileResponse>('/api/auth/complete-profile', data),
 
-  // 토큰 갱신
+  /** 토큰 갱신 */
   refreshToken: (data: RefreshTokenRequest) =>
     post<RefreshTokenResponse>('/api/auth/refresh', data),
 
   // ============================================================
-  // 아래 API들은 Swagger에 존재하지 않음 (백엔드 개발 대기)
+  // SMS 인증
   // ============================================================
 
-  // 비밀번호 찾기/재설정 (백엔드 API 없음)
-  // forgotPassword: (email: string) =>
-  //   post<void>('/api/auth/forgot-password', { email }),
+  /** SMS 인증코드 발송 */
+  sendSms: (data: SendSmsRequest) =>
+    post<MessageResponse>('/api/auth/send-sms', data),
 
-  // resetPassword: (token: string, password: string) =>
-  //   post<void>('/api/auth/reset-password', { token, password }),
+  /** SMS 인증코드 확인 */
+  verifySms: (data: VerifySmsRequest) =>
+    post<MessageResponse>('/api/auth/verify-sms', data),
 
-  // 아이디 찾기 (백엔드 API 없음)
-  // findId: (name: string, phone: string) =>
-  //   post<{ email: string }>('/api/auth/find-id', { name, phone }),
+  // ============================================================
+  // 비밀번호 찾기/재설정
+  // ============================================================
 
-  // 휴대폰 인증 (백엔드 API 없음)
-  // sendVerificationCode: (phone: string) =>
-  //   post<{ success: boolean }>('/api/auth/send-verification', { phone }),
+  /** 비밀번호 찾기 (이메일로 재설정 링크 발송) */
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    post<MessageResponse>('/api/auth/forgot-password', data),
 
-  // verifyCode: (phone: string, code: string) =>
-  //   post<{ success: boolean }>('/api/auth/verify-code', { phone, code }),
+  /** 비밀번호 재설정 */
+  resetPassword: (data: ResetPasswordRequest) =>
+    post<MessageResponse>('/api/auth/reset-password', data),
+
+  // ============================================================
+  // 이메일(아이디) 찾기
+  // ============================================================
+
+  /** 이메일 찾기 (휴대폰 인증 후) */
+  findEmail: (data: FindEmailRequest) =>
+    post<FindEmailResponse>('/api/auth/find-email', data),
 }
 
 /**

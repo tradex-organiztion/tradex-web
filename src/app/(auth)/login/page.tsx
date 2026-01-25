@@ -48,13 +48,22 @@ export default function LoginPage() {
         router.replace("/additional-info")
       }
     } catch (err: unknown) {
-      console.error("Login error:", err)
+      console.warn("Login error:", err)
 
       // 에러 메시지 처리
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response?: { status?: number; data?: { message?: string } } }
-        if (axiosError.response?.status === 401) {
+      if (err && typeof err === "object") {
+        const axiosError = err as {
+          response?: { status?: number; data?: { message?: string } }
+          message?: string
+        }
+
+        // Network Error (서버 연결 불가)
+        if (axiosError.message === "Network Error" || !axiosError.response) {
+          setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+        } else if (axiosError.response?.status === 401) {
           setError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        } else if (axiosError.response?.status === 404) {
+          setError("등록되지 않은 이메일입니다.")
         } else if (axiosError.response?.data?.message) {
           setError(axiosError.response.data.message)
         } else {

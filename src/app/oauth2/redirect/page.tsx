@@ -73,12 +73,12 @@ function OAuth2RedirectHandler() {
       setTokens(accessToken, refreshToken, profileCompleted)
 
       // 사용자 정보 조회 (authApi.me)
-      try {
-        const userInfo = await authApi.me()
+      const userInfo = await authApi.me().catch((err) => {
+        console.warn("Failed to fetch user info:", err.message)
+        return null
+      })
+      if (userInfo) {
         setUser(userInfo)
-      } catch (err) {
-        console.error("Failed to fetch user info:", err)
-        // 사용자 정보 조회 실패해도 로그인은 진행
       }
 
       // 라우팅

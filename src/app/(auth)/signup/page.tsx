@@ -15,8 +15,12 @@ import { useAuthStore } from "@/stores/useAuthStore"
  * - email: string (필수)
  * - username: string (필수, 2-100자)
  * - password: string (필수, 최소 8자)
+ * - phoneNumber: string (필수, 패턴: ^01[0-9]{8,9}$)
  *
- * 참고: 휴대폰 인증 API가 Swagger에 존재하지 않아 제외됨
+ * SMS 인증 플로우:
+ * 1. POST /api/auth/send-sms - 인증번호 발송
+ * 2. POST /api/auth/verify-sms - 인증번호 확인
+ * 3. POST /api/auth/signup - 회원가입 (인증 완료 후)
  */
 
 type SignupStep = "register" | "complete"
@@ -27,17 +31,31 @@ export default function SignupPage() {
 
   const [step, setStep] = useState<SignupStep>("register")
 
-  // Form state (Swagger 스펙 기준)
+  // Form state
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [passwordConfirm, setPasswordConfirm] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [verificationCode, setVerificationCode] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
+
+  // SMS verification state
+  const [isSmsSent, setIsSmsSent] = useState(false)
+  const [isSmsVerified, setIsSmsVerified] = useState(false)
+  const [smsLoading, setSmsLoading] = useState(false)
+  const [smsError, setSmsError] = useState<string | null>(null)
 
   // Loading & Error states
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // 휴대폰 번호 유효성 검사 (01로 시작, 10-11자리)
+  const isPhoneValid = (phone: string) => {
+    const regex = /^01[0-9]{8,9}$/
+    return regex.test(phone)
+  }
 
   // 사용자명 유효성 검사 (2-100자)
   const isUsernameValid = (name: string) => {
@@ -55,6 +73,11 @@ export default function SignupPage() {
     return regex.test(emailStr)
   }
 
+  // 인증번호 유효성 검사 (6자리)
+  const isCodeValid = (code: string) => {
+    return code.length === 6
+  }
+
   const isFormValid =
     username.trim() !== "" &&
     isUsernameValid(username) &&
@@ -63,7 +86,83 @@ export default function SignupPage() {
     password.trim() !== "" &&
     isPasswordValid(password) &&
     passwordConfirm.trim() !== "" &&
-    password === passwordConfirm
+    password === passwordConfirm &&
+    phoneNumber.trim() !== "" &&
+    isPhoneValid(phoneNumber) &&
+    isSmsVerified
+
+  // SMS 인증번호 발송
+  const handleSendSms = async () => {
+    if (!isPhoneValid(phoneNumber) || smsLoading) return
+
+    setSmsLoading(true)
+    setSmsError(null)
+
+    try {
+      await authApi.sendSms({
+        phoneNumber,
+        type: 'SIGNUP',
+      })
+      setIsSmsSent(true)
+    } catch (err: unknown) {
+      console.warn("Send SMS error:", err)
+      if (err && typeof err === "object") {
+        const axiosError = err as {
+          response?: { data?: { message?: string } }
+          message?: string
+        }
+        if (axiosError.message === "Network Error" || !axiosError.response) {
+          setSmsError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+        } else if (axiosError.response?.data?.message) {
+          setSmsError(axiosError.response.data.message)
+        } else {
+          setSmsError("인증번호 발송에 실패했습니다.")
+        }
+      } else {
+        setSmsError("인증번호 발송에 실패했습니다.")
+      }
+    } finally {
+      setSmsLoading(false)
+    }
+  }
+
+  // SMS 인증번호 확인
+  const handleVerifySms = async () => {
+    if (!isCodeValid(verificationCode) || smsLoading) return
+
+    setSmsLoading(true)
+    setSmsError(null)
+
+    try {
+      await authApi.verifySms({
+        phoneNumber,
+        code: verificationCode,
+        type: 'SIGNUP',
+      })
+      setIsSmsVerified(true)
+    } catch (err: unknown) {
+      console.warn("Verify SMS error:", err)
+      if (err && typeof err === "object") {
+        const axiosError = err as {
+          response?: { status?: number; data?: { message?: string } }
+          message?: string
+        }
+        if (axiosError.message === "Network Error" || !axiosError.response) {
+          setSmsError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+        } else if (axiosError.response?.status === 400) {
+          setSmsError("인증번호가 일치하지 않습니다.")
+        } else if (axiosError.response?.data?.message) {
+          setSmsError(axiosError.response.data.message)
+        } else {
+          setSmsError("인증번호 확인에 실패했습니다.")
+        }
+      } else {
+        setSmsError("인증번호 확인에 실패했습니다.")
+      }
+    } finally {
+      setSmsLoading(false)
+    }
+  }
 
   // 회원가입 제출
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,6 +177,7 @@ export default function SignupPage() {
         username,
         email,
         password,
+        phoneNumber,
       })
 
       // 회원가입 성공 시 자동 로그인
@@ -86,10 +186,15 @@ export default function SignupPage() {
       // 완료 화면으로
       setStep("complete")
     } catch (err: unknown) {
-      console.error("Signup error:", err)
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response?: { status?: number; data?: { message?: string } } }
-        if (axiosError.response?.status === 409) {
+      console.warn("Signup error:", err)
+      if (err && typeof err === "object") {
+        const axiosError = err as {
+          response?: { status?: number; data?: { message?: string } }
+          message?: string
+        }
+        if (axiosError.message === "Network Error" || !axiosError.response) {
+          setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+        } else if (axiosError.response?.status === 409) {
           setError("이미 가입된 이메일입니다.")
         } else if (axiosError.response?.data?.message) {
           setError(axiosError.response.data.message)
@@ -152,6 +257,83 @@ export default function SignupPage() {
                     : undefined
                 }
               />
+
+              {/* Phone Number with SMS Verification */}
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <TextField
+                    label="휴대폰 번호"
+                    placeholder="01012345678"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      // 숫자만 입력 허용
+                      const value = e.target.value.replace(/[^0-9]/g, '')
+                      setPhoneNumber(value)
+                      setSmsError(null)
+                      // 번호 변경 시 인증 상태 초기화
+                      if (isSmsSent) {
+                        setIsSmsSent(false)
+                        setIsSmsVerified(false)
+                        setVerificationCode("")
+                      }
+                    }}
+                    disabled={isLoading || isSmsVerified}
+                    messageType={phoneNumber && !isPhoneValid(phoneNumber) ? "error" : undefined}
+                    message={
+                      phoneNumber && !isPhoneValid(phoneNumber)
+                        ? "올바른 휴대폰 번호를 입력해주세요."
+                        : undefined
+                    }
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant={isSmsVerified ? "secondary" : "primary"}
+                    className="mt-[26px] whitespace-nowrap"
+                    disabled={!isPhoneValid(phoneNumber) || smsLoading || isSmsVerified}
+                    onClick={handleSendSms}
+                  >
+                    {smsLoading ? "발송 중..." : isSmsSent ? "재발송" : "인증번호 발송"}
+                  </Button>
+                </div>
+
+                {/* Verification Code Input */}
+                {isSmsSent && !isSmsVerified && (
+                  <div className="flex gap-2">
+                    <TextField
+                      placeholder="인증번호 6자리"
+                      value={verificationCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
+                        setVerificationCode(value)
+                        setSmsError(null)
+                      }}
+                      disabled={smsLoading}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="primary"
+                      disabled={!isCodeValid(verificationCode) || smsLoading}
+                      onClick={handleVerifySms}
+                    >
+                      {smsLoading ? "확인 중..." : "확인"}
+                    </Button>
+                  </div>
+                )}
+
+                {/* SMS Verification Status */}
+                {isSmsVerified && (
+                  <p className="text-body-2-regular text-success-500">
+                    휴대폰 인증이 완료되었습니다.
+                  </p>
+                )}
+
+                {/* SMS Error */}
+                {smsError && (
+                  <p className="text-body-2-regular text-error-500">{smsError}</p>
+                )}
+              </div>
 
               {/* Password */}
               <TextField

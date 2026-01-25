@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Auth Middleware
+ * Auth Proxy (Next.js 16+)
  *
  * 인증이 필요한 페이지와 인증된 사용자가 접근하면 안 되는 페이지를 구분하여 리다이렉트
  *
@@ -36,7 +36,7 @@ const profileIncompletePaths = [
   '/oauth2/redirect',
 ]
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 정적 파일, API 경로 등은 무시

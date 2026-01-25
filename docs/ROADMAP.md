@@ -2,7 +2,7 @@
 
 > **최종 업데이트**: 2026-01-25
 > **현재 주차**: Week 3 + Week 4
-> **전체 진행률**: 45% (Week 1: 100%, Week 2: 100%, Week 3: 75%, Week 4: 50% 진행중)
+> **전체 진행률**: 55% (Week 1: 100%, Week 2: 100%, Week 3: 87.5%, Week 4: 50%, Week 7: 33% 진행중)
 
 ---
 
@@ -36,12 +36,12 @@
 | 주차 | 목표 | 상태 | 진행률 |
 |------|------|------|--------|
 | [Week 1](#week-1-프로젝트-기반-구축) | 프로젝트 기반 구축 | ✅ 완료 | 100% |
-| [Week 2](#week-2-인증-시스템) | 인증 시스템 | ✅ 완료 | 100% (7/9, 2개 백엔드 API 대기) |
-| [Week 3](#week-3-홈-대시보드--매매-관리) | 홈 대시보드 + 매매 관리 | 🔄 진행중 | 75% (6/8) |
+| [Week 2](#week-2-인증-시스템) | 인증 시스템 | ✅ 완료 | 100% (9/9) |
+| [Week 3](#week-3-홈-대시보드--매매-관리) | 홈 대시보드 + 매매 관리 | 🔄 진행중 | 87.5% (7/8) |
 | [Week 4](#week-4-tradex-ai) | Tradex AI | 🔄 진행중 | 50% (3/6) |
 | [Week 5](#week-5-차트-분석) | 차트 분석 | ⬜ 미시작 | 0% |
 | [Week 6](#week-6-분석--수익-관리) | 분석 + 수익 관리 | ⬜ 미시작 | 0% |
-| [Week 7](#week-7-수신함--설정) | 수신함 + 설정 | ⬜ 미시작 | 0% |
+| [Week 7](#week-7-수신함--설정) | 수신함 + 설정 | 🔄 진행중 | 33% (2/6) |
 | [Week 8](#week-8-구독--최적화--qa) | 구독 + 최적화 + QA | ⬜ 미시작 | 0% |
 
 ---
@@ -84,8 +84,8 @@
 ## Week 2: 인증 시스템
 
 **목표**: 로그인/회원가입 플로우 완성
-**상태**: ✅ 완료 (백엔드 API 대기 항목 제외)
-**진행률**: 7/9 (78%) - 2개 백엔드 API 대기
+**상태**: ✅ 완료
+**진행률**: 9/9 (100%)
 
 ### 태스크
 
@@ -97,9 +97,9 @@
 | 2.4 | 추가 정보 입력 페이지 | 🟡 High | ✅ | `app/(auth)/additional-info/` | authApi.completeProfile() 연동 완료 |
 | 2.5 | 인증 상태 관리 + 로그아웃 | 🔴 Critical | ✅ | `stores/useAuthStore.ts`, `lib/api/client.ts`, `components/layout/Header.tsx` | Zustand persist + Token Refresh + 로그아웃 API 연동 |
 | 2.6 | Protected Route 구현 | 🔴 Critical | ✅ | `middleware.ts`, `components/providers/AuthProvider.tsx` | 클라이언트 사이드 Auth Guard |
-| 2.7 | 아이디/비밀번호 찾기 API 연동 | 🟡 High | ⏸️ | `app/(auth)/find-account/` | **백엔드 API 대기** - Swagger에 findId, forgotPassword API 없음 |
+| 2.7 | 아이디/비밀번호 찾기 API 연동 | 🟡 High | ✅ | `app/(auth)/find-account/` | sendSms, verifySms, findEmail, forgotPassword API 연동 완료 |
 | 2.8 | OAuth2 사용자 정보 조회 | 🟡 High | ✅ | `app/oauth2/redirect/` | authApi.me() 호출 구현 완료 |
-| 2.9 | 비밀번호 재설정 페이지 | 🟢 Medium | ⏸️ | `app/(auth)/reset-password/` | **백엔드 API 대기** - Swagger에 resetPassword API 없음 |
+| 2.9 | 비밀번호 재설정 페이지 | 🟢 Medium | ✅ | `app/(auth)/reset-password/` | Figma 디자인 기반 구현, authApi.resetPassword() 연동 완료 |
 
 ### 완료 조건
 
@@ -109,8 +109,8 @@
 - [x] 로그아웃 동작
 - [x] 비인증 사용자 리다이렉트 동작
 - [x] OAuth2 로그인 시 사용자 정보 조회 (authApi.me)
-- [ ] 아이디/비밀번호 찾기 동작 - ⏸️ 백엔드 API 대기
-- [ ] 비밀번호 재설정 동작 - ⏸️ 백엔드 API 대기
+- [x] 아이디/비밀번호 찾기 동작 - SMS 인증 + 이메일 찾기/비밀번호 찾기 API 연동 완료
+- [x] 비밀번호 재설정 동작 - reset-password 페이지 구현 완료
 
 ### 산출물
 
@@ -132,7 +132,7 @@
 
 **목표**: 메인 화면 및 매매 원칙/매매일지 CRUD
 **상태**: 🔄 진행중
-**진행률**: 6/8 (75%)
+**진행률**: 7/8 (87.5%)
 
 ### 태스크
 
@@ -145,7 +145,7 @@
 | 3.5 | 매매일지 작성 폼 | 🔴 Critical | ✅ | `app/(main)/trading/journal/`, `components/trading/JournalForm.tsx` | 사이드패널 폼 구현 완료, Figma 디자인 적용 |
 | 3.6 | 매매일지 목록 (필터링) | 🟡 High | ✅ | `app/(main)/trading/journal/`, `components/trading/JournalList.tsx`, `components/trading/JournalCalendar.tsx` | 캘린더/리스트 뷰 구현, Figma 디자인 적용 |
 | 3.7 | 매매일지 상세 보기 | 🟡 High | ✅ | `components/trading/JournalForm.tsx` | 사이드패널에서 조회/수정 가능 |
-| 3.8 | 대시보드 API 연동 | 🟢 Medium | ⬜ | `lib/api/dashboard.ts` | 요약 데이터, 알림 |
+| 3.8 | 대시보드 API 연동 | 🟢 Medium | ✅ | `app/(main)/home/`, `lib/api/home.ts` | homeApi.getSummary() 연동, WeeklyProfitChart API 데이터 지원 |
 
 ### 완료 조건
 
@@ -286,15 +286,15 @@
 ## Week 7: 수신함 + 설정
 
 **목표**: 알림 및 사용자 설정 완성
-**상태**: ⬜ 미시작
-**진행률**: 0/6 (0%)
+**상태**: 🔄 진행중
+**진행률**: 2/6 (33%)
 
 ### 태스크
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 7.1 | 수신함 페이지 (알림 목록) | 🟡 High | ⬜ | `app/(main)/inbox/` | - |
-| 7.2 | 알림 읽음/삭제 처리 | 🟢 Medium | ⬜ | `lib/api/notification.ts` | - |
+| 7.1 | 수신함 페이지 (알림 목록) | 🟡 High | ✅ | `app/(main)/inbox/` | 전체/읽지않음 필터, 알림 타입별 스타일, homeApi.getNotifications() 연동 |
+| 7.2 | 알림 읽음/삭제 처리 | 🟢 Medium | ✅ | `app/(main)/inbox/`, `lib/api/home.ts` | markAsRead, deleteNotification API 연동 완료 |
 | 7.3 | 계정 설정 (프로필 수정) | 🟡 High | ⬜ | `app/(main)/settings/account/` | - |
 | 7.4 | 거래소 API 키 관리 | 🟡 High | ⬜ | `app/(main)/settings/account/` | - |
 | 7.5 | 테마/언어 설정 | 🟢 Medium | ⬜ | `app/(main)/settings/preferences/` | - |
@@ -302,14 +302,14 @@
 
 ### 완료 조건
 
-- [ ] 알림 목록 표시
-- [ ] 알림 읽음/삭제 동작
+- [x] 알림 목록 표시
+- [x] 알림 읽음/삭제 동작
 - [ ] 프로필 수정 동작
 - [ ] 테마 변경 동작
 
 ### 산출물
 
-- `app/(main)/inbox/` - 수신함 페이지
+- `app/(main)/inbox/` - 수신함 페이지 (API 연동 완료)
 - `app/(main)/settings/` - 설정 페이지들
 - `components/settings/` - 설정 컴포넌트
 - `lib/api/notification.ts` - 알림 API
@@ -377,6 +377,9 @@
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2026-01-25 | Week 2: 아이디/비밀번호 찾기 API 연동 완료 (2.7), 비밀번호 재설정 페이지 구현 (2.9) - Week 2 100% 완료 |
+| 2026-01-25 | Week 3: 대시보드 API 연동 완료 (3.8) - homeApi.getSummary() 연동 |
+| 2026-01-25 | Week 7: 수신함 페이지 구현 및 API 연동 완료 (7.1, 7.2) - 알림 목록/읽음/삭제 기능 |
 | 2026-01-19 | Week 3 시작: 홈 대시보드 레이아웃 및 요약 카드 컴포넌트 Figma 디자인 적용 완료 |
 | 2026-01-19 | 레이아웃 개선: Sidebar 200px, Header 40px, 콘텐츠 패딩 36px/32px Figma 기준 적용 |
 | 2026-01-18 | Week 3/4 순서 변경: Week 3 = 홈 대시보드 + 매매 관리, Week 4 = Tradex AI |

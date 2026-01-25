@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { DailyPnlChartData } from "@/lib/api";
 
 interface DataPoint {
   date: string;
@@ -9,6 +10,7 @@ interface DataPoint {
 
 interface WeeklyProfitChartProps {
   data?: DataPoint[];
+  chartData?: DailyPnlChartData[];
   className?: string;
 }
 
@@ -34,9 +36,17 @@ const defaultData: DataPoint[] = [
  * - 차트 라벨: text-caption-regular, color: label-assistive
  * - 툴팁: white, border-line-normal, rounded-[6px], shadow-heavy
  */
-export function WeeklyProfitChart({ data = defaultData, className }: WeeklyProfitChartProps) {
-  const maxValue = Math.max(...data.map((d) => d.value));
-  const minValue = Math.min(...data.map((d) => d.value));
+export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitChartProps) {
+  // chartData (API 형식)를 data 형식으로 변환
+  const normalizedData: DataPoint[] = chartData && chartData.length > 0
+    ? chartData.map((item) => ({
+        date: new Date(item.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" }).replace(". ", "/").replace(".", ""),
+        value: item.cumulativePnl,
+      }))
+    : data || defaultData;
+
+  const maxValue = Math.max(...normalizedData.map((d) => d.value));
+  const minValue = Math.min(...normalizedData.map((d) => d.value));
   const range = maxValue - minValue || 1;
 
   // Chart dimensions
@@ -47,8 +57,8 @@ export function WeeklyProfitChart({ data = defaultData, className }: WeeklyProfi
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
   // Generate path for the line chart
-  const points = data.map((d, i) => {
-    const x = padding.left + (i / (data.length - 1)) * innerWidth;
+  const points = normalizedData.map((d, i) => {
+    const x = padding.left + (i / (normalizedData.length - 1)) * innerWidth;
     const y = padding.top + innerHeight - ((d.value - minValue) / range) * innerHeight;
     return { x, y, ...d };
   });
