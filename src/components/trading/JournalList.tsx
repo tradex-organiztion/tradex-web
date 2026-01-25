@@ -1,0 +1,159 @@
+'use client'
+
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { CheckCircle2 } from 'lucide-react'
+
+export interface JournalEntry {
+  id: string
+  date: string
+  pair: string
+  leverage: number
+  position: 'Long' | 'Short'
+  profit: number
+  profitPercent: number
+  hasPreScenario: boolean
+  hasPostReview: boolean
+}
+
+interface JournalListProps {
+  entries: JournalEntry[]
+  onEntryClick?: (entry: JournalEntry) => void
+}
+
+// Sample data
+const sampleEntries: JournalEntry[] = [
+  {
+    id: '1',
+    date: '2025.12.11 14:30',
+    pair: 'BTC/USDT',
+    leverage: 20,
+    position: 'Long',
+    profit: 1250,
+    profitPercent: 24.5,
+    hasPreScenario: true,
+    hasPostReview: false,
+  },
+  {
+    id: '2',
+    date: '2025.12.11 14:32',
+    pair: 'ETH/USDT',
+    leverage: 10,
+    position: 'Short',
+    profit: -420,
+    profitPercent: -8.2,
+    hasPreScenario: true,
+    hasPostReview: false,
+  },
+  {
+    id: '3',
+    date: '2025.12.11 14:36',
+    pair: 'SOL/USDT',
+    leverage: 10,
+    position: 'Short',
+    profit: -420,
+    profitPercent: -8.2,
+    hasPreScenario: true,
+    hasPostReview: false,
+  },
+  {
+    id: '4',
+    date: '2025.12.11 14:36',
+    pair: 'SOL/USDT',
+    leverage: 10,
+    position: 'Short',
+    profit: -420,
+    profitPercent: -8.2,
+    hasPreScenario: false,
+    hasPostReview: false,
+  },
+]
+
+export function JournalList({ entries = sampleEntries, onEntryClick }: JournalListProps) {
+  return (
+    <div className="bg-white rounded-xl border border-line-normal overflow-hidden">
+      {/* Table Header */}
+      <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-line-normal bg-gray-50">
+        <div className="text-body-2-medium text-label-assistive">날짜</div>
+        <div className="text-body-2-medium text-label-assistive">거래 페어</div>
+        <div className="text-body-2-medium text-label-assistive">포지션</div>
+        <div className="text-body-2-medium text-label-assistive">손익</div>
+        <div className="text-body-2-medium text-label-assistive">사전 시나리오</div>
+        <div className="text-body-2-medium text-label-assistive">매매 후 복기</div>
+      </div>
+
+      {/* Table Body */}
+      <div className="divide-y divide-line-normal">
+        {entries.map((entry) => (
+          <div
+            key={entry.id}
+            className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+            onClick={() => onEntryClick?.(entry)}
+          >
+            {/* Date */}
+            <div className="text-body-2-regular text-label-normal">
+              {entry.date}
+            </div>
+
+            {/* Trading Pair */}
+            <div className="flex items-center gap-1">
+              <span className="text-body-2-bold text-label-normal">{entry.pair}</span>
+              <span className="text-body-2-regular text-label-assistive">x{entry.leverage}</span>
+            </div>
+
+            {/* Position */}
+            <div>
+              <Badge
+                variant={entry.position === 'Long' ? 'positive-solid' : 'danger-solid'}
+                className="px-3 py-1"
+              >
+                {entry.position}
+              </Badge>
+            </div>
+
+            {/* Profit/Loss */}
+            <div className={cn(
+              "text-body-2-bold",
+              entry.profit >= 0 ? "text-label-positive" : "text-label-danger"
+            )}>
+              {entry.profit >= 0 ? '+' : ''}{entry.profit.toLocaleString()}({entry.profitPercent}%)
+            </div>
+
+            {/* Pre-Scenario Status */}
+            <div className="flex items-center gap-1.5">
+              {entry.hasPreScenario ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-label-positive" />
+                  <span className="text-body-2-regular text-label-neutral">작성 완료</span>
+                </>
+              ) : (
+                <span className="text-body-2-regular text-label-assistive">-</span>
+              )}
+            </div>
+
+            {/* Post-Review Status */}
+            <div className="flex items-center gap-1.5">
+              {entry.hasPostReview ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-label-positive" />
+                  <span className="text-body-2-regular text-label-neutral">작성 완료</span>
+                </>
+              ) : (
+                <span className="text-body-2-regular text-label-assistive">-</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {entries.length === 0 && (
+        <div className="py-16 text-center">
+          <p className="text-body-1-regular text-label-assistive">
+            등록된 매매일지가 없습니다.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
