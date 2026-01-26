@@ -505,20 +505,20 @@ npm run lint     # ESLint 검사
 
 | 브랜치 | 배포 환경 | 플랫폼 |
 |--------|----------|--------|
-| `develop` | Preview/Staging | Vercel |
-| `main` | Production | AWS |
+| `develop` | 개발 | AWS Amplify (dev) |
+| `main` | 프로덕션 | AWS Amplify (prod) |
 
 ### 배포 프로세스
 
 사용자가 "배포해줘"라고 요청하면 다음 단계를 수행합니다:
 
 ```bash
-# 1. develop 브랜치에 커밋 및 푸시 (Vercel 자동 배포)
+# 1. develop 브랜치에 커밋 및 푸시 (개발 환경 자동 배포)
 git add .
 git commit -m "커밋 메시지"
 git push origin develop
 
-# 2. main 브랜치에 merge 및 푸시 (AWS 자동 배포)
+# 2. main 브랜치에 merge 및 푸시 (프로덕션 자동 배포)
 git checkout main
 git pull origin main
 git merge develop
@@ -529,7 +529,6 @@ git checkout develop
 ### 주의사항
 
 - 배포 전 반드시 `npm run build`로 빌드 성공 여부 확인
-- develop push 후 Vercel Preview에서 동작 확인 권장
 - main merge는 Production 배포이므로 신중하게 진행
 
 ## 작업 시 참고사항
@@ -769,16 +768,16 @@ src/lib/api/
 
 | 브랜치 | 용도 | 배포 환경 |
 |--------|------|----------|
-| `main` | 프로덕션 릴리즈 | AWS Amplify |
-| `develop` | 개발/스테이징 | Vercel Preview |
+| `main` | 프로덕션 릴리즈 | AWS Amplify (prod) |
+| `develop` | 개발/스테이징 | AWS Amplify (dev) |
 | `feature/*` | 기능 개발 | - |
 | `fix/*` | 버그 수정 | - |
 
 ### 배포 플로우
 
 ```
-develop push → Vercel Preview 자동 배포
-main push    → AWS Amplify 자동 배포
+develop push → AWS Amplify 개발 환경 자동 배포
+main push    → AWS Amplify 프로덕션 자동 배포
 ```
 
 ### develop → main Merge 작업
