@@ -6,13 +6,15 @@
 
 ## 개요
 
-Tradex 프론트엔드의 CI/CD는 AWS Amplify 자동 배포를 사용합니다.
+Tradex 프론트엔드는 **GitHub 레포지토리와 AWS Amplify가 연결**되어 있어서, 브랜치에 push하면 자동으로 빌드 및 배포가 진행됩니다.
+
+별도의 배포 명령어나 작업 없이 `git push`만 하면 됩니다.
 
 ### 배포 플로우
 
 ```
-develop branch (push) → AWS Amplify 개발 환경 배포 (자동)
-main branch (push)    → AWS Amplify 프로덕션 배포 (자동)
+git push origin develop  →  개발 서버에 자동 배포
+git push origin main     →  운영 서버에 자동 배포
 ```
 
 ---
