@@ -6,9 +6,142 @@ import axios, { AxiosError, type AxiosRequestConfig } from 'axios'
  * Base URL: https://api.tradex.so
  * - OAuth2 인증 엔드포인트: /oauth2/authorization/{provider}
  * - API 엔드포인트: /api/*
+ *
+ * 응답 형식:
+ * - 정상 응답: { success: true, data: T }
+ * - 에러 응답: { code: string, message: string }
  */
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.tradex.so'
+
+// ============================================================
+// Types
+// ============================================================
+
+/** API 정상 응답 래퍼 */
+export interface ApiSuccessResponse<T> {
+  success: true
+  data: T
+}
+
+/** API 에러 응답 */
+export interface ApiErrorResponse {
+  code: string
+  message: string
+}
+
+/** API 에러 클래스 */
+export class ApiError extends Error {
+  code: string
+  statusCode?: number
+
+  constructor(code: string, message: string, statusCode?: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.code = code
+    this.statusCode = statusCode
+  }
+}
+
+/** API 응답이 성공 응답인지 확인 */
+function isSuccessResponse<T>(data: unknown): data is ApiSuccessResponse<T> {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'success' in data &&
+    (data as ApiSuccessResponse<T>).success === true &&
+    'data' in data
+  )
+}
+
+/** API 응답이 에러 응답인지 확인 */
+function isErrorResponse(data: unknown): data is ApiErrorResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'code' in data &&
+    'message' in data &&
+    !('success' in data)
+  )
+}
+
+// ============================================================
+// Error Reporting (Slack)
+// ============================================================
+
+interface ErrorReportPayload {
+  timestamp: string
+  userId?: string
+  userEmail?: string
+  pageUrl: string
+  apiEndpoint: string
+  method: string
+  statusCode: number
+  errorCode?: string
+  errorMessage?: string
+  stackTrace?: string
+  userAgent: string
+}
+
+/** 500 에러 발생 시 Slack으로 리포트 */
+async function reportErrorToSlack(
+  endpoint: string,
+  method: string,
+  statusCode: number,
+  errorCode?: string,
+  errorMessage?: string
+): Promise<void> {
+  // 클라이언트 사이드에서만 실행
+  if (typeof window === 'undefined') return
+
+  // 500번대 에러만 리포트
+  if (statusCode < 500) return
+
+  try {
+    // 유저 정보 가져오기
+    let userId: string | undefined
+    let userEmail: string | undefined
+
+    const authStorage = localStorage.getItem('tradex-auth')
+    if (authStorage) {
+      try {
+        const { state } = JSON.parse(authStorage)
+        userId = state?.user?.id
+        userEmail = state?.user?.email
+      } catch {
+        // ignore
+      }
+    }
+
+    // Stack trace 생성
+    const stackTrace = new Error().stack
+
+    const payload: ErrorReportPayload = {
+      timestamp: new Date().toISOString(),
+      userId,
+      userEmail,
+      pageUrl: window.location.href,
+      apiEndpoint: endpoint,
+      method: method.toUpperCase(),
+      statusCode,
+      errorCode,
+      errorMessage,
+      stackTrace,
+      userAgent: navigator.userAgent,
+    }
+
+    // 내부 API Route로 전송 (비동기, 실패해도 무시)
+    fetch('/api/error-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {
+      // 에러 리포트 실패는 무시
+    })
+  } catch {
+    // 에러 리포트 중 발생한 에러는 무시
+  }
+}
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -56,11 +189,56 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor - Handle errors and token refresh
+// Response interceptor - Handle API response wrapper and errors
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
+  (response) => {
+    const data = response.data
+
+    // API 래퍼 응답 처리: { success: true, data: T } -> T
+    if (isSuccessResponse(data)) {
+      response.data = data.data
+      return response
+    }
+
+    // 에러 응답 형식인 경우: { code: string, message: string }
+    if (isErrorResponse(data)) {
+      return Promise.reject(new ApiError(data.code, data.message, response.status))
+    }
+
+    // 래퍼 없는 응답은 그대로 반환 (OAuth 등 일부 엔드포인트)
+    return response
+  },
+  async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
+    const statusCode = error.response?.status
+    const endpoint = originalRequest?.url || 'unknown'
+    const method = originalRequest?.method || 'unknown'
+
+    // 500번대 에러 발생 시 Slack으로 리포트
+    if (statusCode && statusCode >= 500) {
+      const errorData = error.response?.data
+      reportErrorToSlack(
+        endpoint,
+        method,
+        statusCode,
+        isErrorResponse(errorData) ? errorData.code : undefined,
+        isErrorResponse(errorData) ? errorData.message : error.message
+      )
+    }
+
+    // 서버 에러 응답이 ApiErrorResponse 형식인 경우 ApiError로 변환
+    if (error.response?.data && isErrorResponse(error.response.data)) {
+      const apiError = new ApiError(
+        error.response.data.code,
+        error.response.data.message,
+        error.response.status
+      )
+
+      // 401이 아닌 경우 바로 reject
+      if (error.response.status !== 401) {
+        return Promise.reject(apiError)
+      }
+    }
 
     // 401 에러이고 재시도하지 않은 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -132,17 +310,9 @@ apiClient.interceptors.response.use(
   }
 )
 
+// ============================================================
 // Type-safe API methods
-export interface ApiResponse<T> {
-  data: T
-  message?: string
-}
-
-export interface ApiError {
-  message: string
-  code?: string
-  statusCode: number
-}
+// ============================================================
 
 export async function get<T>(
   url: string,

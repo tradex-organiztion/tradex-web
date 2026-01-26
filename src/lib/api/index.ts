@@ -1,5 +1,5 @@
-export { apiClient, get, post, put, patch, del } from './client'
-export type { ApiResponse, ApiError } from './client'
+export { apiClient, get, post, put, patch, del, ApiError } from './client'
+export type { ApiSuccessResponse, ApiErrorResponse } from './client'
 
 // Auth API
 export { authApi, OAUTH_URLS, startOAuthLogin } from './auth'
