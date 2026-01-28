@@ -20,19 +20,9 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
-  const { login, startDemoMode } = useAuthStore()
+  const { startDemoMode } = useAuthStore()
 
   const handleDemoMode = () => {
-    login(
-      {
-        userId: 0,
-        email: 'demo@tradex.kr',
-        username: 'Demo User',
-        profileCompleted: true,
-        socialProvider: 'LOCAL',
-      },
-      'demo-token'
-    )
     startDemoMode()
     router.replace("/home")
   }

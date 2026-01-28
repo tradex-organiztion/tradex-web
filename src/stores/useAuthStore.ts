@@ -117,6 +117,8 @@ export const useAuthStore = create<AuthState>()(
           isDemoMode: true,
           isAuthenticated: false,
           isLoading: false,
+          accessToken: null,
+          refreshToken: null,
           user: {
             userId: 0,
             email: 'demo@tradex.kr',
