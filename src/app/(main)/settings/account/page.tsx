@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Mail, Lock, Building2, ChevronRight, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { User, Mail, Lock, Building2, LogOut, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -10,7 +11,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 // 설정 항목 타입
 interface SettingItem {
@@ -27,6 +30,7 @@ const sidebarItems = [
   { id: 'profile', label: '프로필', icon: User },
   { id: 'email', label: '이메일', icon: Mail },
   { id: 'password', label: '비밀번호', icon: Lock },
+  { id: 'logout', label: '로그아웃', icon: LogOut },
   { id: 'exchange', label: '거래소', icon: Building2 },
 ]
 
@@ -95,17 +99,27 @@ function ConnectedExchange({
 }
 
 export default function AccountSettingsPage() {
+  const router = useRouter()
+  const { logout, user } = useAuthStore()
+
   const [activeSection, setActiveSection] = useState('profile')
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isExchangeModalOpen, setIsExchangeModalOpen] = useState(false)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
 
   // 샘플 사용자 데이터
   const userData = {
-    email: 'jay@tradex.kr',
+    email: user?.email || 'jay@tradex.kr',
     exchanges: [
       { id: '1', name: 'Binance', apiKey: 'xXJDt3nPok3aWjA4Ns' },
     ],
+  }
+
+  // 로그아웃 처리
+  const handleLogout = () => {
+    logout()
+    router.replace('/login')
   }
 
   return (
@@ -216,6 +230,30 @@ export default function AccountSettingsPage() {
                     buttonText="비밀번호 변경"
                     onClick={() => setIsPasswordModalOpen(true)}
                   />
+                </div>
+              </div>
+            )}
+
+            {/* 로그아웃 섹션 */}
+            {activeSection === 'logout' && (
+              <div>
+                <h2 className="text-title-2-bold text-label-normal mb-1">로그아웃</h2>
+                <p className="text-body-2-regular text-label-assistive mb-6">
+                  현재 기기에서 로그아웃합니다.
+                </p>
+
+                <div className="space-y-4">
+                  <p className="text-body-2-regular text-label-neutral">
+                    로그아웃하면 저장된 로그인 정보가 삭제되며, 다시 로그인해야 서비스를 이용할 수 있습니다.
+                  </p>
+                  <Button
+                    variant="destructive"
+                    className="gap-2"
+                    onClick={() => setIsLogoutModalOpen(true)}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    로그아웃
+                  </Button>
                 </div>
               </div>
             )}
@@ -365,6 +403,32 @@ export default function AccountSettingsPage() {
               </Button>
               <Button className="flex-1">
                 연결하기
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 로그아웃 확인 모달 */}
+      <Dialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>로그아웃</DialogTitle>
+            <DialogDescription>
+              정말 로그아웃 하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <p className="text-body-2-regular text-label-neutral">
+              로그아웃하면 저장된 로그인 정보가 삭제됩니다.
+              다시 서비스를 이용하려면 로그인이 필요합니다.
+            </p>
+            <div className="flex gap-2 pt-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setIsLogoutModalOpen(false)}>
+                취소
+              </Button>
+              <Button variant="destructive" className="flex-1" onClick={handleLogout}>
+                로그아웃
               </Button>
             </div>
           </div>
