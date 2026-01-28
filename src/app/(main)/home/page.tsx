@@ -15,7 +15,7 @@ import { homeApi, HomeSummaryResponse } from "@/lib/api";
  * API: GET /api/home/summary
  */
 export default function HomePage() {
-  const { user } = useAuthStore();
+  const { user, isDemoMode } = useAuthStore();
   const userName = user?.username || "User";
 
   const [summaryData, setSummaryData] = useState<HomeSummaryResponse | null>(null);
@@ -25,6 +25,32 @@ export default function HomePage() {
   useEffect(() => {
     const fetchSummary = async () => {
       setIsLoading(true);
+
+      // 데모 모드에서는 API 호출 없이 목 데이터 사용
+      if (isDemoMode) {
+        setSummaryData({
+          todayTotalAsset: 125000,
+          yesterdayTotalAsset: 120000,
+          assetChangeRate: 4.17,
+          thisMonthPnl: 8500,
+          lastMonthFinalPnl: 6200,
+          achievementRate: 137.1,
+          totalWins: 18,
+          totalLosses: 7,
+          winRate: 72.0,
+          pnlChart: [
+            { date: "01/20", cumulativePnl: 1200 },
+            { date: "01/21", cumulativePnl: 900 },
+            { date: "01/22", cumulativePnl: 1750 },
+            { date: "01/23", cumulativePnl: 2850 },
+            { date: "01/24", cumulativePnl: 2650 },
+            { date: "01/25", cumulativePnl: 4150 },
+            { date: "01/26", cumulativePnl: 5050 },
+          ],
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // API 호출 - 실패 시 null 반환
       const data = await homeApi.getSummary().catch((err) => {
@@ -42,7 +68,7 @@ export default function HomePage() {
     };
 
     fetchSummary();
-  }, []);
+  }, [isDemoMode]);
 
   // 금액 포맷팅 함수
   const formatCurrency = (value: number, currency: "USD" | "KRW" = "USD") => {

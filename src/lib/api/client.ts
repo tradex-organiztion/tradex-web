@@ -242,6 +242,22 @@ apiClient.interceptors.response.use(
 
     // 401 에러이고 재시도하지 않은 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // 데모 모드인 경우 로그인 페이지로 리다이렉트하지 않음
+      if (typeof window !== 'undefined') {
+        const authStorage = localStorage.getItem('tradex-auth')
+        if (authStorage) {
+          try {
+            const { state } = JSON.parse(authStorage)
+            if (state?.isDemoMode) {
+              // 데모 모드에서는 401을 조용히 처리 (리다이렉트 없음)
+              return Promise.reject(error)
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+
       // 이미 토큰 갱신 중인 경우
       if (isRefreshing) {
         return new Promise((resolve) => {
