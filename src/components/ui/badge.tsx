@@ -38,7 +38,7 @@ const badgeVariants = cva(
         info: "bg-element-info-lighter text-element-info-default border-transparent",
 
         // Outline variant
-        outline: "bg-transparent text-gray-800 border border-gray-200",
+        outline: "bg-transparent text-gray-800 border border-gray-300",
       },
       size: {
         sm: "h-5 px-1.5 text-caption-medium gap-0.5 [&>svg]:size-3",

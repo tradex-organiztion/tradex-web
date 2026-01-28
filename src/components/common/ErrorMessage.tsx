@@ -25,8 +25,8 @@ export function ErrorMessage({
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-error-100">
         <AlertCircle className="h-8 w-8 text-error-500" />
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-navy-900">{title}</h3>
-      <p className="mb-6 max-w-sm text-sm text-gray-500">{message}</p>
+      <h3 className="mb-2 text-lg font-semibold text-gray-800">{title}</h3>
+      <p className="mb-6 max-w-sm text-sm text-gray-600">{message}</p>
       {onRetry && (
         <Button variant="secondary" onClick={onRetry} className="gap-2">
           <RefreshCw className="h-4 w-4" />

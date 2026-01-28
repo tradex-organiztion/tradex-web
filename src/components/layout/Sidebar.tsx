@@ -153,7 +153,7 @@ export function Sidebar() {
 
   const isActive = (href: string) => {
     if (href === '/home') return pathname === '/home'
-    if (href === '/ai') return pathname === '/ai'
+    if (href === '/ai') return pathname === '/ai' || pathname.startsWith('/ai/')
     return pathname.startsWith(href.split('/').slice(0, 3).join('/'))
   }
 
@@ -161,12 +161,12 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-line-normal bg-white shadow-[0px_0px_8px_0px_rgba(0,0,0,0.1)] transition-all duration-300',
+          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-gray-300 bg-white shadow-normal transition-all duration-300',
           isSidebarCollapsed ? 'w-16' : 'w-[200px]'
         )}
       >
         {/* Header: Logo + Toggle */}
-        <div className="flex h-10 items-center justify-between border-b border-line-normal px-5">
+        <div className="flex h-10 items-center justify-between border-b border-gray-300 px-5">
           {!isSidebarCollapsed ? (
             <>
               <Link href="/home" className="flex items-center">
@@ -262,7 +262,7 @@ export function Sidebar() {
         </nav>
 
         {/* Profile Section */}
-        <div className="border-t border-line-normal px-5 py-3">
+        <div className="border-t border-gray-300 px-5 py-3">
           {isDemoMode ? (
             // 데모 모드일 때: 로그인 버튼 표시
             !isSidebarCollapsed ? (

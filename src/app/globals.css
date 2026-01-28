@@ -12,16 +12,16 @@
 
   /* ===== Gray Colors ===== */
   --color-gray-0: #FFFFFF;
-  --color-gray-50: #F4F5F6;
-  --color-gray-100: #E6E8EA;
-  --color-gray-200: #CDD1D5;
-  --color-gray-300: #8A949E;
-  --color-gray-400: #6D7882;
-  --color-gray-500: #58616A;
-  --color-gray-600: #464C53;
-  --color-gray-700: #1E2124;
-  --color-gray-800: #131416;
-  --color-gray-900: #000000;
+  --color-gray-50: #F8F8F8;
+  --color-gray-100: #F1F1F1;
+  --color-gray-200: #E5E5E5;
+  --color-gray-300: #D7D7D7;
+  --color-gray-400: #BABABA;
+  --color-gray-500: #8F8F8F;
+  --color-gray-600: #767676;
+  --color-gray-700: #565656;
+  --color-gray-800: #323232;
+  --color-gray-900: #121212;
 
   /* ===== System Colors - Green (Success) ===== */
   --color-green-400: #13C34E;
@@ -81,8 +81,8 @@
   /* ===== Label Colors (텍스트/라벨용) ===== */
   --color-label-normal: var(--color-gray-800);
   --color-label-neutral: var(--color-gray-600);
-  --color-label-assistive: var(--color-gray-400);
-  --color-label-disabled: var(--color-gray-300);
+  --color-label-assistive: var(--color-gray-500);
+  --color-label-disabled: var(--color-gray-400);
   --color-label-inverse: var(--color-gray-0);
   --color-label-positive: var(--color-green-400);
   --color-label-danger: var(--color-red-400);
@@ -90,7 +90,7 @@
   --color-label-info: var(--color-blue-400);
 
   /* ===== Line Colors (보더/구분선용) ===== */
-  --color-line-normal: var(--color-gray-200);
+  --color-line-normal: var(--color-gray-300);
   --color-line-focused: var(--color-gray-400);
   --color-line-primary: var(--color-gray-800);
   --color-line-positive: var(--color-green-400);

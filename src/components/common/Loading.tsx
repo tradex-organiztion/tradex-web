@@ -15,7 +15,7 @@ export function Loading({ size = 'md', className }: LoadingProps) {
   return (
     <div
       className={cn(
-        'animate-spin rounded-full border-gray-200 border-t-navy-900',
+        'animate-spin rounded-full border-gray-300 border-t-gray-800',
         sizeClasses[size],
         className
       )}

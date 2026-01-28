@@ -144,7 +144,7 @@ export default function LoginPage() {
               <Link href="/find-account?tab=id" className="hover:text-gray-800 px-0.5 py-1">
                 아이디 찾기
               </Link>
-              <span className="w-px h-3 bg-gray-200" />
+              <span className="w-px h-3 bg-gray-300" />
               <Link href="/find-account?tab=password" className="hover:text-gray-800 px-0.5 py-1">
                 비밀번호 찾기
               </Link>

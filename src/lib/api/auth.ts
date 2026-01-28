@@ -7,6 +7,7 @@ import type { User } from '@/stores/useAuthStore'
  * OAuth2 소셜 로그인 URL:
  * - Google: https://api.tradex.so/oauth2/authorization/google
  * - Kakao: https://api.tradex.so/oauth2/authorization/kakao
+ * - Naver: https://api.tradex.so/oauth2/authorization/naver
  *
  * OAuth2 리다이렉트 (로그인 성공 후):
  * - http://localhost:3000/oauth2/redirect?accessToken=xxx&refreshToken=xxx&profileCompleted=false
@@ -16,6 +17,7 @@ import type { User } from '@/stores/useAuthStore'
 export const OAUTH_URLS = {
   google: 'https://api.tradex.so/oauth2/authorization/google',
   kakao: 'https://api.tradex.so/oauth2/authorization/kakao',
+  naver: 'https://api.tradex.so/oauth2/authorization/naver',
 } as const
 
 export type OAuthProvider = keyof typeof OAUTH_URLS
@@ -212,7 +214,7 @@ export const authApi = {
 
 /**
  * 소셜 로그인 시작
- * @param provider - 'google' | 'kakao'
+ * @param provider - 'google' | 'kakao' | 'naver'
  *
  * 브라우저를 OAuth 인증 페이지로 리다이렉트합니다.
  * 인증 성공 후 /oauth2/redirect 페이지로 돌아옵니다.

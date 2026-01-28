@@ -22,9 +22,9 @@ export function PageHeader({
       )}
     >
       <div>
-        <h1 className="text-2xl font-bold text-navy-900">{title}</h1>
+        <h1 className="text-title-1-bold text-gray-800">{title}</h1>
         {description && (
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
+          <p className="mt-1 text-body-2-regular text-gray-600">{description}</p>
         )}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}

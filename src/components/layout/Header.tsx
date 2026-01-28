@@ -15,7 +15,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        'fixed right-0 top-0 z-30 h-10 border-b border-line-normal bg-background-gray transition-all duration-300',
+        'fixed right-0 top-0 z-30 h-10 border-b border-gray-300 bg-gray-50 transition-all duration-300',
         isSidebarCollapsed ? 'left-16' : 'left-[200px]'
       )}
     />

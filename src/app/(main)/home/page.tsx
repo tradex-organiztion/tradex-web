@@ -74,15 +74,15 @@ export default function HomePage() {
     return (
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-title-1-bold text-[#0f172a]">
+          <h1 className="text-title-1-bold text-gray-800">
             안녕하세요 {userName}님!
           </h1>
-          <p className="text-body-1-regular text-label-neutral">
+          <p className="text-body-1-regular text-gray-600">
             데이터를 불러오는 중입니다...
           </p>
         </div>
         <div className="flex flex-col gap-6">
-          <div className="flex gap-5">
+          <div className="flex gap-4">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
@@ -119,16 +119,16 @@ export default function HomePage() {
     return (
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-title-1-bold text-[#0f172a]">
+          <h1 className="text-title-1-bold text-gray-800">
             안녕하세요 {userName}님!
           </h1>
-          <p className="text-body-1-regular text-label-neutral">
+          <p className="text-body-1-regular text-gray-600">
             {error || "오늘도 성공적인 트레이딩 되세요."}
           </p>
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="flex gap-5">
+          <div className="flex gap-4">
             <StatCard
               title="총 자산 (Total Assets)"
               value={formatCurrency(data.todayTotalAsset)}
@@ -172,10 +172,10 @@ export default function HomePage() {
     <div className="flex flex-col gap-8">
       {/* Greeting Section */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-title-1-bold text-[#0f172a]">
+        <h1 className="text-title-1-bold text-gray-800">
           안녕하세요 {userName}님!
         </h1>
-        <p className="text-body-1-regular text-label-neutral">
+        <p className="text-body-1-regular text-gray-600">
           오늘도 성공적인 트레이딩 되세요. 현재 시장 변동성이 확대되고 있습니다.
         </p>
       </div>
@@ -183,7 +183,7 @@ export default function HomePage() {
       {/* Dashboard Section */}
       <div className="flex flex-col gap-6">
         {/* Top Stats Row */}
-        <div className="flex gap-5">
+        <div className="flex gap-4">
           <StatCard
             title="총 자산 (Total Assets)"
             value={formatCurrency(summaryData.todayTotalAsset)}
@@ -219,6 +219,7 @@ export default function HomePage() {
 
         {/* Bottom Section */}
         <div className="flex gap-5">
+          {/* Note: 20px gap = gap-5 */}
           <WeeklyProfitChart className="w-[669px] shrink-0" chartData={summaryData.pnlChart} />
           <RiskScoreCard className="flex-1" />
         </div>

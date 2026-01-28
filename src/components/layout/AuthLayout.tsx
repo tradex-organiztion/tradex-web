@@ -90,12 +90,12 @@ export function AuthCard({ children, title, className }: AuthCardProps) {
   return (
     <div
       className={cn(
-        "w-[424px] rounded-[12px] bg-[#FFFFFF] p-8 shadow-emphasize flex flex-col gap-8",
+        "w-[424px] rounded-[12px] bg-[#FFFFFF] p-8 shadow-emphasize flex flex-col gap-6",
         className
       )}
     >
       {title && (
-        <h1 className="text-center text-title-1-bold !text-[#131416]">
+        <h1 className="text-center text-title-1-bold text-gray-800">
           {title}
         </h1>
       )}
@@ -130,11 +130,21 @@ export function SocialLoginButtons() {
         <KakaoIcon />
       </button>
 
+      {/* Naver */}
+      <button
+        type="button"
+        onClick={() => handleSocialLogin("naver")}
+        className="flex size-[54px] items-center justify-center rounded-full bg-[#03C75A] transition-opacity hover:opacity-90"
+        aria-label="네이버로 로그인"
+      >
+        <NaverIcon />
+      </button>
+
       {/* Google */}
       <button
         type="button"
         onClick={() => handleSocialLogin("google")}
-        className="flex size-[54px] items-center justify-center rounded-full border border-[#CDD1D5] bg-[#FFFFFF] transition-opacity hover:opacity-90"
+        className="flex size-[54px] items-center justify-center rounded-full border border-[#D7D7D7] bg-[#FFFFFF] transition-opacity hover:opacity-90"
         aria-label="구글로 로그인"
       >
         <GoogleIcon />
@@ -149,9 +159,9 @@ export function SocialLoginButtons() {
 export function AuthDivider() {
   return (
     <div className="flex items-center gap-4">
-      <div className="h-px flex-1 bg-gray-200" />
-      <span className="text-body-2-regular text-gray-400">OR</span>
-      <div className="h-px flex-1 bg-gray-200" />
+      <div className="h-px flex-1 bg-gray-300" />
+      <span className="text-body-2-regular text-gray-500">OR</span>
+      <div className="h-px flex-1 bg-gray-300" />
     </div>
   )
 }

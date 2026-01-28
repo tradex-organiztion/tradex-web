@@ -82,8 +82,8 @@ export default function JournalPage() {
         {/* Page Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-title-1-bold text-label-normal">매매일지 관리</h1>
-            <p className="text-body-2-regular text-label-assistive mt-1">
+            <h1 className="text-title-1-bold text-gray-800">매매일지 관리</h1>
+            <p className="text-body-2-regular text-gray-600 mt-1">
               성공적인 트레이딩을 위해 모든 매매를 기록하고 복기하세요.
             </p>
           </div>

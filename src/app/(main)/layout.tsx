@@ -18,12 +18,12 @@ export default function MainLayout({
 
       <main
         className={cn(
-          'pt-16 transition-all duration-300',
-          isSidebarCollapsed ? 'pl-16' : 'pl-60',
-          isAIPanelOpen && 'pr-96'
+          'pt-10 transition-all duration-300',
+          isSidebarCollapsed ? 'pl-16' : 'pl-[200px]',
+          isAIPanelOpen && 'pr-[400px]'
         )}
       >
-        <div className="p-6">
+        <div className="px-9 py-8">
           {children}
         </div>
       </main>

@@ -80,16 +80,16 @@ Tailwind CSS v4 `@theme inline`에서 정의됨 (`globals.css`)
 | 단계 | HEX | Tailwind Class |
 |------|-----|----------------|
 | 0 | #FFFFFF | `bg-gray-0`, `text-gray-0` |
-| 50 | #F4F5F6 | `bg-gray-50`, `text-gray-50` |
-| 100 | #E6E8EA | `bg-gray-100`, `text-gray-100` |
-| 200 | #CDD1D5 | `bg-gray-200`, `text-gray-200` |
-| 300 | #8A949E | `bg-gray-300`, `text-gray-300` |
-| 400 | #6D7882 | `bg-gray-400`, `text-gray-400` |
-| 500 | #58616A | `bg-gray-500`, `text-gray-500` |
-| 600 | #464C53 | `bg-gray-600`, `text-gray-600` |
-| 700 | #1E2124 | `bg-gray-700`, `text-gray-700` |
-| 800 | #131416 | `bg-gray-800`, `text-gray-800` |
-| 900 | #000000 | `bg-gray-900`, `text-gray-900` |
+| 50 | #F8F8F8 | `bg-gray-50`, `text-gray-50` |
+| 100 | #F1F1F1 | `bg-gray-100`, `text-gray-100` |
+| 200 | #E5E5E5 | `bg-gray-200`, `text-gray-200` |
+| 300 | #D7D7D7 | `bg-gray-300`, `text-gray-300` |
+| 400 | #BABABA | `bg-gray-400`, `text-gray-400` |
+| 500 | #8F8F8F | `bg-gray-500`, `text-gray-500` |
+| 600 | #767676 | `bg-gray-600`, `text-gray-600` |
+| 700 | #565656 | `bg-gray-700`, `text-gray-700` |
+| 800 | #323232 | `bg-gray-800`, `text-gray-800` |
+| 900 | #121212 | `bg-gray-900`, `text-gray-900` |
 
 #### System Colors
 
@@ -136,8 +136,8 @@ primary/secondary를 element로 통합하고, positive·danger·warning·info �
 |------|---------|----------------|------|
 | normal | gray-800 | `text-label-normal` | 기본 텍스트 |
 | neutral | gray-600 | `text-label-neutral` | 보조 텍스트 |
-| assistive | gray-400 | `text-label-assistive` | 부가 설명, 힌트 |
-| disabled | gray-300 | `text-label-disabled` | 비활성화 텍스트 |
+| assistive | gray-500 | `text-label-assistive` | 부가 설명, 힌트 |
+| disabled | gray-400 | `text-label-disabled` | 비활성화 텍스트 |
 | inverse | gray-0 | `text-label-inverse` | 어두운 배경 위 텍스트 |
 | positive | green-400 | `text-label-positive` | 긍정적 상태 (수익, 성공) |
 | danger | red-400 | `text-label-danger` | 위험 상태 (손실, 에러) |
@@ -150,7 +150,7 @@ primary/secondary를 element로 통합하고, positive·danger·warning·info �
 
 | 이름 | 참조 값 | Tailwind Class | 용도 |
 |------|---------|----------------|------|
-| normal | gray-200 | `border-line-normal` | 기본 보더 |
+| normal | gray-300 | `border-line-normal` | 기본 보더 |
 | focused | gray-400 | `border-line-focused` | 포커스 상태 |
 | primary | gray-800 | `border-line-primary` | 강조 보더 |
 | **positive** | green-400 | `border-line-positive` | 긍정적 상태 |
