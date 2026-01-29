@@ -27,7 +27,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       <main
         className={cn(
-          'pt-10 transition-all duration-300',
+          'pt-16 transition-all duration-300',
           isSidebarCollapsed ? 'pl-16' : 'pl-[200px]',
           isAIPanelOpen && 'pr-96'
         )}

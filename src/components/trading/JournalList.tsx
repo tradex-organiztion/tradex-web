@@ -1,8 +1,6 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-import { CheckCircle2 } from 'lucide-react'
 
 export interface JournalEntry {
   id: string
@@ -21,6 +19,34 @@ interface JournalListProps {
   onEntryClick?: (entry: JournalEntry) => void
 }
 
+// Coin icon colors
+const COIN_COLORS: Record<string, { bg: string; text: string }> = {
+  BTC: { bg: 'bg-[#F7931A]', text: 'text-white' },
+  ETH: { bg: 'bg-[#627EEA]', text: 'text-white' },
+  SOL: { bg: 'bg-gradient-to-br from-[#9945FF] to-[#14F195]', text: 'text-white' },
+  XRP: { bg: 'bg-[#23292F]', text: 'text-white' },
+  BNB: { bg: 'bg-[#F3BA2F]', text: 'text-black' },
+  ADA: { bg: 'bg-[#0033AD]', text: 'text-white' },
+  DOGE: { bg: 'bg-[#C2A633]', text: 'text-white' },
+  DEFAULT: { bg: 'bg-gray-400', text: 'text-white' },
+}
+
+function CoinIcon({ pair }: { pair: string }) {
+  const coinSymbol = pair.split('/')[0]
+  const colors = COIN_COLORS[coinSymbol] || COIN_COLORS.DEFAULT
+  const initial = coinSymbol.charAt(0)
+
+  return (
+    <div className={cn(
+      "w-6 h-6 rounded-full flex items-center justify-center text-caption-bold",
+      colors.bg,
+      colors.text
+    )}>
+      {initial}
+    </div>
+  )
+}
+
 // Sample data
 const sampleEntries: JournalEntry[] = [
   {
@@ -37,7 +63,7 @@ const sampleEntries: JournalEntry[] = [
   {
     id: '2',
     date: '2025.12.11 14:32',
-    pair: 'ETH/USDT',
+    pair: 'BTC/USDT',
     leverage: 10,
     position: 'Short',
     profit: -420,
@@ -48,7 +74,7 @@ const sampleEntries: JournalEntry[] = [
   {
     id: '3',
     date: '2025.12.11 14:36',
-    pair: 'SOL/USDT',
+    pair: 'ETH/USDT',
     leverage: 10,
     position: 'Short',
     profit: -420,
@@ -71,9 +97,9 @@ const sampleEntries: JournalEntry[] = [
 
 export function JournalList({ entries = sampleEntries, onEntryClick }: JournalListProps) {
   return (
-    <div className="bg-white rounded-xl border border-line-normal overflow-hidden">
+    <div className="bg-white overflow-hidden">
       {/* Table Header */}
-      <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-line-normal bg-gray-50">
+      <div className="grid grid-cols-6 gap-4 px-6 py-3 border-b border-line-normal">
         <div className="text-body-2-medium text-label-assistive">날짜</div>
         <div className="text-body-2-medium text-label-assistive">거래 페어</div>
         <div className="text-body-2-medium text-label-assistive">포지션</div>
@@ -87,7 +113,7 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
         {entries.map((entry) => (
           <div
             key={entry.id}
-            className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+            className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors items-center"
             onClick={() => onEntryClick?.(entry)}
           >
             {/* Date */}
@@ -95,20 +121,22 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
               {entry.date}
             </div>
 
-            {/* Trading Pair */}
-            <div className="flex items-center gap-1">
-              <span className="text-body-2-bold text-label-normal">{entry.pair}</span>
-              <span className="text-body-2-regular text-label-assistive">x{entry.leverage}</span>
+            {/* Trading Pair with Coin Icon */}
+            <div className="flex items-center gap-2">
+              <CoinIcon pair={entry.pair} />
+              <span className="text-body-2-medium text-label-normal">{entry.pair}</span>
             </div>
 
-            {/* Position */}
+            {/* Position - Outline style */}
             <div>
-              <Badge
-                variant={entry.position === 'Long' ? 'positive-solid' : 'danger-solid'}
-                className="px-3 py-1"
-              >
+              <span className={cn(
+                "inline-flex items-center px-3 py-1 rounded text-body-2-medium border",
+                entry.position === 'Long'
+                  ? "border-element-positive-default text-element-positive-default"
+                  : "border-element-danger-default text-element-danger-default"
+              )}>
                 {entry.position}
-              </Badge>
+              </span>
             </div>
 
             {/* Profit/Loss */}
@@ -119,25 +147,23 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
               {entry.profit >= 0 ? '+' : ''}{entry.profit.toLocaleString()}({entry.profitPercent}%)
             </div>
 
-            {/* Pre-Scenario Status */}
-            <div className="flex items-center gap-1.5">
+            {/* Pre-Scenario Status - Tag style */}
+            <div>
               {entry.hasPreScenario ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-label-positive" />
-                  <span className="text-body-2-regular text-label-neutral">작성 완료</span>
-                </>
+                <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-caption-medium text-label-neutral">
+                  작성 완료
+                </span>
               ) : (
                 <span className="text-body-2-regular text-label-assistive">-</span>
               )}
             </div>
 
-            {/* Post-Review Status */}
-            <div className="flex items-center gap-1.5">
+            {/* Post-Review Status - Tag style */}
+            <div>
               {entry.hasPostReview ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-label-positive" />
-                  <span className="text-body-2-regular text-label-neutral">작성 완료</span>
-                </>
+                <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-caption-medium text-label-neutral">
+                  작성 완료
+                </span>
               ) : (
                 <span className="text-body-2-regular text-label-assistive">-</span>
               )}

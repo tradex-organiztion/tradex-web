@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Mic, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,23 +25,47 @@ export default function TradexAIChatPage() {
   const initialQuery = searchParams.get('q') || ''
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Handle initial query
-  useEffect(() => {
-    if (initialQuery && messages.length === 0) {
-      handleSend(initialQuery)
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Handle initial query in initial state
+    if (initialQuery) {
+      return [{
+        id: '1',
+        role: 'user' as const,
+        content: initialQuery,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }]
     }
-  }, [initialQuery])
+    return []
+  })
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(!!initialQuery)
+  const initialQueryProcessed = useRef(false)
 
-  // Scroll to bottom on new messages
+  // Generate AI response for initial query
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (initialQuery && !initialQueryProcessed.current && messages.length === 1) {
+      initialQueryProcessed.current = true
+      const timer = setTimeout(() => {
+        const assistantMessage: Message = {
+          id: '2',
+          role: 'assistant',
+          content: '최근 90일간 4시간봉 EMA(20, 50, 200) 골든크로스/ 데드크로스 전략 시뮬레이션 결과입니다.',
+          timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          stats: {
+            winRate: '64.2%',
+            profit: '+ $12,450',
+            totalTrades: 42,
+            profitFactor: 2.1,
+          },
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+        setIsLoading(false)
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [initialQuery, messages.length])
 
-  const handleSend = async (text?: string) => {
+  const handleSend = useCallback((text?: string) => {
     const messageText = text || input
     if (!messageText.trim() || isLoading) return
 
@@ -73,7 +97,12 @@ export default function TradexAIChatPage() {
       setMessages((prev) => [...prev, assistantMessage])
       setIsLoading(false)
     }, 1500)
-  }
+  }, [input, isLoading])
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -107,9 +136,10 @@ export default function TradexAIChatPage() {
               ) : (
                 /* Assistant Message */
                 <div className="flex gap-3">
-                  <div className="h-10 w-10 shrink-0 rounded-full bg-element-primary-default flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-gray-800 flex items-center justify-center">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 17L10 12L14 16L19 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M15 11H19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                   <div className="flex-1 max-w-[70%] space-y-4">
@@ -117,20 +147,20 @@ export default function TradexAIChatPage() {
                       {message.content}
                     </p>
                     {message.stats && (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-gray-50 rounded-xl px-5 py-4">
+                      <div className="grid grid-cols-2 gap-3 border border-line-normal rounded-xl p-3">
+                        <div className="px-4 py-3 border-r border-b border-line-normal">
                           <p className="text-caption-regular text-label-assistive mb-1">승률</p>
                           <p className="text-title-2-bold text-label-normal">{message.stats.winRate}</p>
                         </div>
-                        <div className="bg-gray-50 rounded-xl px-5 py-4">
+                        <div className="px-4 py-3 border-b border-line-normal">
                           <p className="text-caption-regular text-label-assistive mb-1">순이익</p>
                           <p className="text-title-2-bold text-label-positive">{message.stats.profit}</p>
                         </div>
-                        <div className="bg-gray-50 rounded-xl px-5 py-4">
+                        <div className="px-4 py-3 border-r border-line-normal">
                           <p className="text-caption-regular text-label-assistive mb-1">총 거래 수</p>
                           <p className="text-title-2-bold text-label-normal">{message.stats.totalTrades}</p>
                         </div>
-                        <div className="bg-gray-50 rounded-xl px-5 py-4">
+                        <div className="px-4 py-3">
                           <p className="text-caption-regular text-label-assistive mb-1">수익 팩터</p>
                           <p className="text-title-2-bold text-label-normal">{message.stats.profitFactor}</p>
                         </div>
@@ -150,15 +180,16 @@ export default function TradexAIChatPage() {
 
           {isLoading && (
             <div className="flex gap-3">
-              <div className="h-10 w-10 shrink-0 rounded-full bg-element-primary-default flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              <div className="h-10 w-10 shrink-0 rounded-full bg-gray-800 flex items-center justify-center">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 17L10 12L14 16L19 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15 11H19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className="flex items-center gap-2 px-5 py-4">
-                <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-label-assistive" style={{ animationDelay: '0ms' }} />
-                <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-label-assistive" style={{ animationDelay: '150ms' }} />
-                <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-label-assistive" style={{ animationDelay: '300ms' }} />
+              <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-4 py-2">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           )}
@@ -182,20 +213,17 @@ export default function TradexAIChatPage() {
               placeholder="Tradex AI에게 무엇이든 물어보세요!"
               className="flex-1 bg-transparent text-body-1-regular placeholder:text-label-assistive focus:outline-none"
             />
+            <Button variant="ghost" size="icon" className="h-6 w-6 p-0 shrink-0">
+              <Mic className="w-5 h-5 text-label-assistive" />
+            </Button>
             {input.trim() ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 p-0 shrink-0"
+              <button
                 onClick={() => handleSend()}
+                className="h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors shrink-0"
               >
-                <Send className="w-5 h-5 text-label-normal" />
-              </Button>
-            ) : (
-              <Button variant="ghost" size="icon" className="h-6 w-6 p-0 shrink-0">
-                <Mic className="w-5 h-5 text-label-assistive" />
-              </Button>
-            )}
+                <Send className="w-4 h-4 text-white" />
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

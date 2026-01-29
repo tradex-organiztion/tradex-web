@@ -68,11 +68,10 @@ export default function TradexAIPage() {
     <div className="min-h-[calc(100vh-40px)] flex flex-col items-center justify-center -mt-8">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-12">
-        <div className="w-10 h-10 bg-element-primary-default rounded-lg flex items-center justify-center">
-          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        </div>
+        <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none">
+          <path d="M8 28L16 20L22 26L32 16" stroke="#131416" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M26 16H32V22" stroke="#131416" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
         <span className="text-display-2-bold text-label-normal">Tradex</span>
       </div>
 
@@ -122,14 +121,12 @@ export default function TradexAIPage() {
 
           {/* Submit/Mic Button */}
           {inputValue.trim() ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 p-0"
+            <button
               onClick={handleSubmit}
+              className="h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"
             >
-              <Send className="w-5 h-5 text-label-normal" />
-            </Button>
+              <Send className="w-4 h-4 text-white" />
+            </button>
           ) : (
             <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
               <Mic className="w-5 h-5 text-label-assistive" />

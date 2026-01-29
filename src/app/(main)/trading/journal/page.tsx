@@ -80,12 +80,40 @@ export default function JournalPage() {
         isFormOpen && "mr-[400px]"
       )}>
         {/* Page Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-title-1-bold text-gray-800">매매일지 관리</h1>
-            <p className="text-body-2-regular text-gray-600 mt-1">
-              성공적인 트레이딩을 위해 모든 매매를 기록하고 복기하세요.
-            </p>
+        <div className="mb-6">
+          <h1 className="text-title-1-bold text-label-normal">매매일지 관리</h1>
+          <p className="text-body-2-regular text-label-neutral mt-1">
+            성공적인 트레이딩을 위해 모든 매매를 기록하고 복기하세요.
+          </p>
+        </div>
+
+        {/* View Mode Toggle + Add Button */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-1">
+            <button
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-body-2-medium transition-colors",
+                viewMode === 'calendar'
+                  ? "border border-label-normal text-label-normal"
+                  : "text-label-assistive hover:text-label-neutral"
+              )}
+              onClick={() => setViewMode('calendar')}
+            >
+              <Calendar className="w-4 h-4" />
+              캘린더 보기
+            </button>
+            <button
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-body-2-medium transition-colors",
+                viewMode === 'list'
+                  ? "border border-label-normal text-label-normal"
+                  : "text-label-assistive hover:text-label-neutral"
+              )}
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4" />
+              리스트 보기
+            </button>
           </div>
           <Button
             className="bg-element-primary-default hover:bg-element-primary-pressed gap-2"
@@ -93,38 +121,6 @@ export default function JournalPage() {
           >
             <Plus className="w-4 h-4" />
             수동 추가하기
-          </Button>
-        </div>
-
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-2 mb-6">
-          <Button
-            variant={viewMode === 'calendar' ? 'primary' : 'secondary'}
-            size="sm"
-            className={cn(
-              "gap-2",
-              viewMode === 'calendar'
-                ? "bg-element-primary-default hover:bg-element-primary-pressed"
-                : "border-line-normal text-label-neutral hover:bg-gray-50"
-            )}
-            onClick={() => setViewMode('calendar')}
-          >
-            <Calendar className="w-4 h-4" />
-            캘린더 보기
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'primary' : 'secondary'}
-            size="sm"
-            className={cn(
-              "gap-2",
-              viewMode === 'list'
-                ? "bg-element-primary-default hover:bg-element-primary-pressed"
-                : "border-line-normal text-label-neutral hover:bg-gray-50"
-            )}
-            onClick={() => setViewMode('list')}
-          >
-            <List className="w-4 h-4" />
-            리스트 보기
           </Button>
         </div>
 

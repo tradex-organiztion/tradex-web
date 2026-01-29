@@ -1,341 +1,285 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertTriangle, TrendingDown, TrendingUp, Info, ChevronRight, Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Calendar, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// 리스크 패턴 타입
-type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
+// 리스크 카테고리 타입
+type RiskCategory = 'entry' | 'exit' | 'position' | 'timing' | 'emotion'
 
-interface RiskPattern {
-  id: string
-  name: string
-  description: string
-  level: RiskLevel
-  score: number
-  trend: 'up' | 'down' | 'stable'
-  details: {
-    label: string
-    value: string
-    status: 'good' | 'warning' | 'danger'
-  }[]
-}
-
-// 샘플 데이터
-const riskPatterns: RiskPattern[] = [
-  {
-    id: '1',
-    name: '진입 리스크',
-    description: '포지션 진입 시 발생할 수 있는 리스크 수준',
-    level: 'medium',
-    score: 45,
-    trend: 'down',
-    details: [
-      { label: '평균 진입 타이밍', value: '적절', status: 'good' },
-      { label: '손절 설정 비율', value: '78%', status: 'warning' },
-      { label: '과매매 경향', value: '낮음', status: 'good' },
-    ]
-  },
-  {
-    id: '2',
-    name: '청산 리스크',
-    description: '포지션 청산 시 발생할 수 있는 리스크 수준',
-    level: 'high',
-    score: 72,
-    trend: 'up',
-    details: [
-      { label: '조기 청산 비율', value: '34%', status: 'danger' },
-      { label: '익절 달성률', value: '45%', status: 'warning' },
-      { label: '손절 준수율', value: '62%', status: 'warning' },
-    ]
-  },
-  {
-    id: '3',
-    name: '자금 관리 리스크',
-    description: '자본 대비 포지션 크기 및 레버리지 관련 리스크',
-    level: 'low',
-    score: 28,
-    trend: 'stable',
-    details: [
-      { label: '평균 레버리지', value: '12x', status: 'good' },
-      { label: '최대 손실 비율', value: '2.5%', status: 'good' },
-      { label: '자본 활용률', value: '적정', status: 'good' },
-    ]
-  },
-  {
-    id: '4',
-    name: '심리적 리스크',
-    description: '감정적 매매 및 FOMO/FUD 관련 리스크',
-    level: 'critical',
-    score: 85,
-    trend: 'up',
-    details: [
-      { label: 'FOMO 매매 빈도', value: '높음', status: 'danger' },
-      { label: '복수 매매 경향', value: '중간', status: 'warning' },
-      { label: '계획 외 매매', value: '38%', status: 'danger' },
-    ]
-  },
+// 탭 데이터
+const RISK_TABS: { id: RiskCategory; label: string }[] = [
+  { id: 'entry', label: '진입 리스크' },
+  { id: 'exit', label: '청산 리스크' },
+  { id: 'position', label: '포지션 관리 리스크' },
+  { id: 'timing', label: '시간·상황 리스크' },
+  { id: 'emotion', label: '감정 기반 리스크' },
 ]
 
-const riskLevelConfig: Record<RiskLevel, { label: string; color: string; bgColor: string }> = {
-  low: { label: '낮음', color: 'text-element-positive-default', bgColor: 'bg-element-positive-lighter' },
-  medium: { label: '보통', color: 'text-element-warning-default', bgColor: 'bg-element-warning-lighter' },
-  high: { label: '높음', color: 'text-orange-500', bgColor: 'bg-orange-100' },
-  critical: { label: '위험', color: 'text-element-danger-default', bgColor: 'bg-element-danger-lighter' },
+// 각 탭별 데이터
+const RISK_DATA: Record<RiskCategory, {
+  title: string
+  description: string
+  aiInsight: string
+  stats: { label: string; value: string; subtext: string }[]
+  best: { label: string; value: string }
+  worst: { label: string; value: string }
+}> = {
+  entry: {
+    title: '진입 리스크',
+    description: '어떤 상황에서 잘못 들어가고 있는가?',
+    aiInsight: "지난 30일동안 매매의 38%가 '계획 외 진입'이며, 이 구간은 평균 승률이 24%입니다.",
+    stats: [
+      { label: '계획 외 진입', value: '38%', subtext: '48건/127건' },
+      { label: '손절 후 재진입', value: '14회', subtext: '최근 20거래 중' },
+      { label: '연속 진입(뇌동매매)', value: '17회', subtext: '3건 이상 연속' },
+    ],
+    best: { label: '사전 분석 진입 승률', value: '62%' },
+    worst: { label: '계획 외 진입 승률', value: '24%' },
+  },
+  exit: {
+    title: '청산 리스크',
+    description: '왜 수익을 극대화하지 못하고 손실을 키우는가?',
+    aiInsight: '지난 20번의 거래 중 14번에서 목표가 도달 전 조기 익절이 발생했습니다.',
+    stats: [
+      { label: '손절가 미준수', value: '67%', subtext: '85건/127건' },
+      { label: '조기 익절', value: '58%', subtext: '목표가 전 청산' },
+      { label: '평균 손절 지연', value: '+0.8%', subtext: '손실 36% 증가' },
+    ],
+    best: { label: '계획대로 청산 시 평균수익', value: '+5.2%' },
+    worst: { label: '조기 청산 시 평균 수익', value: '+1.4%' },
+  },
+  position: {
+    title: '포지션 관리 리스크',
+    description: '내 포지션 운용 방식 자체가 리스크를 만들고 있는가?',
+    aiInsight: '레버리지 x15 이상 포지션이 전체 손실의 61%를 차지합니다. 평균 손익비가 0.72로, 장기적으로 손실 구조입니다.',
+    stats: [
+      { label: '평균 손익비(R/R)', value: '0.72', subtext: '위험 구조' },
+      { label: '물타기 빈도', value: '23회', subtext: '전체의 18%' },
+    ],
+    best: { label: 'x10 이하 레버리지 승률', value: '68%' },
+    worst: { label: 'x20 이상 레버리지 승률', value: '31%' },
+  },
+  timing: {
+    title: '시간·상황 리스크',
+    description: '특정 시간대나 시장 상태에서 유독 약한가?',
+    aiInsight: '횡보장에서 손실의 72%를 기록하고 있습니다. 오전 진입의 평균 승률이 22%로 매우 낮습니다.',
+    stats: [
+      { label: '오전 진입 승률', value: '22%', subtext: '09:00-11:00' },
+      { label: '밤 진입 승률', value: '68%', subtext: '22:00-01:0' },
+      { label: '횡보장 손실', value: '72%', subtext: '전체 손실 중' },
+      { label: '고변동 구간 실수', value: '41회', subtext: 'ATR 상위 25%' },
+    ],
+    best: { label: '추세장 승률', value: '71%' },
+    worst: { label: '횡보장 승률', value: '28%' },
+  },
+  emotion: {
+    title: '감정 기반 리스크',
+    description: '감정이 개입된 매매가 실제 손실을 만드는가?',
+    aiInsight: "익절 후 첫 거래 승률이 평소의 절반 이하로 감소합니다. 손절 후 바로 진입하는 패턴이 '감정 기반 매매'로 분류됩니다.",
+    stats: [
+      { label: '보복 매매(Revenge)', value: '9회', subtext: '손절 후 즉시 진입' },
+      { label: '밤 진입 승률', value: '12회', subtext: '익절 직후 진입' },
+      { label: '방향 뒤집기', value: '8회', subtext: '손절 후 역포지션' },
+      { label: 'FOMO 비율', value: '+127%', subtext: '최근 2주' },
+    ],
+    best: { label: '차분한 상태 진입 승률', value: '64%' },
+    worst: { label: '감정적 진입 승률', value: '29%' },
+  },
 }
 
-// 리스크 게이지 컴포넌트
-function RiskGauge({ score, size = 'md' }: { score: number; size?: 'sm' | 'md' | 'lg' }) {
-  const sizeConfig = {
-    sm: { width: 60, height: 60, stroke: 6 },
-    md: { width: 100, height: 100, stroke: 8 },
-    lg: { width: 140, height: 140, stroke: 10 },
-  }
+// 핵심 개선 권장사항
+const RECOMMENDATIONS = [
+  '횡보장 진입을 피하고 명확한 추세 확인 후 진입하세요.',
+  '오전 9-11시 진입을 자제하고 밤 시간대 매매에 집중하세요.',
+  '레버리지를 10배 이하로 제한하세요.',
+  '손절 후 최소 1시간 대기 후 재진입을 고려하세요.',
+  '목표가를 설정하고 자동 청산 주문을 활용하세요.',
+]
 
-  const { width, height, stroke } = sizeConfig[size]
-  const radius = (width - stroke) / 2
-  const circumference = radius * Math.PI
-  const offset = circumference - (score / 100) * circumference
+export default function RiskPatternPage() {
+  const [startDate, setStartDate] = useState('2025-12-25')
+  const [endDate, setEndDate] = useState('2026-01-25')
+  const [activeTab, setActiveTab] = useState<RiskCategory>('entry')
 
-  const getColor = (score: number) => {
-    if (score < 30) return '#13C34E'
-    if (score < 50) return '#FEC700'
-    if (score < 70) return '#FF8C00'
-    return '#FF0015'
-  }
-
-  return (
-    <div className="relative" style={{ width, height }}>
-      <svg width={width} height={height} className="transform -rotate-90">
-        {/* Background arc */}
-        <circle
-          cx={width / 2}
-          cy={height / 2}
-          r={radius}
-          fill="none"
-          stroke="#F1F1F1"
-          strokeWidth={stroke}
-          strokeDasharray={circumference}
-          strokeDashoffset={0}
-          strokeLinecap="round"
-          className="origin-center"
-          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-        />
-        {/* Progress arc */}
-        <circle
-          cx={width / 2}
-          cy={height / 2}
-          r={radius}
-          fill="none"
-          stroke={getColor(score)}
-          strokeWidth={stroke}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="origin-center transition-all duration-500"
-          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className={cn(
-          "font-bold",
-          size === 'sm' && "text-body-2-bold",
-          size === 'md' && "text-title-2-bold",
-          size === 'lg' && "text-title-1-bold"
-        )}>
-          {score}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-// 리스크 카드 컴포넌트
-function RiskCard({ pattern, onClick }: { pattern: RiskPattern; onClick: () => void }) {
-  const config = riskLevelConfig[pattern.level]
-
-  return (
-    <div
-      className="bg-white rounded-xl border border-line-normal p-5 hover:shadow-normal transition-shadow cursor-pointer"
-      onClick={onClick}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-body-1-bold text-label-normal">{pattern.name}</h3>
-            <Badge variant={pattern.level === 'critical' ? 'danger' : pattern.level === 'high' ? 'warning' : 'secondary'} size="sm">
-              {config.label}
-            </Badge>
-          </div>
-          <p className="text-body-2-regular text-label-assistive">{pattern.description}</p>
-        </div>
-        <RiskGauge score={pattern.score} size="sm" />
-      </div>
-
-      <div className="space-y-2">
-        {pattern.details.map((detail, index) => (
-          <div key={index} className="flex items-center justify-between text-body-2-regular">
-            <span className="text-label-assistive">{detail.label}</span>
-            <span className={cn(
-              detail.status === 'good' && "text-label-positive",
-              detail.status === 'warning' && "text-label-warning",
-              detail.status === 'danger' && "text-label-danger"
-            )}>
-              {detail.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-line-normal">
-        <div className="flex items-center gap-1.5 text-body-2-regular">
-          {pattern.trend === 'up' ? (
-            <>
-              <TrendingUp className="w-4 h-4 text-label-danger" />
-              <span className="text-label-danger">상승 추세</span>
-            </>
-          ) : pattern.trend === 'down' ? (
-            <>
-              <TrendingDown className="w-4 h-4 text-label-positive" />
-              <span className="text-label-positive">하락 추세</span>
-            </>
-          ) : (
-            <>
-              <span className="w-4 h-0.5 bg-label-assistive rounded" />
-              <span className="text-label-assistive">유지</span>
-            </>
-          )}
-        </div>
-        <button className="flex items-center gap-1 text-body-2-medium text-label-neutral hover:text-label-normal transition-colors">
-          상세 분석 <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-export default function RiskAnalysisPage() {
-  const [selectedPattern, setSelectedPattern] = useState<RiskPattern | null>(null)
-
-  // 전체 리스크 점수 계산
-  const overallScore = Math.round(riskPatterns.reduce((sum, p) => sum + p.score, 0) / riskPatterns.length)
+  const currentData = RISK_DATA[activeTab]
 
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-title-1-bold text-gray-800">리스크 분석</h1>
-          <p className="text-body-2-regular text-gray-600 mt-1">
-            나의 트레이딩 리스크 패턴을 분석하고 개선점을 찾아보세요.
+      <div>
+        <h1 className="text-title-1-bold text-label-normal">리스크 패턴</h1>
+        <p className="text-body-2-regular text-label-assistive mt-1">
+          반복되는 실수와 습관을 파악하여 손실을 최소화하세요.
+        </p>
+      </div>
+
+      {/* Date Range Filter */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 px-4 py-2.5 border border-line-normal rounded-lg bg-white">
+          <input
+            type="text"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-24 text-body-2-regular text-label-normal bg-transparent focus:outline-none"
+          />
+          <Calendar className="w-4 h-4 text-label-assistive" />
+        </div>
+        <span className="text-label-assistive">~</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border border-line-normal rounded-lg bg-white">
+          <input
+            type="text"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-24 text-body-2-regular text-label-normal bg-transparent focus:outline-none"
+          />
+          <Calendar className="w-4 h-4 text-label-assistive" />
+        </div>
+        <button className="px-5 py-2.5 bg-label-normal text-white text-body-2-medium rounded-lg hover:bg-gray-700 transition-colors">
+          조회
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* 가장 치명적인 리스크 */}
+        <div className="bg-white rounded-xl border border-line-normal p-5">
+          <p className="text-caption-regular text-label-assistive mb-1">가장 치명적인 리스크</p>
+          <p className="text-title-2-bold text-label-normal mb-4">패턴 분석</p>
+          <p className="text-caption-regular text-label-assistive mb-1">손절 후 즉각 재진입(복수매매) 손실 기여도</p>
+          <p className="text-title-2-bold text-label-positive">
+            42% <span className="text-body-2-regular text-label-assistive font-normal">14회 발생</span>
           </p>
         </div>
-        <Button variant="secondary" className="gap-2">
-          <Sparkles className="w-4 h-4" />
-          AI 리스크 진단
-        </Button>
+
+        {/* 가장 자주 발생하는 */}
+        <div className="bg-white rounded-xl border border-line-normal p-5">
+          <p className="text-caption-regular text-label-assistive mb-1">가장 자주 발생하는</p>
+          <p className="text-title-2-bold text-label-normal mb-4">습관</p>
+          <p className="text-caption-regular text-label-assistive mb-1">계획 외 진입 발생 비율</p>
+          <p className="text-title-2-bold text-label-positive">
+            38% <span className="text-body-2-regular text-label-assistive font-normal">48건 발생</span>
+          </p>
+        </div>
+
+        {/* 리스크 패턴으로 인한 손실 비중 */}
+        <div className="bg-white rounded-xl border-2 border-line-danger p-5">
+          <p className="text-caption-regular text-label-danger mb-1">리스크 패턴으로 인한</p>
+          <p className="text-title-2-bold text-label-normal mb-4">손실 비중</p>
+          <p className="text-caption-regular text-label-assistive mb-1">패턴별 누적 손실</p>
+          <p className="text-title-2-bold text-label-danger">
+            42%(-18,750원) <span className="text-body-2-regular text-label-assistive font-normal">전체 손실 중</span>
+          </p>
+        </div>
       </div>
 
-      {/* Overall Risk Summary */}
+      {/* Tradex DNA 분석 */}
       <div className="bg-white rounded-xl border border-line-normal p-6">
-        <div className="flex items-center gap-8">
-          <RiskGauge score={overallScore} size="lg" />
-          <div className="flex-1">
-            <h2 className="text-title-2-bold text-label-normal mb-2">종합 리스크 점수</h2>
-            <p className="text-body-1-regular text-label-neutral mb-4">
-              현재 트레이딩 리스크 수준은 <span className="font-semibold text-label-warning">보통</span>입니다.
-              심리적 리스크 관리에 특히 주의가 필요합니다.
+        <div className="mb-4">
+          <h2 className="text-title-2-bold text-label-normal">Tradex DNA 분석</h2>
+          <p className="text-body-2-regular text-label-assistive">AI 기반 종합 분석 리포트</p>
+        </div>
+
+        {/* AI Insight */}
+        <div className="bg-green-50 rounded-lg px-4 py-3 mb-6">
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 px-2 py-0.5 bg-green-500 text-white text-caption-medium rounded">AI 인사이트</span>
+            <p className="text-body-2-regular text-label-normal">
+              당신은 고변동 구간에서 지나치게 공격적입니다. 오전 매매를 줄이고 상승 추세를 공략하는 편이 승률이 <span className="font-bold">2배</span> 높습니다.
             </p>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-element-positive-default" />
-                <span className="text-body-2-regular text-label-assistive">낮음 (0-30)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-element-warning-default" />
-                <span className="text-body-2-regular text-label-assistive">보통 (31-50)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500" />
-                <span className="text-body-2-regular text-label-assistive">높음 (51-70)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-element-danger-default" />
-                <span className="text-body-2-regular text-label-assistive">위험 (71+)</span>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Risk Pattern Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        {riskPatterns.map((pattern) => (
-          <RiskCard
-            key={pattern.id}
-            pattern={pattern}
-            onClick={() => setSelectedPattern(pattern)}
-          />
-        ))}
-      </div>
-
-      {/* AI Insights */}
-      <div className="bg-gray-50 rounded-xl p-5">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-element-primary-default flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h3 className="text-body-1-bold text-label-normal mb-2">Tradex AI 인사이트</h3>
-            <div className="space-y-2 text-body-2-regular text-label-neutral">
-              <p>• <span className="text-label-danger font-medium">심리적 리스크</span>가 가장 높습니다. FOMO 매매를 줄이기 위해 진입 전 체크리스트를 활용해보세요.</p>
-              <p>• <span className="text-label-warning font-medium">청산 리스크</span>를 낮추려면 익절 목표가에 도달 시 부분 청산 전략을 고려해보세요.</p>
-              <p>• 자금 관리는 양호합니다. 현재 레버리지 수준을 유지하세요.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Detail Modal would go here */}
-      {selectedPattern && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedPattern(null)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-title-2-bold text-label-normal">{selectedPattern.name} 상세 분석</h2>
-                <p className="text-body-2-regular text-label-assistive mt-1">{selectedPattern.description}</p>
-              </div>
-              <RiskGauge score={selectedPattern.score} size="md" />
-            </div>
-
-            <div className="space-y-4 mb-6">
-              {selectedPattern.details.map((detail, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-body-2-medium text-label-normal">{detail.label}</span>
-                  <Badge variant={
-                    detail.status === 'good' ? 'positive' :
-                    detail.status === 'warning' ? 'warning' : 'danger'
-                  }>
-                    {detail.value}
-                  </Badge>
+        {/* 핵심 개선 권장사항 */}
+        <div className="flex gap-8">
+          <p className="text-body-2-medium text-label-normal shrink-0">핵심 개선 권장사항</p>
+          <div className="space-y-2">
+            {RECOMMENDATIONS.map((item, index) => (
+              <div key={index} className="flex items-start gap-2">
+                <div className="w-5 h-5 rounded-full bg-label-normal flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-white" />
                 </div>
-              ))}
+                <p className="text-body-2-regular text-label-neutral">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 상세 분석 */}
+      <div>
+        <h2 className="text-title-2-bold text-label-normal mb-4">상세 분석</h2>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4">
+          {RISK_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-body-2-medium transition-colors",
+                activeTab === tab.id
+                  ? "bg-label-normal text-white"
+                  : "bg-white border border-line-normal text-label-neutral hover:bg-gray-50"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-white rounded-xl border border-line-normal p-6">
+          <div className="mb-4">
+            <h3 className="text-title-2-bold text-label-normal">{currentData.title}</h3>
+            <p className="text-body-2-regular text-label-assistive">{currentData.description}</p>
+          </div>
+
+          {/* AI Insight */}
+          <div className="bg-green-50 rounded-lg px-4 py-3 mb-6">
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 px-2 py-0.5 bg-green-500 text-white text-caption-medium rounded">AI 인사이트</span>
+              <p className="text-body-2-regular text-label-normal">{currentData.aiInsight}</p>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className={cn(
+            "grid gap-4 mb-4",
+            currentData.stats.length <= 3 ? "grid-cols-3" : "grid-cols-4"
+          )}>
+            {currentData.stats.map((stat, index) => (
+              <div key={index} className="border border-line-normal rounded-lg p-4">
+                <p className="text-caption-regular text-label-assistive mb-1">{stat.label}</p>
+                <p className="text-title-2-bold text-label-normal">
+                  {stat.value} <span className="text-body-2-regular text-label-assistive font-normal">{stat.subtext}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Best / Worst Comparison */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Best */}
+            <div className="border-2 border-line-positive rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <p className="text-caption-medium text-label-positive mb-1">Best</p>
+                <p className="text-body-2-medium text-label-normal">{currentData.best.label}</p>
+              </div>
+              <p className="text-title-1-bold text-label-positive">{currentData.best.value}</p>
             </div>
 
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" onClick={() => setSelectedPattern(null)}>
-                닫기
-              </Button>
-              <Button className="flex-1 gap-2">
-                <Sparkles className="w-4 h-4" />
-                AI 개선 제안 받기
-              </Button>
+            {/* Worst */}
+            <div className="border-2 border-line-danger rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <p className="text-caption-medium text-label-danger mb-1">Worst</p>
+                <p className="text-body-2-medium text-label-normal">{currentData.worst.label}</p>
+              </div>
+              <p className="text-title-1-bold text-label-danger">{currentData.worst.value}</p>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
