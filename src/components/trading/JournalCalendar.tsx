@@ -146,13 +146,16 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
       </div>
 
       {/* Calendar Table */}
-      <div className="bg-white">
+      <div className="bg-white border border-line-normal rounded-xl overflow-hidden">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 border-b border-line-normal">
-          {WEEKDAYS.map((day) => (
+        <div className="grid grid-cols-7 bg-gray-50 border-b border-line-normal">
+          {WEEKDAYS.map((day, index) => (
             <div
               key={day}
-              className="py-3 text-center text-body-2-medium text-label-assistive"
+              className={cn(
+                "py-3 text-center text-body-2-medium text-label-assistive",
+                index < 6 && "border-r border-line-normal"
+              )}
             >
               {day}
             </div>
@@ -176,9 +179,9 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
               <div
                 key={index}
                 className={cn(
-                  "min-h-[100px] p-2 border-b border-r border-line-normal",
-                  isLastCol && "border-r-0",
-                  isLastRow && "border-b-0"
+                  "min-h-[110px] p-3 cursor-pointer hover:bg-gray-50 transition-colors",
+                  !isLastRow && "border-b border-line-normal",
+                  !isLastCol && "border-r border-line-normal"
                 )}
                 onClick={() => calendarDay.isCurrentMonth && onDateClick?.(new Date(year, month, calendarDay.day))}
               >

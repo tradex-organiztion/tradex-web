@@ -166,7 +166,7 @@ export function Sidebar() {
         )}
       >
         {/* Header: Logo + Toggle */}
-        <div className="flex h-10 items-center justify-between border-b border-gray-300 px-5">
+        <div className="flex h-16 items-center justify-between border-b border-gray-300 px-5">
           {!isSidebarCollapsed ? (
             <>
               <Link href="/home" className="flex items-center">

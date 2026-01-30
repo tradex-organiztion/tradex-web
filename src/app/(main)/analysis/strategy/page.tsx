@@ -43,7 +43,7 @@ function StrategyCard({
           <h3 className="text-body-1-bold text-label-normal mt-0.5">{title}</h3>
         </div>
         <span className={cn(
-          "px-3 py-1 rounded-full text-body-2-bold text-white",
+          "px-4 py-1.5 rounded-lg text-body-2-bold text-white",
           isBest ? "bg-element-positive-default" : "bg-element-danger-default"
         )}>
           {percentage}%
@@ -79,8 +79,8 @@ function StrategyCard({
 
       {/* 하단 요약 */}
       <div className={cn(
-        "flex items-center gap-8 pt-3 border-l-2 pl-4",
-        isBest ? "border-element-positive-default" : "border-element-danger-default"
+        "flex items-center gap-8 pt-3 mt-3 border-t border-line-normal border-l-2 pl-4",
+        isBest ? "border-l-element-positive-default" : "border-l-element-danger-default"
       )}>
         <div className="flex gap-3">
           <span className="text-body-2-regular text-label-assistive">총 거래</span>
