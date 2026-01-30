@@ -121,22 +121,25 @@ export function CandleChart({
     const chartData = data || generateSampleData()
     candleSeries.setData(chartData)
 
-    // 현재 가격 설정
-    if (chartData.length > 0) {
-      setCurrentPrice(chartData[chartData.length - 1].close)
-    }
+    // 초기 가격 설정 (ref로 저장하고 이벤트 콜백에서 상태 업데이트)
+    const initialPrice = chartData.length > 0 ? chartData[chartData.length - 1].close : null
 
     // 크로스헤어 이동 이벤트
-    chart.subscribeCrosshairMove((param) => {
+    const handleCrosshairMove = (param: { time?: Time; seriesData: Map<unknown, unknown> }) => {
       if (param.time && param.seriesData.has(candleSeries)) {
-        const data = param.seriesData.get(candleSeries) as CandlestickData<Time>
-        setCurrentPrice(data.close)
-        onCrosshairMove?.(data.close, param.time)
+        const candleData = param.seriesData.get(candleSeries) as CandlestickData<Time>
+        setCurrentPrice(candleData.close)
+        onCrosshairMove?.(candleData.close, param.time)
       } else {
-        const lastData = chartData[chartData.length - 1]
-        setCurrentPrice(lastData?.close || null)
+        setCurrentPrice(initialPrice)
         onCrosshairMove?.(null, null)
       }
+    }
+    chart.subscribeCrosshairMove(handleCrosshairMove)
+
+    // 초기 가격 표시를 위해 마운트 후 상태 업데이트
+    requestAnimationFrame(() => {
+      setCurrentPrice(initialPrice)
     })
 
     // 차트 크기 조절

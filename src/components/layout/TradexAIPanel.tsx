@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Plus, Mic, Send, TrendingUp, Search, Target, Bell, Newspaper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -51,16 +51,26 @@ export function TradexAIPanel() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const messageIdRef = useRef(0)
 
-  const handleSend = async (text?: string) => {
+  const generateMessageId = useCallback(() => {
+    messageIdRef.current += 1
+    return `msg-${messageIdRef.current}`
+  }, [])
+
+  const getTimestamp = useCallback(() => {
+    return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+  }, [])
+
+  const handleSend = useCallback((text?: string) => {
     const messageText = text || input
     if (!messageText.trim() || isLoading) return
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: generateMessageId(),
       role: 'user',
       content: messageText,
-      timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: getTimestamp(),
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -70,10 +80,10 @@ export function TradexAIPanel() {
     // Simulated AI response
     setTimeout(() => {
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: generateMessageId(),
         role: 'assistant',
         content: '최근 90일간 4시간봉 EMA(20, 50, 200) 골든크로스/ 데드크로스 전략 시뮬레이션 결과입니다.',
-        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: getTimestamp(),
         stats: {
           winRate: '64.2%',
           profit: '+ $12,450',
@@ -84,7 +94,7 @@ export function TradexAIPanel() {
       setMessages((prev) => [...prev, assistantMessage])
       setIsLoading(false)
     }, 1500)
-  }
+  }, [input, isLoading, generateMessageId, getTimestamp])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

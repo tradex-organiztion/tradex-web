@@ -11,8 +11,8 @@ import type { NextRequest } from 'next/server'
  * - 공개 경로: /, /oauth2/redirect, /additional-info
  */
 
-// 인증이 필요한 경로들
-const protectedPaths = [
+// 인증이 필요한 경로들 (추후 서버 사이드 인증 체크 시 사용 예정)
+const _protectedPaths = [
   '/home',
   '/trading',
   '/chart',
@@ -24,17 +24,22 @@ const protectedPaths = [
 ]
 
 // 인증된 사용자가 접근하면 안 되는 경로들 (로그인/회원가입 페이지)
-const authPaths = [
+const _authPaths = [
   '/login',
   '/signup',
   '/find-account',
 ]
 
 // 프로필 미완성 시 접근 가능한 경로
-const profileIncompletePaths = [
+const _profileIncompletePaths = [
   '/additional-info',
   '/oauth2/redirect',
 ]
+
+// ESLint: 추후 사용 예정 변수
+void _protectedPaths
+void _authPaths
+void _profileIncompletePaths
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
