@@ -47,10 +47,10 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
 
   // Get days from previous month
   const prevMonthLastDay = new Date(year, month, 0).getDate()
+  const prevMonth = month === 0 ? 11 : month - 1
 
   // Get next month info
   const nextMonth = month === 11 ? 0 : month + 1
-  const nextMonthYear = month === 11 ? year + 1 : year
 
   // Generate calendar days with prev/next month info
   const calendarDays: CalendarDay[] = []
@@ -72,16 +72,15 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
     })
   }
 
-  // Next month days to fill remaining cells
+  // Next month days to fill remaining cells (exactly 5 rows = 35 cells)
   let nextMonthDay = 1
-  while (calendarDays.length % 7 !== 0 || calendarDays.length < 35) {
+  while (calendarDays.length < 35) {
     calendarDays.push({
       day: nextMonthDay,
       isCurrentMonth: false,
       isNextMonth: true,
     })
     nextMonthDay++
-    if (calendarDays.length >= 42) break // Max 6 rows
   }
 
   const goToPrevMonth = () => {
@@ -98,25 +97,23 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
-  const getTradesForDay = (calendarDay: CalendarDay): TradeEntry[] => {
-    if (!calendarDay.isCurrentMonth) return []
-    return trades[formatDateKey(calendarDay.day)] || []
-  }
-
   // Sample data for demonstration
   const sampleTrades: DayTrades = {
     [`${year}-${String(month + 1).padStart(2, '0')}-11`]: [
-      { id: '1', pair: 'BTC/USDT', profit: 1250, profitPercent: 5.2 },
+      { id: '1', pair: 'BTC/USDT', profit: 1250000, profitPercent: 5.2 },
       { id: '2', pair: 'ETH/USDT', profit: -1250, profitPercent: -2.1 },
     ],
   }
 
   const displayTrades = Object.keys(trades).length > 0 ? trades : sampleTrades
 
-  // Format day label
+  // Format day label - show "X월 1일" for first day of each month
   const formatDayLabel = (calendarDay: CalendarDay): string => {
     if (calendarDay.isCurrentMonth && calendarDay.day === 1) {
       return `${month + 1}월 ${calendarDay.day}일`
+    }
+    if (calendarDay.isPrevMonth && calendarDay.day === 1) {
+      return `${prevMonth + 1}월 ${calendarDay.day}일`
     }
     if (calendarDay.isNextMonth && calendarDay.day === 1) {
       return `${nextMonth + 1}월 ${calendarDay.day}일`
@@ -124,104 +121,134 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
     return String(calendarDay.day)
   }
 
+  // Format profit number with commas
+  const formatProfit = (profit: number): string => {
+    const absProfit = Math.abs(profit)
+    const formatted = absProfit.toLocaleString()
+    return profit >= 0 ? `+${formatted}` : `-${formatted}`
+  }
+
+  const totalRows = Math.ceil(calendarDays.length / 7)
+
   return (
-    <div>
-      {/* Calendar Header - Outside the table */}
-      <div className="flex items-center justify-center gap-4 mb-4">
+    <div className="flex flex-col gap-3 h-full">
+      {/* Calendar Header - Figma: gap 16px between elements */}
+      <div className="flex items-center gap-4">
         <button
           onClick={goToPrevMonth}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
+          aria-label="이전 달"
         >
-          <ChevronLeft className="w-5 h-5 text-label-neutral" />
+          <ChevronLeft className="w-5 h-5 text-gray-800" strokeWidth={1.5} />
         </button>
-        <span className="text-body-1-bold text-label-normal min-w-[120px] text-center">
+        <span className="text-body-1-bold text-gray-800">
           {year}년 {month + 1}월
         </span>
         <button
           onClick={goToNextMonth}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
+          aria-label="다음 달"
         >
-          <ChevronRight className="w-5 h-5 text-label-neutral" />
+          <ChevronRight className="w-5 h-5 text-gray-800" strokeWidth={1.5} />
         </button>
       </div>
 
       {/* Calendar Table */}
-      <div className="bg-white border border-line-normal rounded-xl overflow-hidden">
+      <div className="flex flex-col flex-1">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 bg-gray-50 border-b border-line-normal">
+        <div className="grid grid-cols-7 bg-gray-100 rounded-t-lg">
           {WEEKDAYS.map((day, index) => (
             <div
               key={day}
               className={cn(
-                "py-3 text-center text-body-2-medium text-label-assistive",
-                index < 6 && "border-r border-line-normal"
+                "py-1 px-2 flex justify-center items-center",
+                index < 6 && "border-r border-gray-300/40"
               )}
             >
-              {day}
+              <span className="text-body-2-regular text-gray-600">{day}</span>
             </div>
           ))}
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 flex-1">
           {calendarDays.map((calendarDay, index) => {
             const dayTrades = calendarDay.isCurrentMonth
               ? (displayTrades[formatDateKey(calendarDay.day)] || [])
               : []
-            const isToday = calendarDay.isCurrentMonth &&
-              new Date().getDate() === calendarDay.day &&
-              new Date().getMonth() === month &&
-              new Date().getFullYear() === year
-            const isLastRow = Math.floor(index / 7) === Math.floor((calendarDays.length - 1) / 7)
-            const isLastCol = index % 7 === 6
+            const rowIndex = Math.floor(index / 7)
+            const colIndex = index % 7
+            const isLastRow = rowIndex === totalRows - 1
+            const isLastCol = colIndex === 6
+
+            // Border classes based on position (Figma spec)
+            const borderClasses = cn(
+              "border-gray-300/40",
+              // Top border for all cells
+              "border-t",
+              // Left border for all cells
+              "border-l",
+              // Right border only for last column
+              isLastCol && "border-r",
+              // Bottom border only for last row
+              isLastRow && "border-b"
+            )
 
             return (
               <div
                 key={index}
                 className={cn(
-                  "min-h-[110px] p-3 cursor-pointer hover:bg-gray-50 transition-colors",
-                  !isLastRow && "border-b border-line-normal",
-                  !isLastCol && "border-r border-line-normal"
+                  "flex flex-col bg-white px-2 py-1 cursor-pointer hover:bg-gray-50 transition-colors min-h-[100px]",
+                  borderClasses
                 )}
                 onClick={() => calendarDay.isCurrentMonth && onDateClick?.(new Date(year, month, calendarDay.day))}
               >
                 {/* Day number - right aligned */}
                 <div className={cn(
-                  "text-body-2-medium mb-1 text-right",
-                  !calendarDay.isCurrentMonth && "text-label-disabled",
-                  calendarDay.isCurrentMonth && isToday && "text-label-info",
-                  calendarDay.isCurrentMonth && !isToday && "text-label-normal"
+                  "text-body-2-medium text-right p-0.5",
+                  calendarDay.isCurrentMonth ? "text-gray-600" : "text-gray-400"
                 )}>
                   {formatDayLabel(calendarDay)}
                 </div>
 
-                {/* Trades for this day */}
-                {calendarDay.isCurrentMonth && (
-                  <div className="space-y-1">
+                {/* Trade cards for this day */}
+                {calendarDay.isCurrentMonth && dayTrades.length > 0 && (
+                  <div className="flex flex-col gap-0.5 mt-auto">
                     {dayTrades.slice(0, 2).map((trade) => (
                       <div
                         key={trade.id}
-                        className="flex items-center gap-1 text-caption-regular cursor-pointer hover:opacity-70"
+                        className={cn(
+                          "rounded py-0.5 px-1 cursor-pointer hover:opacity-80 transition-opacity",
+                          trade.profit >= 0 ? "bg-gray-100" : "bg-red-100"
+                        )}
                         onClick={(e) => {
                           e.stopPropagation()
                           onTradeClick?.(trade)
                         }}
                       >
-                        <span className={cn(
-                          "w-1.5 h-1.5 rounded-full shrink-0",
-                          trade.profit >= 0 ? "bg-element-positive-default" : "bg-element-danger-default"
-                        )} />
-                        <span className="text-label-neutral truncate">{trade.pair}</span>
-                        <span className={cn(
-                          "font-medium whitespace-nowrap",
-                          trade.profit >= 0 ? "text-label-positive" : "text-label-danger"
-                        )}>
-                          {trade.profit >= 0 ? '+' : ''}{trade.profit.toLocaleString()}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {/* Color dot */}
+                          <span className={cn(
+                            "w-1.5 h-1.5 rounded-full shrink-0",
+                            trade.profit >= 0 ? "bg-green-400" : "bg-red-400"
+                          )} />
+                          {/* Coin name and profit */}
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            <span className="text-caption-medium text-gray-800 truncate">
+                              {trade.pair}
+                            </span>
+                            <span className={cn(
+                              "text-body-2-bold whitespace-nowrap",
+                              trade.profit >= 0 ? "text-green-400" : "text-red-400"
+                            )}>
+                              {formatProfit(trade.profit)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                     {dayTrades.length > 2 && (
-                      <div className="text-caption-regular text-label-assistive">
+                      <div className="text-caption-regular text-gray-500 px-1">
                         +{dayTrades.length - 2}개 더보기
                       </div>
                     )}

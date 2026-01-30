@@ -33,10 +33,10 @@ export function Header() {
       <button
         onClick={toggleAIPanel}
         className={cn(
-          "flex items-center gap-2 h-9 px-4 rounded-full border text-body-2-medium transition-colors",
+          "flex items-center justify-center gap-0.5 py-1 px-2 rounded border text-body-2-medium transition-colors",
           isAIPanelOpen
-            ? "border-label-normal bg-gray-100 text-label-normal"
-            : "border-line-normal text-label-neutral hover:bg-gray-50"
+            ? "border-gray-800 bg-gray-100 text-gray-800"
+            : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
         )}
       >
         <IconAIBulb className="w-4 h-4" />
