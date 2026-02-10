@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Calendar, List, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { JournalCalendar, JournalList, JournalForm } from '@/components/trading'
@@ -58,9 +59,26 @@ const sampleEntries: JournalEntry[] = [
 ]
 
 export default function JournalPage() {
+  const searchParams = useSearchParams()
+
+  // 리다이렉트 쿼리 파라미터로 초기 상태 계산
+  const initialFromParams = useMemo(() => {
+    const action = searchParams.get('action')
+    const entryId = searchParams.get('entry')
+
+    if (action === 'new') {
+      return { isOpen: true, entry: null }
+    }
+    if (entryId) {
+      const entry = sampleEntries.find(e => e.id === entryId)
+      if (entry) return { isOpen: true, entry }
+    }
+    return { isOpen: false, entry: null }
+  }, [searchParams])
+
   const [viewMode, setViewMode] = useState<ViewMode>('calendar')
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(initialFromParams.isOpen)
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(initialFromParams.entry)
 
   const handleEntryClick = (entry: JournalEntry) => {
     setSelectedEntry(entry)
@@ -77,7 +95,7 @@ export default function JournalPage() {
       {/* Main Content */}
       <div className={cn(
         "transition-all duration-300",
-        isFormOpen && "mr-[400px]"
+        isFormOpen && "mr-[549px]"
       )}>
         {/* Page Header */}
         <div className="mb-6">
@@ -143,22 +161,18 @@ export default function JournalPage() {
 
       {/* Side Panel */}
       {isFormOpen && (
-        <div className="fixed right-0 top-0 bottom-0 w-[400px] border-l border-line-normal shadow-heavy z-40">
+        <div className="fixed right-0 top-0 bottom-0 w-[549px] border-l border-line-normal shadow-emphasize z-40">
           <JournalForm
-            mode={selectedEntry ? 'edit' : 'create'}
             initialData={selectedEntry ? {
               date: selectedEntry.date,
               pair: selectedEntry.pair,
               leverage: selectedEntry.leverage,
               position: selectedEntry.position,
-              profit: selectedEntry.profit,
-              profitPercent: selectedEntry.profitPercent,
+              pnl: selectedEntry.profit >= 0 ? `+${selectedEntry.profit.toLocaleString()}` : selectedEntry.profit.toLocaleString(),
+              pnlPercent: String(selectedEntry.profitPercent),
+              result: selectedEntry.profit >= 0 ? 'Win' : 'Lose',
             } : undefined}
             onClose={() => setIsFormOpen(false)}
-            onSubmit={(data) => {
-              console.log('Submit:', data)
-              setIsFormOpen(false)
-            }}
           />
         </div>
       )}

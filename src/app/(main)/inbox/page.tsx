@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, Trash2, Check } from "lucide-react"
+import { Bell } from "lucide-react"
 import { PageHeader } from "@/components/common"
 import { Button } from "@/components/ui"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { homeApi, NotificationResponse, NotificationType } from "@/lib/api"
 
@@ -21,9 +22,9 @@ type FilterType = "all" | "unread"
 
 // 알림 타입별 라벨 및 색상
 const notificationTypeConfig: Record<NotificationType, { label: string; bgColor: string; textColor: string }> = {
-  POSITION_ENTRY: { label: "진입", bgColor: "bg-info-100", textColor: "text-info-500" },
-  POSITION_EXIT: { label: "청산", bgColor: "bg-success-100", textColor: "text-success-500" },
-  RISK_WARNING: { label: "위험", bgColor: "bg-error-100", textColor: "text-error-500" },
+  POSITION_ENTRY: { label: "포지션 진입", bgColor: "bg-element-positive-lighter", textColor: "text-element-positive-default" },
+  POSITION_EXIT: { label: "포지션 종료", bgColor: "bg-gray-100", textColor: "text-gray-800" },
+  RISK_WARNING: { label: "리스크 경고", bgColor: "bg-element-danger-lighter", textColor: "text-element-danger-default" },
 }
 
 export default function InboxPage() {
@@ -31,6 +32,7 @@ export default function InboxPage() {
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<NotificationResponse | null>(null)
 
   // 알림 목록 불러오기
   const fetchNotifications = async () => {
@@ -73,16 +75,22 @@ export default function InboxPage() {
     )
   }
 
-  // 알림 삭제
-  const handleDelete = async (id: number) => {
-    const result = await homeApi.deleteNotification(id).catch((err) => {
+  // 알림 삭제 확인 모달 열기
+  const handleDeleteClick = (notification: NotificationResponse) => {
+    setDeleteTarget(notification)
+  }
+
+  // 알림 삭제 실행
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const result = await homeApi.deleteNotification(deleteTarget.id).catch((err) => {
       console.warn("Failed to delete notification:", err.message)
       return null
     })
     if (result !== null) {
-      // 성공 시에만 목록에서 제거
-      setNotifications((prev) => prev.filter((n) => n.id !== id))
+      setNotifications((prev) => prev.filter((n) => n.id !== deleteTarget.id))
     }
+    setDeleteTarget(null)
   }
 
   // 날짜 포맷팅
@@ -142,7 +150,7 @@ export default function InboxPage() {
           </div>
         ) : error ? (
           <div className="p-8 text-center">
-            <p className="text-body-1-regular text-error-500">{error}</p>
+            <p className="text-body-1-regular text-element-danger-default">{error}</p>
             <Button
               variant="secondary"
               size="sm"
@@ -167,70 +175,61 @@ export default function InboxPage() {
                 <li
                   key={notification.id}
                   className={cn(
-                    "p-4 hover:bg-gray-50 transition-colors",
-                    !notification.read && "bg-info-100/30"
+                    "px-5 py-4 hover:bg-gray-50 transition-colors"
                   )}
                 >
-                  <div className="flex items-start gap-4">
-                    {/* Icon / Badge */}
-                    <div
-                      className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                        typeConfig.bgColor
-                      )}
-                    >
-                      <Bell className={cn("w-4 h-4", typeConfig.textColor)} />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className={cn(
-                            "text-caption-medium px-2 py-0.5 rounded",
-                            typeConfig.bgColor,
-                            typeConfig.textColor
-                          )}
-                        >
-                          {typeConfig.label}
-                        </span>
+                  <div className="space-y-3">
+                    {/* Badge + Timestamp Row */}
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={cn(
+                          "text-caption-medium px-2 py-0.5 rounded",
+                          typeConfig.bgColor,
+                          typeConfig.textColor
+                        )}
+                      >
+                        {typeConfig.label}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {!notification.read && (
+                          <span className="w-1.5 h-1.5 bg-gray-800 rounded-full" />
+                        )}
                         <span className="text-caption-regular text-label-assistive">
                           {formatDate(notification.createdAt)}
                         </span>
-                        {!notification.read && (
-                          <span className="w-2 h-2 bg-info-500 rounded-full" />
-                        )}
                       </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-0.5">
                       <h3
                         className={cn(
-                          "text-body-1-medium text-label-normal truncate",
+                          "text-body-2-medium text-label-normal",
                           !notification.read && "font-bold"
                         )}
                       >
                         {notification.title}
                       </h3>
-                      <p className="text-body-2-regular text-label-neutral mt-1 line-clamp-2">
+                      <p className="text-body-2-regular text-label-neutral">
                         {notification.message}
                       </p>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-2">
                       {!notification.read && (
                         <button
                           onClick={() => handleMarkAsRead(notification.id)}
-                          className="p-2 text-label-assistive hover:text-info-500 hover:bg-info-100 rounded-lg transition-colors"
-                          title="읽음 처리"
+                          className="flex-1 py-1 px-2 border border-line-normal rounded text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors text-center"
                         >
-                          <Check className="w-4 h-4" />
+                          읽음 처리
                         </button>
                       )}
                       <button
-                        onClick={() => handleDelete(notification.id)}
-                        className="p-2 text-label-assistive hover:text-error-500 hover:bg-error-100 rounded-lg transition-colors"
-                        title="삭제"
+                        onClick={() => handleDeleteClick(notification)}
+                        className="flex-1 py-1 px-2 border border-line-normal rounded text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors text-center"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        삭제
                       </button>
                     </div>
                   </div>
@@ -240,6 +239,32 @@ export default function InboxPage() {
           </ul>
         )}
       </div>
+
+      {/* 삭제 확인 모달 */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent showCloseButton={false} className="w-[327px] p-4 pt-6 rounded-xl shadow-emphasize">
+          <DialogHeader className="items-center">
+            <DialogTitle className="text-title-2-bold text-label-normal text-center">
+              삭제 하시겠습니까?
+            </DialogTitle>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-3 mt-2">
+            <Button
+              variant="secondary"
+              className="flex-1 h-12 border-line-normal rounded-lg"
+              onClick={() => setDeleteTarget(null)}
+            >
+              취소
+            </Button>
+            <Button
+              className="flex-1 h-12 bg-gray-800 hover:bg-gray-700 text-white rounded-lg"
+              onClick={handleDeleteConfirm}
+            >
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

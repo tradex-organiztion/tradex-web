@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DatePickerCalendar } from '@/components/common'
 
 // AI 인사이트 컴포넌트 - 리스크 패턴 페이지와 동일
 function AIInsightBox({ children }: { children: React.ReactNode }) {
@@ -158,6 +159,8 @@ export default function StrategyAnalysisPage() {
   })
 
   const [showResults, setShowResults] = useState(true)
+  const [startDate, setStartDate] = useState('2025-12-25')
+  const [endDate, setEndDate] = useState('2026-01-25')
 
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     setFilters((prev) => ({
@@ -173,11 +176,29 @@ export default function StrategyAnalysisPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* 페이지 타이틀 */}
-      <div>
+      <div className="flex flex-col gap-2">
         <h1 className="text-title-1-bold text-label-normal">전략 분석</h1>
-        <p className="text-body-2-regular text-label-assistive mt-1">
+        <p className="text-body-2-regular text-label-assistive">
           나의 트레이딩 전략과 승률을 분석하고 최고의 성과를 만들어 보세요.
         </p>
+      </div>
+
+      {/* 날짜 범위 필터 - Figma 기준 */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <DatePickerCalendar
+            value={startDate}
+            onChange={setStartDate}
+          />
+          <span className="text-body-1-regular text-gray-800">~</span>
+          <DatePickerCalendar
+            value={endDate}
+            onChange={setEndDate}
+          />
+        </div>
+        <button className="px-3 py-2 bg-gray-800 text-white text-body-1-medium rounded-lg hover:bg-gray-700 transition-colors">
+          조회
+        </button>
       </div>
 
       {/* Best/Worst 전략 카드 */}
