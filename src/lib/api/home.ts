@@ -59,12 +59,7 @@ export interface NotificationResponse {
   read: boolean
 }
 
-/**
- * 읽지 않은 알림 개수 응답
- */
-export interface UnreadCountResponse {
-  count: number
-}
+/** 읽지 않은 알림 개수 - API는 number(long) 직접 반환 */
 
 // ============================================================
 // Home API
@@ -99,11 +94,11 @@ export const homeApi = {
 
   /** 읽지 않은 알림 개수 조회 */
   getUnreadCount: () =>
-    get<UnreadCountResponse>('/api/home/notifications/unread-count'),
+    get<number>('/api/home/notifications/unread-count'),
 
   /** 특정 알림 읽음 처리 */
   markAsRead: (id: number) =>
-    patch<void>(`/api/home/notifications/${id}/read`),
+    patch<NotificationResponse>(`/api/home/notifications/${id}/read`),
 
   /** 알림 삭제 */
   deleteNotification: (id: number) =>

@@ -1,12 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Search, Star, ChevronDown, Sparkles, Bell } from 'lucide-react'
-import { CandleChart, ChartToolbar } from '@/components/chart'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useChartStore } from '@/stores/useChartStore'
+
+// TradingView requires window object - must be loaded client-side only
+const TVChartContainer = dynamic(
+  () => import('@/components/chart/TVChartContainer').then(mod => ({ default: mod.TVChartContainer })),
+  { ssr: false }
+)
+const TriggerPanel = dynamic(
+  () => import('@/components/chart/TriggerPanel').then(mod => ({ default: mod.TriggerPanel })),
+  { ssr: false }
+)
 
 // 샘플 워치리스트 데이터
 const watchlistData = [
@@ -18,13 +29,15 @@ const watchlistData = [
 ]
 
 export default function ChartPage() {
-  const [selectedSymbol, setSelectedSymbol] = useState('BTC/USDT')
+  const { selectedSymbol, setSelectedSymbol } = useChartStore()
   const [showWatchlist, setShowWatchlist] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredWatchlist = watchlistData.filter(item =>
     item.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const selectedData = watchlistData.find(w => w.symbol === selectedSymbol)
 
   return (
     <div className="flex flex-col h-[calc(100vh-40px-64px)]">
@@ -123,7 +136,11 @@ export default function ChartPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-title-1-bold text-label-normal">{selectedSymbol}</h2>
-                <Badge variant="positive" size="sm">+2.34%</Badge>
+                {selectedData && (
+                  <Badge variant={selectedData.change >= 0 ? 'positive' : 'danger'} size="sm">
+                    {selectedData.change >= 0 ? '+' : ''}{selectedData.change}%
+                  </Badge>
+                )}
               </div>
               <p className="text-body-2-regular text-label-assistive">Binance Futures · 영구 계약</p>
             </div>
@@ -144,13 +161,16 @@ export default function ChartPage() {
             </div>
           </div>
 
-          {/* Chart Toolbar */}
-          <ChartToolbar />
-
-          {/* Chart */}
+          {/* TradingView Chart (replaces CandleChart + ChartToolbar) */}
           <div className="flex-1 relative">
-            <CandleChart className="absolute inset-0" />
+            <TVChartContainer
+              symbol={selectedSymbol}
+              className="absolute inset-0"
+            />
           </div>
+
+          {/* Trigger Panel */}
+          <TriggerPanel />
 
           {/* Bottom Panel - Trade Info */}
           <div className="flex items-center justify-between px-4 py-3 border-t border-line-normal bg-gray-50">

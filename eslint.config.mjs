@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // TradingView Charting Library (third-party, not our code)
+    "public/charting_library/**",
   ]),
 ]);
 

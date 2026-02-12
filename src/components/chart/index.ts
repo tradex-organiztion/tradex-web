@@ -1,2 +1,2 @@
-export { CandleChart } from './CandleChart'
-export { ChartToolbar } from './ChartToolbar'
+export { TVChartContainer } from './TVChartContainer'
+export { TriggerPanel } from './TriggerPanel'

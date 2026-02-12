@@ -4,9 +4,12 @@ import { useState, useRef, useCallback } from 'react'
 import { Plus, Mic, Send, TrendingUp, Search, Target, Bell, Newspaper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useUIStore } from '@/stores'
+import { useUIStore, useChartStore, useTriggerStore } from '@/stores'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { aiApi } from '@/lib/api/ai'
+import { captureChartContext } from '@/lib/chart/chartContext'
+import { executeAICommands } from '@/lib/chart/aiCommandExecutor'
 
 interface Message {
   id: string
@@ -48,6 +51,8 @@ const SUGGESTION_PROMPTS = [
 export function TradexAIPanel() {
   const router = useRouter()
   const { isAIPanelOpen, setAIPanelOpen } = useUIStore()
+  const { widgetInstance } = useChartStore()
+  const { addTrigger } = useTriggerStore()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -62,7 +67,7 @@ export function TradexAIPanel() {
     return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
   }, [])
 
-  const handleSend = useCallback((text?: string) => {
+  const handleSend = useCallback(async (text?: string) => {
     const messageText = text || input
     if (!messageText.trim() || isLoading) return
 
@@ -77,24 +82,49 @@ export function TradexAIPanel() {
     setInput('')
     setIsLoading(true)
 
-    // Simulated AI response
-    setTimeout(() => {
+    // Capture chart context if widget is available
+    let chartContext
+    if (widgetInstance) {
+      chartContext = await captureChartContext(widgetInstance).catch(() => undefined)
+    }
+
+    // Call AI API
+    const response = await aiApi.chat({
+      message: messageText,
+      chartContext,
+    }).catch((err) => {
+      console.warn('AI chat error:', err)
+      return null
+    })
+
+    if (response) {
+      // Execute AI commands on chart if any
+      if (response.commands && widgetInstance) {
+        await executeAICommands(widgetInstance, response.commands, addTrigger).catch((err) => {
+          console.warn('AI command execution error:', err)
+        })
+      }
+
       const assistantMessage: Message = {
         id: generateMessageId(),
         role: 'assistant',
-        content: '최근 90일간 4시간봉 EMA(20, 50, 200) 골든크로스/ 데드크로스 전략 시뮬레이션 결과입니다.',
+        content: response.message,
         timestamp: getTimestamp(),
-        stats: {
-          winRate: '64.2%',
-          profit: '+ $12,450',
-          totalTrades: 42,
-          profitFactor: 2.1,
-        },
+        stats: response.stats,
       }
       setMessages((prev) => [...prev, assistantMessage])
-      setIsLoading(false)
-    }, 1500)
-  }, [input, isLoading, generateMessageId, getTimestamp])
+    } else {
+      const errorMessage: Message = {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: '죄송합니다. 응답을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.',
+        timestamp: getTimestamp(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    }
+
+    setIsLoading(false)
+  }, [input, isLoading, generateMessageId, getTimestamp, widgetInstance, addTrigger])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

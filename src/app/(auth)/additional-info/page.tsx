@@ -25,17 +25,15 @@ import { useAuthStore } from "@/stores/useAuthStore"
  *
  * POST /api/auth/complete-profile
  * {
- *   "exchangeName": "binance",  // 필수
- *   "apiKey": "xxx",            // 필수
+ *   "exchangeName": "BYBIT",     // 필수
+ *   "apiKey": "xxx",             // 필수
+ *   "apiSecret": "xxx",          // 필수
  * }
  */
 
 // 지원 거래소 목록
 const EXCHANGES = [
-  { value: "binance", label: "Binance" },
-  { value: "upbit", label: "Upbit" },
-  { value: "bybit", label: "Bybit" },
-  { value: "bithumb", label: "Bithumb" },
+  { value: "BYBIT", label: "Bybit" },
 ] as const
 
 type ExchangeName = (typeof EXCHANGES)[number]["value"]
@@ -43,11 +41,13 @@ type ExchangeName = (typeof EXCHANGES)[number]["value"]
 interface FormData {
   exchangeName: ExchangeName | ""
   apiKey: string
+  apiSecret: string
 }
 
 interface FormErrors {
   exchangeName?: string
   apiKey?: string
+  apiSecret?: string
 }
 
 export default function AdditionalInfoPage() {
@@ -57,6 +57,7 @@ export default function AdditionalInfoPage() {
   const [formData, setFormData] = useState<FormData>({
     exchangeName: "",
     apiKey: "",
+    apiSecret: "",
   })
 
   const [errors, setErrors] = useState<FormErrors>({})
@@ -73,6 +74,10 @@ export default function AdditionalInfoPage() {
 
     if (!formData.apiKey.trim()) {
       newErrors.apiKey = "거래소 API 키를 입력해주세요"
+    }
+
+    if (!formData.apiSecret.trim()) {
+      newErrors.apiSecret = "거래소 API Secret을 입력해주세요"
     }
 
     setErrors(newErrors)
@@ -92,17 +97,23 @@ export default function AdditionalInfoPage() {
 
     try {
       const response = await authApi.completeProfile({
-        exchangeName: formData.exchangeName as string,
+        exchangeName: formData.exchangeName as 'BYBIT',
         apiKey: formData.apiKey,
+        apiSecret: formData.apiSecret,
       })
 
       // 프로필 완성 상태 업데이트
       setProfileCompleted(true)
 
-      // 사용자 정보 업데이트
-      if (response.user) {
-        setUser(response.user)
-      }
+      // 사용자 정보 업데이트 (UserResponse 직접 반환)
+      setUser({
+        userId: response.userId,
+        email: response.email,
+        username: response.username,
+        profileImageUrl: response.profileImageUrl,
+        socialProvider: response.socialProvider,
+        profileCompleted: response.profileCompleted,
+      })
 
       // 메인 페이지로 이동
       router.replace("/home")
@@ -138,7 +149,7 @@ export default function AdditionalInfoPage() {
     setApiError(null)
   }
 
-  const isFormValid = formData.exchangeName && formData.apiKey.trim()
+  const isFormValid = formData.exchangeName && formData.apiKey.trim() && formData.apiSecret.trim()
 
   return (
     <AuthLayout>
@@ -198,6 +209,17 @@ export default function AdditionalInfoPage() {
               onChange={(e) => handleChange("apiKey", e.target.value)}
               message={errors.apiKey}
               messageType={errors.apiKey ? "error" : undefined}
+              disabled={isLoading}
+            />
+
+            {/* API Secret */}
+            <TextField
+              label="거래소 API Secret 입력"
+              placeholder="거래소 API Secret을 입력해주세요."
+              value={formData.apiSecret}
+              onChange={(e) => handleChange("apiSecret", e.target.value)}
+              message={errors.apiSecret}
+              messageType={errors.apiSecret ? "error" : undefined}
               disabled={isLoading}
             />
           </div>

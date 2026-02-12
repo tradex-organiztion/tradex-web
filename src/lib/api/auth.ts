@@ -36,6 +36,7 @@ export interface LoginResponse {
   user: User
   accessToken: string
   refreshToken: string
+  tokenType: string
 }
 
 /**
@@ -54,6 +55,7 @@ export interface SignupResponse {
   user: User
   accessToken: string
   refreshToken: string
+  tokenType: string
 }
 
 /**
@@ -61,15 +63,20 @@ export interface SignupResponse {
  * POST /api/auth/complete-profile
  */
 export interface CompleteProfileRequest {
-  username?: string        // 선택
-  exchangeName: string     // 필수: BYBIT 등
-  apiKey: string           // 필수
-  apiSecret?: string       // 선택
+  username?: string          // 선택 (2-100자)
+  exchangeName: 'BYBIT'     // 필수
+  apiKey: string             // 필수
+  apiSecret: string          // 필수
 }
 
-export interface CompleteProfileResponse {
-  success: boolean
-  user: User
+/** UserResponse - /api/auth/me, /api/auth/complete-profile 공통 */
+export interface UserResponse {
+  userId: number
+  email: string
+  username: string
+  profileImageUrl: string
+  socialProvider: 'LOCAL' | 'GOOGLE' | 'KAKAO' | 'NAVER'
+  profileCompleted: boolean
 }
 
 // 토큰 갱신
@@ -169,11 +176,11 @@ export const authApi = {
 
   /** 현재 사용자 정보 조회 */
   me: () =>
-    get<User>('/api/auth/me'),
+    get<UserResponse>('/api/auth/me'),
 
   /** 프로필 완성 (거래소 API 연동) */
   completeProfile: (data: CompleteProfileRequest) =>
-    post<CompleteProfileResponse>('/api/auth/complete-profile', data),
+    post<UserResponse>('/api/auth/complete-profile', data),
 
   /** 토큰 갱신 */
   refreshToken: (data: RefreshTokenRequest) =>
