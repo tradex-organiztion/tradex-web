@@ -82,18 +82,21 @@ export function RiskScoreCard({
             {items.map((item, index) => {
               const config = levelConfig[item.level];
               return (
-                <div key={index} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between h-5">
-                    <p className="text-body-2-medium text-label-normal">{item.label}</p>
-                    <p className={cn("text-body-2-bold", config.textColor)}>
-                      {config.label}
-                    </p>
-                  </div>
-                  <div className="w-full h-2 bg-element-primary-disabled rounded-full">
-                    <div
-                      className={cn("h-2 rounded-full", config.bgColor)}
-                      style={{ width: `${item.percentage}%` }}
-                    />
+                <div key={index}>
+                  {index > 0 && <div className="h-px bg-gray-100 mb-5" />}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between h-5">
+                      <p className="text-body-2-medium text-label-normal">{item.label}</p>
+                      <p className={cn("text-body-2-bold", config.textColor)}>
+                        {config.label}
+                      </p>
+                    </div>
+                    <div className="w-full h-2 bg-element-primary-disabled rounded-full">
+                      <div
+                        className={cn("h-2 rounded-full", config.bgColor)}
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               );

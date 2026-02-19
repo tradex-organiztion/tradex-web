@@ -1,4 +1,4 @@
-import { get } from './client'
+import { get, post, patch, del } from './client'
 
 /**
  * Futures API
@@ -167,4 +167,87 @@ export const futuresApi = {
     get<ClosedPositionsSummaryResponse>('/api/futures/closed-positions/summary', {
       params: { period },
     }),
+}
+
+// ============================================================
+// Position CRUD API
+// ============================================================
+
+export interface PositionRequest {
+  symbol: string
+  side: PositionSide
+  leverage: number
+  entryPrice: number
+  size: number
+  entryTime?: string
+}
+
+export interface PositionResponse {
+  id: number
+  symbol: string
+  side: PositionSide
+  leverage: number
+  entryPrice: number
+  size: number
+  status: 'OPEN' | 'CLOSED'
+  pnl: number
+  entryTime: string
+  exitTime?: string
+  createdAt: string
+}
+
+export const positionsApi = {
+  /** 포지션 수동 생성 (매매일지 자동 생성) */
+  create: (data: PositionRequest) =>
+    post<PositionResponse>('/api/futures/positions', data),
+
+  /** 포지션 수정 */
+  update: (positionId: number, data: PositionRequest) =>
+    patch<PositionResponse>(`/api/futures/positions/${positionId}`, data),
+
+  /** 포지션 삭제 (연결된 오더, 매매일지도 삭제) */
+  delete: (positionId: number) =>
+    del<void>(`/api/futures/positions/${positionId}`),
+}
+
+// ============================================================
+// Order API
+// ============================================================
+
+export interface OrderRequest {
+  side: 'BUY' | 'SELL'
+  type: 'MARKET' | 'LIMIT'
+  price: number
+  quantity: number
+  executedAt?: string
+}
+
+export interface OrderResponse {
+  id: number
+  positionId: number
+  side: 'BUY' | 'SELL'
+  type: 'MARKET' | 'LIMIT'
+  price: number
+  quantity: number
+  fee: number
+  executedAt: string
+  createdAt: string
+}
+
+export const ordersApi = {
+  /** 포지션에 오더 추가 */
+  create: (positionId: number, data: OrderRequest) =>
+    post<OrderResponse>(`/api/positions/${positionId}/orders`, data),
+
+  /** 오더 수정 */
+  update: (orderId: number, data: OrderRequest) =>
+    patch<OrderResponse>(`/api/orders/${orderId}`, data),
+
+  /** 오더 삭제 */
+  delete: (orderId: number) =>
+    del<void>(`/api/orders/${orderId}`),
+
+  /** 오더를 다른 포지션으로 이동 */
+  move: (orderId: number, targetPositionId: number) =>
+    patch<OrderResponse>(`/api/orders/${orderId}/move`, { targetPositionId }),
 }

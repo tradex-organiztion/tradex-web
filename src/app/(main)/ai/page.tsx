@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Mic, Send, TrendingUp, Search, Target, Bell, Newspaper } from 'lucide-react'
+import { Plus, Mic, Send, TrendingUp, Search, Target, Bell, Newspaper, MessageSquare, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
+import { useAIChatStore } from '@/stores'
 
 // Suggested prompts from Figma design
 const SUGGESTED_PROMPTS = [
@@ -38,11 +39,24 @@ const ACTION_MENU_ITEMS = [
   { icon: '🔔', label: '트리거 설정' },
 ]
 
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (days === 0) return '오늘'
+  if (days === 1) return '어제'
+  if (days < 7) return `${days}일 전`
+  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+}
+
 export default function TradexAIPage() {
   const router = useRouter()
   const [inputValue, setInputValue] = useState('')
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
   const actionMenuRef = useRef<HTMLDivElement>(null)
+  const { conversations, createConversation, deleteConversation, setActiveConversation } = useAIChatStore()
 
   // Close menu on outside click
   useEffect(() => {
@@ -61,8 +75,19 @@ export default function TradexAIPage() {
 
   const handleSubmit = () => {
     if (!inputValue.trim()) return
-    // Navigate to chat page with the prompt
-    router.push(`/ai/chat?q=${encodeURIComponent(inputValue)}`)
+    // Create a new conversation and navigate to chat page
+    const convId = createConversation()
+    router.push(`/ai/chat?id=${convId}&q=${encodeURIComponent(inputValue)}`)
+  }
+
+  const handleConversationClick = (convId: string) => {
+    setActiveConversation(convId)
+    router.push(`/ai/chat?id=${convId}`)
+  }
+
+  const handleDeleteConversation = (e: React.MouseEvent, convId: string) => {
+    e.stopPropagation()
+    deleteConversation(convId)
   }
 
   return (
@@ -81,7 +106,7 @@ export default function TradexAIPage() {
         {/* Prompt Input - Figma: 700x52px, rounded-full, shadow-emphasize */}
         <div className="relative" ref={actionMenuRef}>
           <div className="flex items-center h-[52px] bg-white border border-[#D7D7D7] rounded-full px-3 gap-4 shadow-emphasize">
-            {/* Plus Button - Figma: 36x36px ghost button */}
+            {/* Plus Button */}
             <Button
               variant="ghost"
               size="icon"
@@ -91,7 +116,7 @@ export default function TradexAIPage() {
               <Plus className="w-5 h-5 text-gray-800" />
             </Button>
 
-            {/* Input - Figma: Body 1/Regular, placeholder #BABABA */}
+            {/* Input */}
             <input
               type="text"
               value={inputValue}
@@ -101,7 +126,7 @@ export default function TradexAIPage() {
               className="flex-1 text-body-1-regular text-label-normal placeholder:text-label-disabled focus:outline-none bg-transparent"
             />
 
-            {/* Mic/Send Button - Figma: 36x36px ghost button */}
+            {/* Mic/Send Button */}
             {inputValue.trim() ? (
               <Button
                 variant="ghost"
@@ -131,7 +156,6 @@ export default function TradexAIPage() {
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-body-2-regular text-label-neutral hover:bg-gray-50 transition-colors"
                   onClick={() => {
                     setIsActionMenuOpen(false)
-                    // TODO: Handle action
                   }}
                 >
                   <span>{item.icon}</span>
@@ -142,28 +166,84 @@ export default function TradexAIPage() {
           )}
         </div>
 
-        {/* Action Samples - Figma: column layout, each card has padding 12px, gap 16px */}
-        <div className="flex flex-col">
-          {SUGGESTED_PROMPTS.map((prompt, index) => {
-            const IconComponent = prompt.icon
-            return (
-              <button
-                key={index}
-                onClick={() => handlePromptClick(prompt.text)}
-                className="flex items-center gap-4 px-3 py-3 text-left rounded-[200px] hover:bg-gray-50 transition-colors"
-              >
-                {/* Icon Container - Figma: 20x20px */}
-                <div className="w-5 h-5 shrink-0 flex items-center justify-center">
-                  <IconComponent className="w-[14px] h-[14px] text-gray-600" />
-                </div>
-                {/* Text - Figma: Body 2/Regular, #767676 */}
-                <span className="text-body-2-regular text-gray-600">
-                  {prompt.text}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+        {/* Conversation History or Suggestion Prompts */}
+        {conversations.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {/* Recent conversations */}
+            <div className="flex items-center justify-between px-3 pt-2">
+              <span className="text-body-2-bold text-label-neutral">최근 대화</span>
+              <span className="text-caption-regular text-label-assistive">{conversations.length}개</span>
+            </div>
+            <div className="flex flex-col">
+              {conversations.slice(0, 5).map((conv) => (
+                <button
+                  key={conv.id}
+                  onClick={() => handleConversationClick(conv.id)}
+                  className="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                >
+                  <MessageSquare className="w-4 h-4 text-label-assistive shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body-2-medium text-label-normal truncate">{conv.title}</p>
+                    <p className="text-caption-regular text-label-assistive">
+                      {conv.messages.length}개 메시지 · {formatDate(conv.updatedAt)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => handleDeleteConversation(e, conv.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-label-assistive" />
+                  </button>
+                </button>
+              ))}
+            </div>
+
+            {/* Divider + suggestion prompts */}
+            <div className="border-t border-line-normal mt-2 pt-2">
+              <span className="text-body-2-bold text-label-neutral px-3">추천 질문</span>
+            </div>
+            <div className="flex flex-col">
+              {SUGGESTED_PROMPTS.slice(0, 3).map((prompt, index) => {
+                const IconComponent = prompt.icon
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handlePromptClick(prompt.text)}
+                    className="flex items-center gap-4 px-3 py-3 text-left rounded-[200px] hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                      <IconComponent className="w-[14px] h-[14px] text-gray-600" />
+                    </div>
+                    <span className="text-body-2-regular text-gray-600">
+                      {prompt.text}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          /* No history - show all suggestions */
+          <div className="flex flex-col">
+            {SUGGESTED_PROMPTS.map((prompt, index) => {
+              const IconComponent = prompt.icon
+              return (
+                <button
+                  key={index}
+                  onClick={() => handlePromptClick(prompt.text)}
+                  className="flex items-center gap-4 px-3 py-3 text-left rounded-[200px] hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                    <IconComponent className="w-[14px] h-[14px] text-gray-600" />
+                  </div>
+                  <span className="text-body-2-regular text-gray-600">
+                    {prompt.text}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

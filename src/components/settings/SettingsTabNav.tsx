@@ -23,10 +23,10 @@ export function SettingsTabNav() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              "w-[120px] h-[44px] flex items-center justify-center px-2 transition-colors",
+              "w-[120px] h-14 flex items-center justify-center px-2 transition-colors",
               isActive
-                ? "text-body-1-bold text-label-normal border-b-2 border-label-normal"
-                : "text-body-1-regular text-label-disabled hover:text-label-neutral"
+                ? "text-title-2-bold text-label-normal border-b-2 border-gray-800"
+                : "text-title-2-regular text-label-disabled hover:text-label-neutral"
             )}
           >
             {tab.label}

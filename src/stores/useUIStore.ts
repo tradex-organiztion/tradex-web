@@ -11,6 +11,10 @@ interface UIState {
   // AI Panel
   isAIPanelOpen: boolean
 
+  // Settings Modal
+  isSettingsOpen: boolean
+  settingsTab: 'account' | 'general' | 'notification' | 'subscription'
+
   // Theme
   theme: Theme
 
@@ -23,6 +27,9 @@ interface UIState {
   setSidebarCollapsed: (collapsed: boolean) => void
   toggleAIPanel: () => void
   setAIPanelOpen: (open: boolean) => void
+  openSettings: (tab?: 'account' | 'general' | 'notification' | 'subscription') => void
+  closeSettings: () => void
+  setSettingsTab: (tab: 'account' | 'general' | 'notification' | 'subscription') => void
   setTheme: (theme: Theme) => void
   setIsMobile: (isMobile: boolean) => void
 }
@@ -34,6 +41,8 @@ export const useUIStore = create<UIState>()(
       isSidebarOpen: true,
       isSidebarCollapsed: false,
       isAIPanelOpen: false,
+      isSettingsOpen: false,
+      settingsTab: 'account',
       theme: 'system',
       isMobile: false,
 
@@ -52,6 +61,15 @@ export const useUIStore = create<UIState>()(
 
       setAIPanelOpen: (isAIPanelOpen) =>
         set({ isAIPanelOpen }),
+
+      openSettings: (tab = 'account') =>
+        set({ isSettingsOpen: true, settingsTab: tab }),
+
+      closeSettings: () =>
+        set({ isSettingsOpen: false }),
+
+      setSettingsTab: (settingsTab) =>
+        set({ settingsTab }),
 
       setTheme: (theme) =>
         set({ theme }),

@@ -1,4 +1,4 @@
-import { apiClient } from './client'
+import { apiClient, get, post, del } from './client'
 import type { ChartContext } from '@/lib/chart/chartContext'
 import type { AIChartCommand } from '@/lib/chart/aiCommandExecutor'
 
@@ -280,4 +280,45 @@ function generateMockResponse(message: string): AIChatResponse {
       profitFactor: 2.1,
     },
   }
+}
+
+// ============================================================
+// Chat Session API
+// ============================================================
+
+export interface ChatSessionResponse {
+  id: number
+  title: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatMessageResponse {
+  id: number
+  role: 'USER' | 'ASSISTANT'
+  content: string
+  createdAt: string
+}
+
+export interface ChatHistoryResponse {
+  sessionId: number
+  messages: ChatMessageResponse[]
+}
+
+export const chatSessionApi = {
+  /** 채팅 세션 목록 조회 */
+  getSessions: () =>
+    get<ChatSessionResponse[]>('/api/chat/sessions'),
+
+  /** 새 채팅 세션 생성 */
+  createSession: () =>
+    post<ChatSessionResponse>('/api/chat/sessions'),
+
+  /** 채팅 기록 조회 */
+  getHistory: (sessionId: number) =>
+    get<ChatHistoryResponse>(`/api/chat/sessions/${sessionId}/history`),
+
+  /** 채팅 세션 삭제 */
+  deleteSession: (sessionId: number) =>
+    del<void>(`/api/chat/sessions/${sessionId}`),
 }

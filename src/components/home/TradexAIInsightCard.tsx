@@ -20,14 +20,15 @@ export function TradexAIInsightCard({ className }: TradexAIInsightCardProps) {
   return (
     <div
       className={cn(
-        "flex-1 min-w-[200px] rounded-[10px] bg-gray-800 px-6 py-5 flex flex-col justify-between overflow-hidden",
+        "flex-1 min-w-[200px] rounded-[10px] px-6 py-5 flex flex-col justify-between overflow-hidden",
         className
       )}
+      style={{ backgroundColor: '#5B21B6' }}
     >
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-body-1-bold text-white">Tradex AI Insight</p>
-          <p className="text-body-2-regular text-gray-300">
+          <p className="text-body-2-regular text-symbol-main">
             오늘의 시장 현황과 이슈를 분석한
             <br />
             인사이트 리포트가 도착했어요!
@@ -35,7 +36,7 @@ export function TradexAIInsightCard({ className }: TradexAIInsightCardProps) {
         </div>
         <Link
           href="/ai"
-          className="w-full bg-white text-label-normal text-body-1-medium text-center py-2.5 px-3 rounded-lg hover:bg-gray-100 transition-colors"
+          className="w-full border border-white/60 text-white text-body-1-medium text-center py-2.5 px-3 rounded-lg hover:bg-white/10 transition-colors"
         >
           보러가기
         </Link>

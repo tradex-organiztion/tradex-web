@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useState, useRef, useEffect } from 'react'
 import {
   Tooltip,
   TooltipContent,
@@ -56,6 +57,37 @@ function IconJournal({ className }: { className?: string }) {
       <path d="M9.33333 1.33333H4C3.64638 1.33333 3.30724 1.47381 3.05719 1.72386C2.80714 1.97391 2.66667 2.31304 2.66667 2.66667V13.3333C2.66667 13.687 2.80714 14.0261 3.05719 14.2761C3.30724 14.5262 3.64638 14.6667 4 14.6667H12C12.3536 14.6667 12.6928 14.5262 12.9428 14.2761C13.1929 14.0261 13.3333 13.687 13.3333 13.3333V5.33333L9.33333 1.33333Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M9.33333 1.33333V5.33333H13.3333" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M5.33333 8.66667L7.33333 10.6667L10.6667 6.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconTradingSystem({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 2V4M8 12V14M4 8H2M14 8H12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M12.5 3.5L10.8 5.2M5.2 10.8L3.5 12.5M12.5 12.5L10.8 10.8M5.2 5.2L3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function IconScenario({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 1.33333V4.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M8 4.66667C9.10457 4.66667 10 5.5621 10 6.66667C10 7.77124 9.10457 8.66667 8 8.66667C6.89543 8.66667 6 7.77124 6 6.66667C6 5.5621 6.89543 4.66667 8 4.66667Z" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M8 8.66667V14.6667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M4.66667 12L8 14.6667L11.3333 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconReview({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.33333 1.33333H4C3.64638 1.33333 3.30724 1.47381 3.05719 1.72386C2.80714 1.97391 2.66667 2.31304 2.66667 2.66667V13.3333C2.66667 13.687 2.80714 14.0261 3.05719 14.2761C3.30724 14.5262 3.64638 14.6667 4 14.6667H12C12.3536 14.6667 12.6928 14.5262 12.9428 14.2761C13.1929 14.0261 13.3333 13.687 13.3333 13.3333V5.33333L9.33333 1.33333Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9.33333 1.33333V5.33333H13.3333" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 8.66667L7.33333 10L10 7.33333" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -122,16 +154,19 @@ const navSections: NavSection[] = [
     title: 'Chart',
     items: [
       { label: '차트 분석', href: '/chart', icon: IconChart },
+      { label: '트레이딩 시스템', href: '/chart#trading-system', icon: IconTradingSystem },
     ],
   },
   {
     title: 'Trading Log',
     items: [
-      { label: '매매일지 관리', href: '/trading/journal', icon: IconJournal },
+      { label: '매매 기록 관리', href: '/trading/journal', icon: IconJournal },
+      { label: '매매 원칙', href: '/trading/principles', icon: IconScenario },
+      { label: '매매 복기', href: '/trading/journal#review', icon: IconReview },
     ],
   },
   {
-    title: 'Analysis',
+    title: 'Trading Analysis',
     items: [
       { label: '전략 분석', href: '/analysis/strategy', icon: IconStrategy },
       { label: '리스크 패턴', href: '/analysis/risk', icon: IconRisk },
@@ -140,11 +175,152 @@ const navSections: NavSection[] = [
   },
 ]
 
+// 프로필 호버 드롭다운 컴포넌트
+function ProfileDropdown({
+  user,
+  isSidebarCollapsed,
+  onLogout,
+  onOpenSettings,
+}: {
+  user: { username?: string; profileImageUrl?: string | null } | null
+  isSidebarCollapsed: boolean
+  onLogout: () => void
+  onOpenSettings: (tab: 'account' | 'general' | 'notification') => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setIsOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setIsOpen(false), 150)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
+  const profileAvatar = (
+    <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+      {user?.profileImageUrl ? (
+        <Image
+          src={user.profileImageUrl}
+          alt={user.username || 'User'}
+          width={28}
+          height={28}
+          className="size-full object-cover"
+        />
+      ) : (
+        <span className="text-caption-medium text-gray-500">
+          {user?.username?.charAt(0) || 'U'}
+        </span>
+      )}
+    </div>
+  )
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Profile Trigger */}
+      {!isSidebarCollapsed ? (
+        <button className="flex w-full items-center gap-3 rounded-lg px-0 py-1 text-left transition-colors hover:bg-gray-50">
+          {profileAvatar}
+          <span className="text-body-2-bold text-label-normal">
+            {user?.username || 'User'}
+          </span>
+        </button>
+      ) : (
+        <button className="flex w-full justify-center py-1">
+          {profileAvatar}
+        </button>
+      )}
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div
+          className={cn(
+            'absolute z-50 min-w-[160px] rounded-lg border border-line-normal bg-white py-1 shadow-emphasize',
+            isSidebarCollapsed
+              ? 'bottom-0 left-full ml-2'
+              : 'bottom-full left-0 mb-2'
+          )}
+        >
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-body-2-medium text-label-normal transition-colors hover:bg-gray-50"
+            onClick={() => {
+              setIsOpen(false)
+              onOpenSettings('account')
+            }}
+          >
+            <svg className="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M2 14C2 11.7909 4.68629 10 8 10C11.3137 10 14 11.7909 14 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+            계정 설정
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-body-2-medium text-label-normal transition-colors hover:bg-gray-50"
+            onClick={() => {
+              setIsOpen(false)
+              onOpenSettings('notification')
+            }}
+          >
+            <svg className="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5.33333C12 4.27247 11.5786 3.25505 10.8284 2.50491C10.0783 1.75476 9.06087 1.33333 8 1.33333C6.93913 1.33333 5.92172 1.75476 5.17157 2.50491C4.42143 3.25505 4 4.27247 4 5.33333C4 10 2 11.3333 2 11.3333H14C14 11.3333 12 10 12 5.33333Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.15333 13.3333C8.97268 13.6451 8.71003 13.9027 8.39434 14.0773C8.07865 14.2519 7.72165 14.3371 7.36133 14.3238C7.00101 14.3105 6.65134 14.1993 6.34914 14.0023C6.04695 13.8052 5.80351 13.5296 5.64533 13.2053" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            알림 설정
+          </button>
+          <div className="my-1 border-t border-line-normal" />
+          <button
+            onClick={() => {
+              setIsOpen(false)
+              onLogout()
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-body-2-medium text-label-danger transition-colors hover:bg-gray-50"
+          >
+            <svg className="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10.6667 11.3333L14 8L10.6667 4.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 8H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            로그아웃
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { isSidebarCollapsed, setSidebarCollapsed } = useUIStore()
+  const { isSidebarCollapsed, setSidebarCollapsed, openSettings, isMobile, setIsMobile } = useUIStore()
   const { user, isDemoMode, logout } = useAuthStore()
+
+  // 화면 크기 감지 및 모바일 모드 설정
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024
+      setIsMobile(mobile)
+      if (mobile && !isSidebarCollapsed) {
+        setSidebarCollapsed(true)
+      }
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [setIsMobile, setSidebarCollapsed, isSidebarCollapsed])
 
   const handleLoginClick = () => {
     logout() // 데모 모드 해제 및 상태 초기화
@@ -152,22 +328,35 @@ export function Sidebar() {
   }
 
   const isActive = (href: string) => {
-    if (href === '/home') return pathname === '/home'
-    if (href === '/ai') return pathname === '/ai' || pathname.startsWith('/ai/')
-    return pathname.startsWith(href.split('/').slice(0, 3).join('/'))
+    const basePath = href.split('#')[0]
+    if (basePath === '/home') return pathname === '/home'
+    if (basePath === '/ai') return pathname === '/ai' || pathname.startsWith('/ai/')
+    if (href === basePath) {
+      return pathname.startsWith(basePath.split('/').slice(0, 3).join('/'))
+    }
+    return pathname === basePath
   }
 
   return (
     <TooltipProvider delayDuration={0}>
+      {/* Mobile overlay backdrop */}
+      {isMobile && !isSidebarCollapsed && (
+        <div
+          className="fixed inset-0 z-30 bg-black/30"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
       <aside
         className={cn(
           'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-gray-300 bg-white shadow-normal transition-all duration-300',
-          isSidebarCollapsed ? 'w-16' : 'w-[200px]'
+          isMobile
+            ? isSidebarCollapsed ? '-translate-x-full w-[200px]' : 'translate-x-0 w-[200px]'
+            : isSidebarCollapsed ? 'w-16' : 'w-[200px]'
         )}
       >
         {/* Header: Logo + Toggle */}
         <div className="flex h-16 items-center justify-between border-b border-gray-300 px-5">
-          {!isSidebarCollapsed ? (
+          {(!isSidebarCollapsed || isMobile) ? (
             <>
               <Link href="/home" className="flex items-center">
                 <Image
@@ -201,7 +390,7 @@ export function Sidebar() {
             {navSections.map((section, sectionIndex) => (
               <div key={sectionIndex} className="flex flex-col gap-1">
                 {/* Section Title */}
-                {section.title && !isSidebarCollapsed && (
+                {section.title && (!isSidebarCollapsed || isMobile) && (
                   <div className="px-2 py-1">
                     <span className="text-caption-medium text-label-disabled">
                       {section.title}
@@ -225,7 +414,7 @@ export function Sidebar() {
                       )}
                     >
                       <Icon className="size-4 shrink-0" />
-                      {!isSidebarCollapsed && (
+                      {(!isSidebarCollapsed || isMobile) && (
                         <>
                           <span className="flex-1">{item.label}</span>
                           {item.badge && (
@@ -238,7 +427,7 @@ export function Sidebar() {
                     </Link>
                   )
 
-                  if (isSidebarCollapsed) {
+                  if (isSidebarCollapsed && !isMobile) {
                     return (
                       <Tooltip key={item.href}>
                         <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
@@ -265,7 +454,7 @@ export function Sidebar() {
         <div className="border-t border-gray-300 px-5 py-3">
           {isDemoMode ? (
             // 데모 모드일 때: 로그인 버튼 표시
-            !isSidebarCollapsed ? (
+            (!isSidebarCollapsed || isMobile) ? (
               <button
                 onClick={handleLoginClick}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-body-2-medium text-white transition-colors hover:bg-black-light"
@@ -294,54 +483,16 @@ export function Sidebar() {
               </Tooltip>
             )
           ) : (
-            // 로그인 상태일 때: 유저 프로필 표시
-            !isSidebarCollapsed ? (
-              <Link href="/settings/account" className="flex items-center gap-3">
-                <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
-                  {user?.profileImageUrl ? (
-                    <Image
-                      src={user.profileImageUrl}
-                      alt={user.username || 'User'}
-                      width={28}
-                      height={28}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-caption-medium text-gray-500">
-                      {user?.username?.charAt(0) || 'U'}
-                    </span>
-                  )}
-                </div>
-                <span className="text-body-2-bold text-label-normal">
-                  {user?.username || 'User'}
-                </span>
-              </Link>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href="/settings/account" className="flex justify-center">
-                    <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
-                      {user?.profileImageUrl ? (
-                        <Image
-                          src={user.profileImageUrl}
-                          alt={user.username || 'User'}
-                          width={28}
-                          height={28}
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-caption-medium text-gray-500">
-                          {user?.username?.charAt(0) || 'U'}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  {user?.username || 'User'}
-                </TooltipContent>
-              </Tooltip>
-            )
+            // 로그인 상태일 때: 유저 프로필 + 호버 드롭다운
+            <ProfileDropdown
+              user={user}
+              isSidebarCollapsed={isSidebarCollapsed && !isMobile}
+              onLogout={() => {
+                logout()
+                router.push('/login')
+              }}
+              onOpenSettings={openSettings}
+            />
           )}
         </div>
       </aside>

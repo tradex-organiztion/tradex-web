@@ -103,7 +103,7 @@ export default function HomePage() {
           <h1 className="text-title-1-bold text-gray-800">
             안녕하세요 {userName}님!
           </h1>
-          <p className="text-body-1-regular text-gray-600">
+          <p className="text-body-1-regular text-symbol-main">
             데이터를 불러오는 중입니다...
           </p>
         </div>
@@ -117,7 +117,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="flex gap-5">
-            <div className="w-[669px] h-[300px] bg-gray-100 rounded-[16px] animate-pulse" />
+            <div className="w-full max-w-[669px] h-[300px] bg-gray-100 rounded-[16px] animate-pulse" />
             <div className="flex-1 h-[300px] bg-gray-100 rounded-[16px] animate-pulse" />
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function HomePage() {
           <h1 className="text-title-1-bold text-gray-800">
             안녕하세요 {userName}님!
           </h1>
-          <p className="text-body-1-regular text-gray-600">
+          <p className="text-body-1-regular text-symbol-main">
             {error || "오늘도 성공적인 트레이딩 되세요."}
           </p>
         </div>
@@ -159,7 +159,7 @@ export default function HomePage() {
               title="총 자산 (Total Assets)"
               value={formatCurrency(data.todayTotalAsset)}
               subValue={formatCurrency(usdToKrw(data.todayTotalAsset), "KRW")}
-              badge={{
+              change={{
                 label: formatPercent(data.assetChangeRate),
                 variant: data.assetChangeRate >= 0 ? "positive" : "danger",
               }}
@@ -168,7 +168,7 @@ export default function HomePage() {
               title="이번 달 실현 손익(PnL)"
               value={formatCurrency(data.thisMonthPnl)}
               subValue={formatCurrency(usdToKrw(data.thisMonthPnl), "KRW")}
-              badge={{
+              change={{
                 label: formatPercent(data.achievementRate),
                 variant: data.achievementRate >= 0 ? "positive" : "danger",
               }}
@@ -177,7 +177,7 @@ export default function HomePage() {
               title="최근 7일 승률(Win Rate)"
               value={`${data.winRate.toFixed(1)}%`}
               subValue={`${data.totalWins}승 ${data.totalLosses}패`}
-              badge={{
+              change={{
                 label: formatPercent(0),
                 variant: "positive",
               }}
@@ -186,7 +186,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex gap-5">
-            <WeeklyProfitChart className="w-[669px] shrink-0" chartData={data.pnlChart} />
+            <WeeklyProfitChart className="w-full max-w-[669px] shrink-0" chartData={data.pnlChart} />
             <RiskScoreCard className="flex-1" />
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function HomePage() {
         <h1 className="text-title-1-bold text-gray-800">
           안녕하세요 {userName}님!
         </h1>
-        <p className="text-body-1-regular text-gray-600">
+        <p className="text-body-1-regular text-symbol-main">
           오늘도 성공적인 트레이딩 되세요. 현재 시장 변동성이 확대되고 있습니다.
         </p>
       </div>
@@ -214,7 +214,7 @@ export default function HomePage() {
             title="총 자산 (Total Assets)"
             value={formatCurrency(summaryData.todayTotalAsset)}
             subValue={formatCurrency(usdToKrw(summaryData.todayTotalAsset), "KRW")}
-            badge={{
+            change={{
               label: formatPercent(summaryData.assetChangeRate),
               variant: summaryData.assetChangeRate >= 0 ? "positive" : "danger",
             }}
@@ -223,7 +223,7 @@ export default function HomePage() {
             title="이번 달 실현 손익(PnL)"
             value={formatCurrency(summaryData.thisMonthPnl)}
             subValue={formatCurrency(usdToKrw(summaryData.thisMonthPnl), "KRW")}
-            badge={{
+            change={{
               label: formatPercent(summaryData.achievementRate),
               variant: summaryData.achievementRate >= 0 ? "positive" : "danger",
             }}
@@ -232,7 +232,7 @@ export default function HomePage() {
             title="최근 7일 승률(Win Rate)"
             value={`${summaryData.winRate.toFixed(1)}%`}
             subValue={`${summaryData.totalWins}승 ${summaryData.totalLosses}패`}
-            badge={{
+            change={{
               label:
                 summaryData.winRate > 50
                   ? `+${(summaryData.winRate - 50).toFixed(1)}%`
@@ -246,7 +246,7 @@ export default function HomePage() {
         {/* Bottom Section */}
         <div className="flex gap-5">
           {/* Note: 20px gap = gap-5 */}
-          <WeeklyProfitChart className="w-[669px] shrink-0" chartData={summaryData.pnlChart} />
+          <WeeklyProfitChart className="w-full max-w-[669px] shrink-0" chartData={summaryData.pnlChart} />
           <RiskScoreCard className="flex-1" />
         </div>
       </div>

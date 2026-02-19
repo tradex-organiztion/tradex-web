@@ -1,28 +1,16 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Mic, Send, TrendingUp, Search, Target, Bell, Newspaper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useUIStore, useChartStore, useTriggerStore } from '@/stores'
+import { useUIStore, useChartStore, useTriggerStore, useAIChatStore, generateMessageId } from '@/stores'
+import type { AIMessage } from '@/stores'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { aiApi } from '@/lib/api/ai'
+import { aiApi, chatSessionApi } from '@/lib/api/ai'
 import { captureChartContext } from '@/lib/chart/chartContext'
 import { executeAICommands } from '@/lib/chart/aiCommandExecutor'
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: string
-  stats?: {
-    winRate: string
-    profit: string
-    totalTrades: number
-    profitFactor: number
-  }
-}
 
 // Suggestion prompts matching Figma design
 const SUGGESTION_PROMPTS = [
@@ -53,78 +41,127 @@ export function TradexAIPanel() {
   const { isAIPanelOpen, setAIPanelOpen } = useUIStore()
   const { widgetInstance } = useChartStore()
   const { addTrigger } = useTriggerStore()
-  const [messages, setMessages] = useState<Message[]>([])
+  const {
+    conversations,
+    activeConversationId,
+    createConversation,
+    addMessage,
+    updateMessageContent,
+    setActiveConversation,
+  } = useAIChatStore()
+
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const messageIdRef = useRef(0)
+  const [panelConvId, setPanelConvId] = useState<string | null>(
+    activeConversationId
+  )
+  const sessionsLoaded = useRef(false)
 
-  const generateMessageId = useCallback(() => {
-    messageIdRef.current += 1
-    return `msg-${messageIdRef.current}`
-  }, [])
+  const currentConv = conversations.find((c) => c.id === panelConvId)
+  const messages = currentConv?.messages || []
+
+  // Load backend sessions when panel opens
+  useEffect(() => {
+    if (!isAIPanelOpen || sessionsLoaded.current) return
+    sessionsLoaded.current = true
+
+    chatSessionApi.getSessions().catch((err) => {
+      console.warn('Failed to load chat sessions:', err.message)
+    })
+  }, [isAIPanelOpen])
 
   const getTimestamp = useCallback(() => {
     return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
   }, [])
 
+  const handleNewConversation = useCallback(() => {
+    const localId = createConversation('사이드 패널 대화')
+    setPanelConvId(localId)
+
+    // Best-effort backend session creation
+    chatSessionApi.createSession().catch((err) => {
+      console.warn('Failed to create backend session:', err.message)
+    })
+  }, [createConversation])
+
   const handleSend = useCallback(async (text?: string) => {
     const messageText = text || input
     if (!messageText.trim() || isLoading) return
 
-    const userMessage: Message = {
+    // Ensure we have a conversation
+    let convId = panelConvId
+    if (!convId) {
+      convId = createConversation('사이드 패널 대화')
+      setPanelConvId(convId)
+
+      // Best-effort backend session creation
+      chatSessionApi.createSession().catch((err) => {
+        console.warn('Failed to create backend session:', err.message)
+      })
+    }
+
+    const userMessage: AIMessage = {
       id: generateMessageId(),
       role: 'user',
       content: messageText,
       timestamp: getTimestamp(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    addMessage(convId, userMessage)
     setInput('')
     setIsLoading(true)
 
-    // Capture chart context if widget is available
-    let chartContext
-    if (widgetInstance) {
-      chartContext = await captureChartContext(widgetInstance).catch(() => undefined)
+    // Create placeholder assistant message for streaming
+    const assistantMsgId = generateMessageId()
+    const assistantMessage: AIMessage = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: getTimestamp(),
     }
+    addMessage(convId, assistantMessage)
 
-    // Call AI API
-    const response = await aiApi.chat({
-      message: messageText,
-      chartContext,
-    }).catch((err) => {
-      console.warn('AI chat error:', err)
-      return null
+    // Try SSE streaming first, fallback to mock
+    let streamedContent = ''
+    const finalConvId = convId
+
+    await aiApi.chatStream(messageText, {
+      onToken: (token) => {
+        streamedContent += token
+        updateMessageContent(finalConvId, assistantMsgId, streamedContent)
+      },
+      onComplete: (fullMessage) => {
+        updateMessageContent(finalConvId, assistantMsgId, fullMessage)
+        setIsLoading(false)
+      },
+      onError: async () => {
+        // Fallback to mock API
+        let chartContext
+        if (widgetInstance) {
+          chartContext = await captureChartContext(widgetInstance).catch(() => undefined)
+        }
+
+        const response = await aiApi.chat({
+          message: messageText,
+          chartContext,
+        }).catch(() => null)
+
+        if (response) {
+          if (response.commands && widgetInstance) {
+            await executeAICommands(widgetInstance, response.commands, addTrigger).catch((err) => {
+              console.warn('AI command execution error:', err)
+            })
+          }
+          updateMessageContent(finalConvId, assistantMsgId, response.message)
+        } else {
+          updateMessageContent(finalConvId, assistantMsgId, '죄송합니다. 응답을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.')
+        }
+        setIsLoading(false)
+      },
+    }).catch(() => {
+      setIsLoading(false)
     })
-
-    if (response) {
-      // Execute AI commands on chart if any
-      if (response.commands && widgetInstance) {
-        await executeAICommands(widgetInstance, response.commands, addTrigger).catch((err) => {
-          console.warn('AI command execution error:', err)
-        })
-      }
-
-      const assistantMessage: Message = {
-        id: generateMessageId(),
-        role: 'assistant',
-        content: response.message,
-        timestamp: getTimestamp(),
-        stats: response.stats,
-      }
-      setMessages((prev) => [...prev, assistantMessage])
-    } else {
-      const errorMessage: Message = {
-        id: generateMessageId(),
-        role: 'assistant',
-        content: '죄송합니다. 응답을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.',
-        timestamp: getTimestamp(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    }
-
-    setIsLoading(false)
-  }, [input, isLoading, generateMessageId, getTimestamp, widgetInstance, addTrigger])
+  }, [input, isLoading, getTimestamp, widgetInstance, addTrigger, addMessage, updateMessageContent, createConversation, panelConvId])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -134,56 +171,48 @@ export function TradexAIPanel() {
   }
 
   const handleExpand = () => {
+    if (panelConvId) {
+      setActiveConversation(panelConvId)
+    }
     setAIPanelOpen(false)
-    router.push('/ai')
+    router.push(panelConvId ? `/ai/chat?id=${panelConvId}` : '/ai')
   }
 
   if (!isAIPanelOpen) return null
 
   return (
-    <div className="fixed bottom-0 right-0 top-0 z-50 flex w-[400px] flex-col bg-white shadow-emphasize border-l border-[#D7D7D7]">
-      {/* Header - Figma: padding 0 20px, gap 8px, border-bottom 0.6px */}
+    <div className="fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col bg-white shadow-emphasize border-l border-[#D7D7D7] md:w-[400px]">
+      {/* Header */}
       <div className="flex items-center gap-2 px-5 h-12 border-b border-[#D7D7D7]">
         <button
           onClick={() => setAIPanelOpen(false)}
           className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
         >
-          <Image
-            src="/icons/icon-double-chevron.svg"
-            alt="Close"
-            width={20}
-            height={20}
-          />
+          <Image src="/icons/icon-double-chevron.svg" alt="Close" width={20} height={20} />
         </button>
         <button
           onClick={handleExpand}
           className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
         >
-          <Image
-            src="/icons/icon-expand.svg"
-            alt="Expand"
-            width={20}
-            height={20}
-          />
+          <Image src="/icons/icon-expand.svg" alt="Expand" width={20} height={20} />
+        </button>
+        <div className="flex-1" />
+        <button
+          onClick={handleNewConversation}
+          className="text-caption-medium text-label-assistive hover:text-label-normal transition-colors"
+        >
+          새 대화
         </button>
       </div>
 
-      {/* Messages Area - Figma: padding 32px 16px, gap 16px */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
         {messages.length === 0 ? (
-          /* Empty State with Suggestions - Figma: gap 16px */
+          /* Empty State with Suggestions */
           <div className="flex flex-col h-full">
-            {/* Center Logo */}
             <div className="flex-1 flex items-center justify-center">
-              <Image
-                src="/tradex-logo-black.svg"
-                alt="Tradex"
-                width={203}
-                height={32}
-                priority
-              />
+              <Image src="/tradex-logo-black.svg" alt="Tradex" width={203} height={32} priority />
             </div>
-            {/* Suggestions - Figma: padding 0 12px, gap 16px */}
             <div className="flex flex-col gap-4">
               {SUGGESTION_PROMPTS.map((prompt, index) => {
                 const IconComponent = prompt.icon
@@ -193,11 +222,9 @@ export function TradexAIPanel() {
                     className="flex items-center gap-4 px-3 text-left hover:bg-gray-50 rounded-[200px] transition-colors"
                     onClick={() => handleSend(prompt.text)}
                   >
-                    {/* Icon - Figma: 20x20px container */}
                     <div className="w-5 h-5 shrink-0 flex items-center justify-center">
                       <IconComponent className="w-[14px] h-[14px] text-gray-600" />
                     </div>
-                    {/* Text - Figma: Body 2/Regular, #767676 */}
                     <span className="text-body-2-regular text-gray-600 py-1">
                       {prompt.text}
                     </span>
@@ -207,56 +234,34 @@ export function TradexAIPanel() {
             </div>
           </div>
         ) : (
-          /* Chat Messages - Figma: gap 16px */
+          /* Chat Messages */
           <div className="flex flex-col gap-4">
             {messages.map((message) => (
               <div key={message.id} className="w-[360px]">
                 {message.role === 'user' ? (
-                  /* User Message - Figma: padding-left 60px, align flex-end */
                   <div className="pl-[60px]">
                     <div className="flex justify-end gap-4">
                       <div className="flex flex-col items-end gap-2 flex-1">
-                        {/* Message Box - Figma: padding 16px 20px, border-radius 12px 0 12px 12px, border 0.5px #D7D7D7 */}
                         <div className="bg-white border border-[#D7D7D7] rounded-tl-xl rounded-bl-xl rounded-br-xl px-5 py-4">
-                          <p className="text-body-1-regular text-gray-800">
-                            {message.content}
-                          </p>
+                          <p className="text-body-1-regular text-gray-800">{message.content}</p>
                         </div>
-                        {/* Timestamp - Figma: Caption/Regular, #8F8F8F */}
-                        <span className="text-caption-regular text-gray-500">
-                          {message.timestamp}
-                        </span>
+                        <span className="text-caption-regular text-gray-500">{message.timestamp}</span>
                       </div>
-                      {/* Profile - Figma: 32x32 */}
                       <Avatar className="h-8 w-8 shrink-0">
                         <AvatarImage src="/avatar.png" />
-                        <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
-                          U
-                        </AvatarFallback>
+                        <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">U</AvatarFallback>
                       </Avatar>
                     </div>
                   </div>
                 ) : (
-                  /* Assistant Message - Figma: padding-right 60px */
                   <div className="pr-[60px]">
                     <div className="flex gap-4">
-                      {/* Profile - Figma: 32x32 with Tradex logo */}
                       <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
-                        <Image
-                          src="/tradex-logo-black.svg"
-                          alt="Tradex AI"
-                          width={20}
-                          height={20}
-                          className="invert"
-                        />
+                        <Image src="/tradex-logo-black.svg" alt="Tradex AI" width={20} height={20} className="invert" />
                       </div>
                       <div className="flex flex-col gap-2 flex-1">
-                        {/* Message Box - Figma: padding 16px 20px, bg #F8F8F8, border-radius 0 12px 12px 12px */}
                         <div className="bg-gray-50 rounded-tr-xl rounded-bl-xl rounded-br-xl px-5 py-4">
-                          <p className="text-body-2-regular text-gray-800">
-                            {message.content}
-                          </p>
-                          {/* Stats Card - Figma: gap 12px */}
+                          <p className="text-body-2-regular text-gray-800">{message.content}</p>
                           {message.stats && (
                             <div className="mt-4 grid grid-cols-2 gap-3">
                               <div className="bg-white rounded-lg px-4 py-3">
@@ -278,10 +283,7 @@ export function TradexAIPanel() {
                             </div>
                           )}
                         </div>
-                        {/* Timestamp - Figma: Caption/Regular, #8F8F8F */}
-                        <span className="text-caption-regular text-gray-500">
-                          {message.timestamp}
-                        </span>
+                        <span className="text-caption-regular text-gray-500">{message.timestamp}</span>
                       </div>
                     </div>
                   </div>
@@ -294,13 +296,7 @@ export function TradexAIPanel() {
               <div className="w-[360px] pr-[60px]">
                 <div className="flex gap-4">
                   <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
-                    <Image
-                      src="/tradex-logo-black.svg"
-                      alt="Tradex AI"
-                      width={20}
-                      height={20}
-                      className="invert"
-                    />
+                    <Image src="/tradex-logo-black.svg" alt="Tradex AI" width={20} height={20} className="invert" />
                   </div>
                   <div className="flex items-center gap-1.5 px-5 py-4">
                     <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
@@ -314,20 +310,12 @@ export function TradexAIPanel() {
         )}
       </div>
 
-      {/* Input Area - Figma: padding 12px 20px, border-top 0.6px #D7D7D7 */}
+      {/* Input Area */}
       <div className="px-5 py-3 border-t border-[#D7D7D7]">
-        {/* Prompt Input - Figma: padding 8px 0, gap 16px */}
         <div className="flex items-center gap-4 py-2">
-          {/* Plus Button - Figma: 36x36px ghost */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
-          >
+          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100">
             <Plus className="w-5 h-5 text-gray-800" />
           </Button>
-
-          {/* Input - Figma: Body 1/Regular, placeholder #BABABA */}
           <input
             type="text"
             value={input}
@@ -336,8 +324,6 @@ export function TradexAIPanel() {
             placeholder="무엇이든 물어보세요!"
             className="flex-1 bg-transparent text-body-1-regular text-gray-800 placeholder:text-gray-400 focus:outline-none"
           />
-
-          {/* Mic/Send Button - Figma: 36x36px ghost */}
           {input.trim() ? (
             <Button
               variant="ghost"
@@ -348,11 +334,7 @@ export function TradexAIPanel() {
               <Send className="w-4 h-4 text-white" />
             </Button>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
-            >
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100">
               <Mic className="w-5 h-5 text-gray-800" />
             </Button>
           )}

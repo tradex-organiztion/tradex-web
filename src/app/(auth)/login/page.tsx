@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AuthLayout, AuthCard, SocialLoginButtons, AuthDivider } from "@/components/layout"
-import { Button, TextField, Checkbox, IconVisibility, IconVisibilityOff } from "@/components/ui"
+import { Button, TextField, Checkbox, IconVisibility, IconVisibilityOff, IconXCircle } from "@/components/ui"
 import { authApi } from "@/lib/api/auth"
 import { useAuthStore } from "@/stores/useAuthStore"
 
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showFailScreen, setShowFailScreen] = useState(false)
 
   const isFormValid = email.trim() !== "" && password.trim() !== ""
 
@@ -57,9 +58,10 @@ export default function LoginPage() {
           message?: string
         }
 
-        // Network Error (서버 연결 불가)
+        // Network Error (서버 연결 불가) → 실패 전용 화면
         if (axiosError.message === "Network Error" || !axiosError.response) {
           setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+          setShowFailScreen(true)
         } else if (axiosError.response?.status === 401) {
           setError("이메일 또는 비밀번호가 올바르지 않습니다.")
         } else if (axiosError.response?.status === 404) {
@@ -75,6 +77,39 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (showFailScreen) {
+    return (
+      <AuthLayout>
+        <AuthCard title="로그인">
+          <div className="flex flex-col items-center py-8">
+            <div className="text-[#FF0015] mb-4">
+              <IconXCircle size={48} />
+            </div>
+            <p className="text-title-2-bold text-label-normal text-center mb-2">
+              로그인에 실패했습니다
+            </p>
+            <p className="text-body-1-regular text-label-neutral text-center">
+              {error || "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요."}
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              setShowFailScreen(false)
+              setError(null)
+            }}
+          >
+            다시 시도
+          </Button>
+        </AuthCard>
+      </AuthLayout>
+    )
   }
 
   return (
@@ -106,6 +141,8 @@ export default function LoginPage() {
                 setError(null)
               }}
               disabled={isLoading}
+              messageType={error ? "error" : undefined}
+              message={error ? undefined : undefined}
               rightElement={
                 <button
                   type="button"
@@ -122,9 +159,13 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Error Message */}
+          {/* Error Message - Inline with icon (Figma pattern) */}
           {error && (
-            <div className="bg-[#FFF9F9] border border-[#FF0015] rounded-[8px] px-4 py-3">
+            <div className="flex items-center gap-1">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="9" r="8" fill="#FF0015"/>
+                <path d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
               <p className="text-body-2-regular text-[#FF0015]">{error}</p>
             </div>
           )}

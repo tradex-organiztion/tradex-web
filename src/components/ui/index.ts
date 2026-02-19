@@ -54,6 +54,7 @@ export {
   IconVisibilityOff,
   // Status Icons
   IconCheckCircle,
+  IconXCircle,
   IconAlert,
   IconInfo,
   // Communication Icons

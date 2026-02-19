@@ -21,7 +21,7 @@ const messageVariants = cva(
         hint: "text-gray-500",
         info: "text-blue-400",
         success: "text-green-400",
-        error: "text-red-400",
+        error: "text-[#FF0015]",
       },
     },
     defaultVariants: {
@@ -152,17 +152,15 @@ function SuccessIcon({ className }: { className?: string }) {
 function ErrorIcon({ className }: { className?: string }) {
   return (
     <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      <path
-        d="M8 1.33334C4.32 1.33334 1.33333 4.32001 1.33333 8.00001C1.33333 11.68 4.32 14.6667 8 14.6667C11.68 14.6667 14.6667 11.68 14.6667 8.00001C14.6667 4.32001 11.68 1.33334 8 1.33334ZM8.66667 11.3333H7.33333V10H8.66667V11.3333ZM8.66667 8.66668H7.33333V4.66668H8.66667V8.66668Z"
-        fill="currentColor"
-      />
+      <circle cx="9" cy="9" r="8" fill="#FF0015"/>
+      <path d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }

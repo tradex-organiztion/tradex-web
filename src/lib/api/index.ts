@@ -41,6 +41,8 @@ export type {
   UpdateEntryRequest,
   JournalFilters,
   PaginatedResponse,
+  JournalResponse,
+  UpdateJournalRequest,
 } from './trading'
 
 // Portfolio API
@@ -59,7 +61,7 @@ export type {
 } from './portfolio'
 
 // Futures API
-export { futuresApi } from './futures'
+export { futuresApi, positionsApi, ordersApi } from './futures'
 export type {
   FuturesPeriod,
   PnlChartData,
@@ -73,16 +75,30 @@ export type {
   PageResponse,
   ClosedPositionsFilter,
   ClosedPositionsSummaryResponse,
+  PositionRequest,
+  PositionResponse,
+  OrderRequest,
+  OrderResponse,
 } from './futures'
 
 // AI Chat API
-export { aiApi } from './ai'
+export { aiApi, chatSessionApi } from './ai'
 export type {
   AIChatRequest,
   AIChatResponse,
   AIAnalysisResponse,
   ChatStreamCallbacks,
+  ChatSessionResponse,
+  ChatMessageResponse,
+  ChatHistoryResponse,
 } from './ai'
+
+// Exchange API
+export { exchangeApi } from './exchange'
+export type {
+  ExchangeApiKeyResponse,
+  ExchangeApiKeyRequest,
+} from './exchange'
 
 // Chart API
 export { chartApi } from './chart'

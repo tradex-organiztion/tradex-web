@@ -1,108 +1,186 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Plus, Mic, Send } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Plus, Mic, Send, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: string
-  stats?: {
-    winRate: string
-    profit: string
-    totalTrades: number
-    profitFactor: number
-  }
-}
+import { useAIChatStore, generateMessageId } from '@/stores'
+import type { AIMessage } from '@/stores'
+import { aiApi, chatSessionApi } from '@/lib/api/ai'
 
 export default function TradexAIChatPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const conversationId = searchParams.get('id')
   const initialQuery = searchParams.get('q') || ''
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const initialQueryProcessed = useRef(false)
+  const sessionsLoaded = useRef(false)
 
-  const [messages, setMessages] = useState<Message[]>(() => {
-    // Handle initial query in initial state
-    if (initialQuery) {
-      return [{
-        id: '1',
-        role: 'user' as const,
-        content: initialQuery,
-        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-      }]
+  const {
+    conversations,
+    addMessage,
+    updateMessageContent,
+    createConversation,
+    setActiveConversation,
+  } = useAIChatStore()
+
+  // Find or create conversation
+  const [activeConvId] = useState<string>(() => {
+    if (conversationId) {
+      const exists = conversations.find((c) => c.id === conversationId)
+      if (exists) return conversationId
     }
-    return []
+    return createConversation()
   })
+
+  const conversation = conversations.find((c) => c.id === activeConvId)
+  const messages = conversation?.messages || []
+
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(!!initialQuery)
-  const initialQueryProcessed = useRef(false)
 
-  // Generate AI response for initial query
+  // Set active conversation in store
   useEffect(() => {
-    if (initialQuery && !initialQueryProcessed.current && messages.length === 1) {
-      initialQueryProcessed.current = true
-      const timer = setTimeout(() => {
-        const assistantMessage: Message = {
-          id: '2',
-          role: 'assistant',
-          content: '최근 90일간 4시간봉 EMA(20, 50, 200) 골든크로스/ 데드크로스 전략 시뮬레이션 결과입니다.',
-          timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-          stats: {
-            winRate: '64.2%',
-            profit: '+ $12,450',
-            totalTrades: 42,
-            profitFactor: 2.1,
-          },
-        }
-        setMessages((prev) => [...prev, assistantMessage])
-        setIsLoading(false)
-      }, 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [initialQuery, messages.length])
+    setActiveConversation(activeConvId)
+  }, [activeConvId, setActiveConversation])
 
-  const handleSend = useCallback((text?: string) => {
+  // Load backend sessions on mount (best-effort)
+  useEffect(() => {
+    if (sessionsLoaded.current) return
+    sessionsLoaded.current = true
+
+    chatSessionApi.getSessions().catch((err) => {
+      console.warn('Failed to load chat sessions:', err.message)
+    })
+    // Sessions are loaded for side-effect awareness; local Zustand store is source of truth for now
+  }, [])
+
+  // Try to create a backend session for the current conversation
+  useEffect(() => {
+    if (!activeConvId) return
+    chatSessionApi.createSession().catch((err) => {
+      console.warn('Failed to create backend session:', err.message)
+    })
+  }, [activeConvId])
+
+  // Load history from backend if conversation has an ID that looks like a backend ID
+  useEffect(() => {
+    if (!conversationId) return
+    const numericId = Number(conversationId)
+    if (isNaN(numericId)) return // local ID, skip
+
+    let cancelled = false
+    chatSessionApi.getHistory(numericId).then((history) => {
+      if (cancelled || !history?.messages) return
+      // Populate local store with backend messages
+      for (const msg of history.messages) {
+        addMessage(activeConvId, {
+          id: generateMessageId(),
+          role: msg.role === 'USER' ? 'user' : 'assistant',
+          content: msg.content,
+          timestamp: new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        })
+      }
+    }).catch((err) => {
+      console.warn('Failed to load chat history:', err.message)
+    })
+
+    return () => { cancelled = true }
+  }, [conversationId, activeConvId, addMessage])
+
+  // Handle initial query
+  useEffect(() => {
+    if (initialQuery && !initialQueryProcessed.current && messages.length === 0) {
+      initialQueryProcessed.current = true
+
+      const userMsg: AIMessage = {
+        id: generateMessageId(),
+        role: 'user',
+        content: initialQuery,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }
+      addMessage(activeConvId, userMsg)
+
+      // Create placeholder for streaming
+      const assistantMsgId = generateMessageId()
+      addMessage(activeConvId, {
+        id: assistantMsgId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      })
+
+      let streamed = ''
+      aiApi.chatStream(initialQuery, {
+        onToken: (token) => {
+          streamed += token
+          updateMessageContent(activeConvId, assistantMsgId, streamed)
+        },
+        onComplete: (full) => {
+          updateMessageContent(activeConvId, assistantMsgId, full)
+          setIsLoading(false)
+        },
+        onError: async () => {
+          // Fallback to mock
+          const response = await aiApi.chat({ message: initialQuery }).catch(() => null)
+          updateMessageContent(activeConvId, assistantMsgId,
+            response?.message || '죄송합니다. 응답을 생성할 수 없습니다.')
+          setIsLoading(false)
+        },
+      }).catch(() => setIsLoading(false))
+    }
+  }, [initialQuery, activeConvId, messages.length, addMessage, updateMessageContent])
+
+  const handleSend = useCallback(async (text?: string) => {
     const messageText = text || input
     if (!messageText.trim() || isLoading) return
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
+    const userMsg: AIMessage = {
+      id: generateMessageId(),
       role: 'user',
       content: messageText,
       timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    addMessage(activeConvId, userMsg)
     setInput('')
     setIsLoading(true)
 
-    // Simulated AI response
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: '최근 90일간 4시간봉 EMA(20, 50, 200) 골든크로스/ 데드크로스 전략 시뮬레이션 결과입니다.',
-        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        stats: {
-          winRate: '64.2%',
-          profit: '+ $12,450',
-          totalTrades: 42,
-          profitFactor: 2.1,
-        },
-      }
-      setMessages((prev) => [...prev, assistantMessage])
-      setIsLoading(false)
-    }, 1500)
-  }, [input, isLoading])
+    // Create placeholder for streaming
+    const assistantMsgId = generateMessageId()
+    addMessage(activeConvId, {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    })
+
+    let streamed = ''
+    await aiApi.chatStream(messageText, {
+      onToken: (token) => {
+        streamed += token
+        updateMessageContent(activeConvId, assistantMsgId, streamed)
+      },
+      onComplete: (full) => {
+        updateMessageContent(activeConvId, assistantMsgId, full)
+        setIsLoading(false)
+      },
+      onError: async () => {
+        const response = await aiApi.chat({ message: messageText }).catch(() => null)
+        updateMessageContent(activeConvId, assistantMsgId,
+          response?.message || '죄송합니다. 응답을 생성할 수 없습니다.')
+        setIsLoading(false)
+      },
+    }).catch(() => setIsLoading(false))
+  }, [input, isLoading, activeConvId, addMessage, updateMessageContent])
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages.length])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -113,6 +191,19 @@ export default function TradexAIChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-40px-64px)]">
+      {/* Chat Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-line-normal">
+        <button
+          onClick={() => router.push('/ai')}
+          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-label-normal" />
+        </button>
+        <span className="text-body-1-bold text-label-normal truncate">
+          {conversation?.title || '새 대화'}
+        </span>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-[800px] mx-auto space-y-6">

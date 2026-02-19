@@ -1,13 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface StatCardProps {
   title: string;
   value: string;
   subValue?: string;
-  badge?: {
+  change?: {
     label: string;
     variant: "positive" | "danger";
   };
@@ -16,18 +15,14 @@ interface StatCardProps {
 
 /**
  * StatCard - Figma 디자인 기준
- * - 너비: 276.75px (flex-1로 균등 분배)
- * - 높이: 154px
- * - 패딩: px-24 (24px), py-20 (20px)
- * - 타이틀: text-body-2-medium, color: label-neutral (#464c53)
- * - 값: text-title-1-bold, color: label-normal (#131416)
- * - 서브값: text-body-2-regular, color: label-assistive (#6d7882)
+ * - 퍼센트 변동은 Badge가 아닌 일반 색상 텍스트로 표시
+ * - subValue 옆에 변동률 표시
  */
 export function StatCard({
   title,
   value,
   subValue,
-  badge,
+  change,
   className,
 }: StatCardProps) {
   return (
@@ -40,12 +35,21 @@ export function StatCard({
       <div className="flex flex-col gap-2">
         <p className="text-body-2-medium text-label-neutral">{title}</p>
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <p className="text-title-1-bold text-label-normal">{value}</p>
-            {badge && <Badge variant={badge.variant} size="sm">{badge.label}</Badge>}
-          </div>
-          {subValue && (
-            <p className="text-body-2-regular text-label-assistive">{subValue}</p>
+          <p className="text-title-1-bold text-label-normal">{value}</p>
+          {(subValue || change) && (
+            <div className="flex items-center gap-2">
+              {subValue && (
+                <p className="text-body-2-regular text-label-assistive">{subValue}</p>
+              )}
+              {change && (
+                <span className={cn(
+                  "text-body-2-bold",
+                  change.variant === "positive" ? "text-label-positive" : "text-label-danger"
+                )}>
+                  {change.label}
+                </span>
+              )}
+            </div>
           )}
         </div>
       </div>

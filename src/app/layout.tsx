@@ -5,6 +5,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Tradex",
   description: "AI 기반 트레이딩 분석 서비스",
+  metadataBase: new URL("https://tradex.so"),
+  openGraph: {
+    title: "Tradex",
+    description: "AI 기반 트레이딩 분석 서비스",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -13,8 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           as="style"

@@ -1,9 +1,17 @@
 @import "tailwindcss";
 
+/* ===== Dark Mode: class-based variant ===== */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ===== Tradex Design System ===== */
 /* Based on Figma: https://www.figma.com/design/bIuxiR3Mqy0PfLkxIQv4Oa */
+/* Updated: 2026-02-12 (dark mode support) */
 
-@theme inline {
+/* ============================================================
+   Primitive Colors
+   - @theme generates CSS custom properties (required for dark mode)
+   ============================================================ */
+@theme {
   /* ===== Font ===== */
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
     system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo",
@@ -21,65 +29,66 @@
   --color-gray-600: #767676;
   --color-gray-700: #565656;
   --color-gray-800: #323232;
+  --color-gray-850: #1E1E1E;
   --color-gray-900: #121212;
 
   /* ===== System Colors - Green (Success) ===== */
-  --color-green-400: #13C34E;
-  --color-green-300: #5FD98B;
-  --color-green-200: #A8EAC0;
   --color-green-100: #E7F8ED;
+  --color-green-200: #A8EAC0;
+  --color-green-300: #5FD98B;
+  --color-green-400: #13C34E;
+  --color-green-900: #085221;
 
   /* ===== System Colors - Red (Error) ===== */
-  --color-red-400: #FF0015;
-  --color-red-300: #FF4D5E;
-  --color-red-200: #FF9AA3;
   --color-red-100: #FFE6E8;
+  --color-red-200: #FF9AA3;
+  --color-red-300: #FF4D5E;
+  --color-red-400: #FF0015;
+  --color-red-900: #5E0108;
 
   /* ===== System Colors - Blue (Info) ===== */
-  --color-blue-400: #0070FF;
-  --color-blue-300: #BFDBFF;
-  --color-blue-200: #E4EFFF;
   --color-blue-100: #FCFDFF;
+  --color-blue-200: #E4EFFF;
+  --color-blue-300: #BFDBFF;
+  --color-blue-400: #0070FF;
 
   /* ===== System Colors - Yellow (Warning) ===== */
-  --color-yellow-400: #FEC700;
-  --color-yellow-300: #FFE066;
-  --color-yellow-200: #FFED99;
   --color-yellow-100: #FFF8D6;
+  --color-yellow-200: #FFED99;
+  --color-yellow-300: #FFE066;
+  --color-yellow-400: #FEC700;
 
   /* ===== Symbol Colors ===== */
   --color-symbol-main: #0FDD99;
   --color-symbol-sub: #9FF91E;
 
+  /* ============================================================
+     Semantic Colors - Light Mode Defaults
+     ============================================================ */
+
   /* ===== Element Colors ===== */
-  /* Primary (버튼, 주요 인터랙티브 요소) */
-  --color-element-primary-default: var(--color-gray-800);
+  --color-element-primary-default: var(--color-gray-900);
   --color-element-primary-pressed: var(--color-gray-700);
   --color-element-primary-disabled: var(--color-gray-100);
 
-  /* Secondary (보조 버튼, 카드 등) */
   --color-element-secondary-default: var(--color-gray-0);
   --color-element-secondary-pressed: var(--color-gray-100);
   --color-element-secondary-disabled: var(--color-gray-200);
 
-  /* Positive (성공, 수익, 긍정적 상태) */
   --color-element-positive-default: var(--color-green-400);
   --color-element-positive-lighter: var(--color-green-100);
 
-  /* Danger (에러, 손실, 위험 상태) */
   --color-element-danger-default: var(--color-red-400);
   --color-element-danger-lighter: var(--color-red-100);
 
-  /* Warning (경고, 주의 상태) */
   --color-element-warning-default: var(--color-yellow-400);
   --color-element-warning-lighter: var(--color-yellow-100);
 
-  /* Info (정보, 안내 상태) */
   --color-element-info-default: var(--color-blue-400);
-  --color-element-info-lighter: var(--color-blue-100);
+  --color-element-info-lighter: var(--color-blue-200);
 
-  /* ===== Label Colors (텍스트/라벨용) ===== */
-  --color-label-normal: var(--color-gray-800);
+  /* ===== Label Colors ===== */
+  --color-label-normal: var(--color-gray-900);
   --color-label-neutral: var(--color-gray-600);
   --color-label-assistive: var(--color-gray-500);
   --color-label-disabled: var(--color-gray-400);
@@ -89,7 +98,7 @@
   --color-label-warning: var(--color-yellow-400);
   --color-label-info: var(--color-blue-400);
 
-  /* ===== Line Colors (보더/구분선용) ===== */
+  /* ===== Line Colors ===== */
   --color-line-normal: var(--color-gray-300);
   --color-line-focused: var(--color-gray-400);
   --color-line-primary: var(--color-gray-800);
@@ -98,7 +107,12 @@
   --color-line-warning: var(--color-yellow-400);
   --color-line-info: var(--color-blue-400);
 
-  /* ===== Semantic Colors ===== */
+  /* ===== Background Colors ===== */
+  --color-bg-white: var(--color-gray-0);
+  --color-bg-gray: var(--color-gray-50);
+  --color-bg-subtle: var(--color-gray-0);
+
+  /* ===== Generic Semantic Colors ===== */
   --color-background: var(--color-gray-0);
   --color-foreground: var(--color-gray-900);
   --color-primary: var(--color-gray-900);
@@ -106,7 +120,6 @@
   --color-muted: var(--color-gray-300);
   --color-border: var(--color-gray-100);
 
-  /* Semantic System Colors */
   --color-success: var(--color-green-400);
   --color-error: var(--color-red-400);
   --color-info: var(--color-blue-400);
@@ -131,9 +144,6 @@
   --shadow-heavy: 0px 0px 24px 0px rgba(0, 0, 0, 0.1);
 
   /* ===== Grid System ===== */
-  /* Desktop: 1920px, 12 columns, margin 40px, gutter 24px */
-  /* Tablet: 1024px, 6 columns, margin 24px, gutter 16px */
-  /* Mobile: 4 columns, margin 16px, gutter 16px */
   --grid-desktop-columns: 12;
   --grid-desktop-margin: 40px;
   --grid-desktop-gutter: 24px;
@@ -153,19 +163,78 @@
   --breakpoint-mobile-android: 412px;
 
   /* ===== Border Radius ===== */
-  /* Figma 기준: radius-sm=4px, radius-md=8px, radius-lg=12px */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
 }
 
+/* ============================================================
+   Light Mode (default)
+   ============================================================ */
 :root {
   --background: var(--color-background);
   --foreground: var(--color-foreground);
 }
 
-/* Note: Dark mode disabled for Tradex - Light mode only design */
+/* ============================================================
+   Dark Mode Overrides
+   ============================================================ */
+.dark {
+  /* --- Element --- */
+  --color-element-primary-default: var(--color-gray-0);
+  --color-element-primary-pressed: var(--color-gray-200);
+  --color-element-primary-disabled: var(--color-gray-700);
+
+  --color-element-secondary-default: var(--color-gray-700);
+  --color-element-secondary-pressed: var(--color-gray-600);
+  --color-element-secondary-disabled: var(--color-gray-800);
+
+  --color-element-positive-default: var(--color-green-400);
+  --color-element-positive-lighter: var(--color-green-900);
+
+  --color-element-danger-default: var(--color-red-400);
+  --color-element-danger-lighter: var(--color-red-900);
+
+  --color-element-warning-default: var(--color-yellow-400);
+  --color-element-warning-lighter: var(--color-yellow-100);
+
+  --color-element-info-default: var(--color-blue-400);
+  --color-element-info-lighter: var(--color-blue-200);
+
+  /* --- Label --- */
+  --color-label-normal: var(--color-gray-0);
+  --color-label-neutral: var(--color-gray-200);
+  --color-label-assistive: var(--color-gray-400);
+  --color-label-disabled: var(--color-gray-500);
+  --color-label-inverse: var(--color-gray-900);
+  --color-label-positive: var(--color-green-300);
+  --color-label-danger: var(--color-red-300);
+  --color-label-warning: var(--color-yellow-400);
+  --color-label-info: var(--color-blue-400);
+
+  /* --- Line --- */
+  --color-line-normal: var(--color-gray-700);
+  --color-line-focused: var(--color-gray-500);
+  --color-line-primary: var(--color-gray-100);
+  --color-line-positive: var(--color-green-400);
+  --color-line-danger: var(--color-red-400);
+  --color-line-warning: var(--color-yellow-400);
+  --color-line-info: var(--color-blue-400);
+
+  /* --- Background --- */
+  --color-bg-white: var(--color-gray-850);
+  --color-bg-gray: var(--color-gray-900);
+  --color-bg-subtle: var(--color-gray-800);
+
+  /* --- Generic Semantic --- */
+  --color-background: var(--color-gray-850);
+  --color-foreground: var(--color-gray-0);
+  --color-primary: var(--color-gray-0);
+  --color-secondary: var(--color-gray-400);
+  --color-muted: var(--color-gray-700);
+  --color-border: var(--color-gray-800);
+}
 
 body {
   background: var(--background);

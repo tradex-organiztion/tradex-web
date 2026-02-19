@@ -240,6 +240,16 @@ export function IconInfo({ size = 24, className, ...props }: IconProps) {
   )
 }
 
+export function IconXCircle({ size = 24, className, ...props }: IconProps) {
+  return (
+    <svg {...iconDefaults} width={size} height={size} className={cn("text-current", className)} {...props}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M15 9L9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9 9L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 // Communication Icons
 export function IconMic({ size = 24, className, ...props }: IconProps) {
   return (

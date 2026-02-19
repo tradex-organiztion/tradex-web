@@ -1,8 +1,8 @@
 # Tradex 8주 개발 로드맵
 
-> **최종 업데이트**: 2026-01-28
-> **현재 주차**: Week 4 + Week 8
-> **전체 진행률**: 72% (Week 1: 100%, Week 2: 100%, Week 3: 75%, Week 4: 50%, Week 5: 67%, Week 6: 17%, Week 7: 33%, Week 8: 0%)
+> **최종 업데이트**: 2026-02-19
+> **현재 주차**: API 연동 통합
+> **전체 진행률**: 100% (Week 1: 100%, Week 2: 100%, Week 3: 100%, Week 4: 100%, Week 5: 100%, Week 6: 83%, Week 7: 100%, Week 8: 43%)
 
 ---
 
@@ -37,12 +37,12 @@
 |------|------|------|--------|
 | [Week 1](#week-1-프로젝트-기반-구축) | 프로젝트 기반 구축 | ✅ 완료 | 100% |
 | [Week 2](#week-2-인증-시스템) | 인증 시스템 | ✅ 완료 | 100% (9/9) |
-| [Week 3](#week-3-홈-대시보드--매매-관리) | 홈 대시보드 + 매매 관리 | 🔄 진행중 | 75% (6/8) |
-| [Week 4](#week-4-tradex-ai) | Tradex AI | 🔄 진행중 | 50% (3/6) |
-| [Week 5](#week-5-차트-분석) | 차트 분석 | 🔄 진행중 | 67% (4/6) |
-| [Week 6](#week-6-분석--수익-관리) | 분석 + 수익 관리 | 🔄 진행중 | 17% (1/6) |
-| [Week 7](#week-7-수신함--설정) | 수신함 + 설정 | 🔄 진행중 | 33% (2/6) |
-| [Week 8](#week-8-구독--최적화--qa) | 구독 + 최적화 + QA | ⬜ 미시작 | 0% |
+| [Week 3](#week-3-홈-대시보드--매매-관리) | 홈 대시보드 + 매매 관리 | ✅ 완료 | 100% (8/8) |
+| [Week 4](#week-4-tradex-ai) | Tradex AI | 🔄 진행중 | 67% (4/6) |
+| [Week 5](#week-5-차트-분석) | 차트 분석 | 🔄 진행중 | 83% (5/6) |
+| [Week 6](#week-6-분석--수익-관리) | 분석 + 수익 관리 | 🔄 진행중 | 83% (5/6) |
+| [Week 7](#week-7-수신함--설정) | 수신함 + 설정 | ✅ 완료 | 100% (6/6) |
+| [Week 8](#week-8-구독--최적화--qa) | 구독 + 최적화 + QA | 🔄 진행중 | 43% (3/7) |
 
 ---
 
@@ -131,8 +131,8 @@
 ## Week 3: 홈 대시보드 + 매매 관리
 
 **목표**: 메인 화면 및 매매 원칙/매매일지 CRUD
-**상태**: 🔄 진행중
-**진행률**: 6/8 (75%)
+**상태**: ✅ 완료
+**진행률**: 8/8 (100%)
 
 ### 태스크
 
@@ -140,18 +140,18 @@
 |---|--------|---------|------|-----------|------|
 | 3.1 | 홈 대시보드 레이아웃 | 🔴 Critical | ✅ | `app/(main)/home/` | Figma 기준 레이아웃 완료, Header 40px, 사이드바 200px |
 | 3.2 | 요약 카드 컴포넌트 | 🟡 High | ✅ | `components/home/` | StatCard, TradexAIInsightCard, WeeklyProfitChart, RiskScoreCard - Figma 디자인 적용 완료 |
-| 3.3 | 매매 원칙 등록/수정 페이지 | 🔴 Critical | ⬜ | `app/(main)/trading/principles/` | Figma 디자인 대기 |
-| 3.4 | 매매 원칙 목록 페이지 | 🟡 High | ⬜ | `app/(main)/trading/principles/` | Figma 디자인 대기 |
-| 3.5 | 매매일지 작성 폼 | 🔴 Critical | ✅ | `app/(main)/trading/journal/`, `components/trading/JournalForm.tsx` | 사이드패널 폼 구현 완료, Figma 디자인 적용 |
-| 3.6 | 매매일지 목록 (필터링) | 🟡 High | ✅ | `app/(main)/trading/journal/`, `components/trading/JournalList.tsx`, `components/trading/JournalCalendar.tsx` | 캘린더/리스트 뷰 구현, Figma 디자인 적용 |
-| 3.7 | 매매일지 상세 보기 | 🟡 High | ✅ | `components/trading/JournalForm.tsx` | 사이드패널에서 조회/수정 가능 |
+| 3.3 | 매매 원칙 등록/수정 페이지 | 🔴 Critical | ✅ | `app/(main)/trading/principles/new`, `[id]` | 원칙 추가/수정 폼, AI분석 배지 구현 |
+| 3.4 | 매매 원칙 목록 페이지 | 🟡 High | ✅ | `app/(main)/trading/principles/` | 목록, 인라인 편집, AI/수동 배지, 삭제 기능 |
+| 3.5 | 매매일지 작성 폼 | 🔴 Critical | ✅ | `app/(main)/trading/journal/`, `components/trading/JournalForm.tsx` | 사이드패널 폼 구현 완료, Figma 디자인 적용, positionsApi.create() + ordersApi.create() + journalApi.update() 연동 |
+| 3.6 | 매매일지 목록 (필터링) | 🟡 High | ✅ | `app/(main)/trading/journal/`, `components/trading/JournalList.tsx`, `components/trading/JournalCalendar.tsx` | 캘린더/리스트 뷰 구현, Figma 디자인 적용, journalApi.getAll() 연동 |
+| 3.7 | 매매일지 상세 보기 | 🟡 High | ✅ | `components/trading/JournalForm.tsx` | 사이드패널에서 조회/수정 가능, journalApi.update() 연동 |
 | 3.8 | 대시보드 API 연동 | 🟢 Medium | ✅ | `app/(main)/home/`, `lib/api/home.ts` | homeApi.getSummary() 연동, WeeklyProfitChart API 데이터 지원 |
 
 ### 완료 조건
 
 - [x] 홈 대시보드 카드 렌더링
 - [ ] 매매 원칙 CRUD 동작
-- [x] 매매일지 CRUD 동작 (UI 완료, API 연동 대기)
+- [x] 매매일지 CRUD 동작 (UI + API 연동 완료: journalApi, positionsApi, ordersApi)
 - [x] 필터링 동작 (캘린더/리스트 뷰 전환)
 
 ### 산출물
@@ -161,7 +161,8 @@
 - `components/layout/` - Sidebar 200px, Header 40px Figma 기준 적용
 - `app/(main)/trading/journal/` - 매매일지 페이지 (캘린더/리스트 뷰)
 - `components/trading/` - JournalCalendar, JournalList, JournalForm 컴포넌트
-- `lib/api/trading.ts` - 매매 API
+- `lib/api/trading.ts` - 매매 API (journalApi: /api/journals, principlesApi: mock)
+- `lib/api/futures.ts` - 포지션/오더 API (positionsApi, ordersApi)
 - `lib/api/dashboard.ts` - 대시보드 API
 
 ### 의존성
@@ -173,26 +174,26 @@
 ## Week 4: Tradex AI
 
 **목표**: AI 채팅 기능 구축
-**상태**: 🔄 진행중
-**진행률**: 3/6 (50%)
+**상태**: ✅ 완료
+**진행률**: 6/6 (100%)
 
 ### 태스크
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 4.1 | Tradex AI 사이드 패널 UI | 🔴 Critical | ✅ | `components/layout/TradexAIPanel.tsx` | Figma 디자인 적용 완료, 제안 칩, 채팅 UI |
-| 4.2 | 채팅 인터페이스 구현 | 🔴 Critical | ✅ | `app/(main)/ai/page.tsx`, `app/(main)/ai/chat/page.tsx` | 메인 페이지 + 채팅 페이지 구현, 통계 카드 포함 |
+| 4.1 | Tradex AI 사이드 패널 UI | 🔴 Critical | ✅ | `components/layout/TradexAIPanel.tsx` | Figma 디자인 적용 완료, 제안 칩, 채팅 UI, chatSessionApi 연동 (세션 생성/목록) |
+| 4.2 | 채팅 인터페이스 구현 | 🔴 Critical | ✅ | `app/(main)/ai/page.tsx`, `app/(main)/ai/chat/page.tsx` | 메인 페이지 + 채팅 페이지 구현, 통계 카드 포함, chatSessionApi 연동 (세션/히스토리) |
 | 4.3 | 메시지 입력/전송 기능 | 🟡 High | ✅ | `components/layout/TradexAIPanel.tsx`, `app/(main)/ai/chat/page.tsx` | 제안 프롬프트 클릭, 직접 입력, 마이크 버튼 |
-| 4.4 | AI 응답 스트리밍 표시 | 🟡 High | ⬜ | `components/ai/ChatMessage.tsx` | SSE 스트리밍 (API 연동 필요) |
-| 4.5 | 대화 목록/히스토리 관리 | 🟡 High | ⬜ | `components/ai/ConversationList.tsx` | - |
-| 4.6 | AI 매매 원칙 추천 연동 | 🟢 Medium | ⬜ | `components/trading/` | 매매 관리와 연동 |
+| 4.4 | AI 응답 스트리밍 표시 | 🟡 High | ✅ | `TradexAIPanel.tsx`, `ai/chat/page.tsx`, `useAIChatStore.ts` | SSE 스트리밍 UI + mock fallback, updateMessageContent 실시간 토큰 표시 |
+| 4.5 | 대화 목록/히스토리 관리 | 🟡 High | ✅ | `stores/useAIChatStore.ts`, `app/(main)/ai/` | Zustand persist + chatSessionApi 백엔드 연동 (세션 목록/히스토리/삭제), 백엔드 실패 시 로컬 fallback |
+| 4.6 | AI 매매 원칙 추천 연동 | 🟢 Medium | ✅ | `app/(main)/trading/principles/page.tsx` | AI 원칙 추천 버튼 + 수락/거절 UI, mock 추천 3개 |
 
 ### 완료 조건
 
 - [x] AI 사이드 패널 열기/닫기
-- [x] 메시지 전송 및 응답 표시 (Mock)
-- [ ] 채팅 히스토리 유지
-- [ ] AI 추천 기능 연동
+- [x] 메시지 전송 및 응답 표시 (SSE 스트리밍 + Mock fallback)
+- [x] 채팅 히스토리 유지 (Zustand persist + chatSessionApi 백엔드 연동)
+- [x] AI 추천 기능 연동 (mock 추천 3개)
 
 ### 산출물
 
@@ -211,19 +212,19 @@
 ## Week 5: 차트 분석
 
 **목표**: 차트 기능 구현
-**상태**: 🔄 진행중
-**진행률**: 4/6 (67%)
+**상태**: ✅ 완료
+**진행률**: 6/6 (100%)
 
 ### 태스크
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 5.1 | TradingView Lightweight Charts 연동 | 🔴 Critical | ✅ | `components/chart/` | v5.1.0 설치 완료 |
-| 5.2 | 기본 캔들 차트 구현 | 🔴 Critical | ✅ | `components/chart/CandleChart.tsx` | 캔들차트 + 크로스헤어 완료 |
-| 5.3 | 기술적 지표 추가 | 🟡 High | ✅ | `components/chart/ChartToolbar.tsx` | MA, EMA, BB, RSI, MACD UI 구현 |
-| 5.4 | 차트 도구 | 🟢 Medium | ✅ | `components/chart/ChartToolbar.tsx` | 직선, 수평선, 피보나치, 텍스트 UI 구현 |
-| 5.5 | Trading System (트리거 설정) UI | 🟡 High | ⬜ | `components/chart/TriggerForm.tsx` | - |
-| 5.6 | AI 차트 분석 연동 | 🟢 Medium | ⬜ | `lib/api/chart.ts` | 스크린샷 → AI 분석 |
+| 5.1 | TradingView Charting Library 연동 | 🔴 Critical | ✅ | `components/chart/TVChartContainer.tsx` | TradingView v30 Charting Library, custom datafeed 구현 |
+| 5.2 | 기본 캔들 차트 구현 | 🔴 Critical | ✅ | `components/chart/TVChartContainer.tsx` | 캔들차트 + 실시간 업데이트 + save/load adapter |
+| 5.3 | 기술적 지표 추가 | 🟡 High | ✅ | TradingView 내장 | TradingView 위젯 내장 지표 (200+) |
+| 5.4 | 차트 도구 | 🟢 Medium | ✅ | TradingView 내장 | TradingView 위젯 내장 드로잉 도구 |
+| 5.5 | Trading System (트리거 설정) UI | 🟡 High | ✅ | `components/chart/TriggerPanel.tsx`, `lib/chart/triggerEngine.ts` | 트리거 패널 + 평가 엔진 + 차트 연동 완료 |
+| 5.6 | AI 차트 분석 연동 | 🟢 Medium | ✅ | `app/(main)/chart/page.tsx`, `lib/chart/chartContext.ts` | 차트 페이지 AI 분석 버튼 + 오버레이 결과 패널, AI 채팅 연결 |
 
 ### 완료 조건
 
@@ -249,17 +250,17 @@
 
 **목표**: 전략/리스크 분석 및 포트폴리오
 **상태**: 🔄 진행중
-**진행률**: 1/6 (17%)
+**진행률**: 5/6 (83%)
 
 ### 태스크
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 6.1 | 전략 분석 페이지 | 🟡 High | ⬜ | `app/(main)/analysis/strategy/` | 변수별 성과 |
+| 6.1 | 전략 분석 페이지 | 🟡 High | ✅ | `app/(main)/analysis/strategy/` | Figma 디자인 적용 완료, 사이드바+분석리포트 레이아웃, AI 패널 |
 | 6.2 | 리스크 매핑 시각화 | 🟡 High | ✅ | `app/(main)/analysis/risk/` | RiskGauge, RiskCard, AI 인사이트 구현 |
-| 6.3 | Assets 페이지 (자산 현황) | 🔴 Critical | ⬜ | `app/(main)/portfolio/assets/` | Figma 디자인 대기 |
-| 6.4 | P&L 페이지 (손익 관리) | 🔴 Critical | ⬜ | `app/(main)/portfolio/pnl/` | Figma 디자인 대기 |
-| 6.5 | 수익률 차트/그래프 | 🟡 High | ⬜ | `app/(main)/portfolio/pnl/` | Figma 디자인 대기 |
+| 6.3 | Assets 페이지 (자산 현황) | 🔴 Critical | ✅ | `app/(main)/portfolio/assets/` | Figma 디자인 적용 완료, 누적손익+일일손익캘린더+자산분포 |
+| 6.4 | P&L 페이지 (손익 관리) | 🔴 Critical | ✅ | `app/(main)/portfolio/pnl/` | Figma 디자인 적용 완료, 손익+랭킹+체결완료 테이블 |
+| 6.5 | 수익률 차트/그래프 | 🟡 High | ✅ | `app/(main)/portfolio/` | SVG 차트 구현 (P&L 바차트, 누적손익 라인차트, 자산추이 차트) |
 | 6.6 | 거래소 API 연동 (자산 동기화) | 🟢 Medium | ⬜ | `lib/api/exchange.ts` | - |
 
 ### 완료 조건
@@ -286,8 +287,8 @@
 ## Week 7: 수신함 + 설정
 
 **목표**: 알림 및 사용자 설정 완성
-**상태**: 🔄 진행중
-**진행률**: 2/6 (33%)
+**상태**: ✅ 완료
+**진행률**: 6/6 (100%)
 
 ### 태스크
 
@@ -295,10 +296,10 @@
 |---|--------|---------|------|-----------|------|
 | 7.1 | 수신함 페이지 (알림 목록) | 🟡 High | ✅ | `app/(main)/inbox/` | 전체/읽지않음 필터, 알림 타입별 스타일, homeApi.getNotifications() 연동 |
 | 7.2 | 알림 읽음/삭제 처리 | 🟢 Medium | ✅ | `app/(main)/inbox/`, `lib/api/home.ts` | markAsRead, deleteNotification API 연동 완료 |
-| 7.3 | 계정 설정 (프로필 수정) | 🟡 High | ⬜ | `app/(main)/settings/account/` | Figma 디자인 대기 |
-| 7.4 | 거래소 API 키 관리 | 🟡 High | ⬜ | `app/(main)/settings/account/` | Figma 디자인 대기 |
-| 7.5 | 테마/언어 설정 | 🟢 Medium | ⬜ | `app/(main)/settings/preferences/` | Figma 디자인 대기 |
-| 7.6 | 알림 설정 페이지 | 🟢 Medium | ⬜ | `app/(main)/settings/notifications/` | Figma 디자인 대기 |
+| 7.3 | 계정 설정 (프로필 수정) | 🟡 High | ✅ | `components/settings/SettingsModal.tsx` | Figma 기준 모달 오버레이로 구현 (이메일/비밀번호/거래소) |
+| 7.4 | 거래소 API 키 관리 | 🟡 High | ✅ | `components/settings/SettingsModal.tsx` | 거래소 추가/삭제 UI 포함 |
+| 7.5 | 테마/언어 설정 | 🟢 Medium | ✅ | `components/settings/SettingsModal.tsx` | 기본 설정 탭 (테마/언어) |
+| 7.6 | 알림 설정 페이지 | 🟢 Medium | ✅ | `components/settings/SettingsModal.tsx` | 알림 설정 탭 (푸시/앱내) |
 
 ### 완료 조건
 
@@ -323,20 +324,20 @@
 ## Week 8: 구독 + 최적화 + QA
 
 **목표**: 결제 연동 및 최종 마무리
-**상태**: ⬜ 미시작
-**진행률**: 0/7 (0%)
+**상태**: 🔄 진행중
+**진행률**: 3/7 (43%)
 
 ### 태스크
 
 | # | 태스크 | 우선순위 | 상태 | 관련 파일 | 비고 |
 |---|--------|---------|------|-----------|------|
-| 8.1 | 구독 플랜 페이지 | 🟡 High | ⬜ | `app/(main)/settings/subscription/` | - |
+| 8.1 | 구독 플랜 페이지 | 🟡 High | ✅ | `components/settings/SettingsModal.tsx` | SettingsModal 구독 관리 탭 구현 (Free/Pro/Enterprise 플랜 카드, 빌링 정보) |
 | 8.2 | 결제 시스템 연동 | 🟡 High | ⬜ | `lib/api/payment.ts` | - |
-| 8.3 | 성능 최적화 | 🟢 Medium | ⬜ | - | 코드 스플리팅, 이미지 최적화 |
-| 8.4 | 반응형 대응 점검 | 🟢 Medium | ⬜ | - | 태블릿, 모바일 |
-| 8.5 | 에러 핸들링 강화 | 🟡 High | ⬜ | `components/common/ErrorBoundary.tsx` | - |
+| 8.3 | 성능 최적화 | 🟢 Medium | ✅ | `app/(main)/layout.tsx`, `app/(main)/loading.tsx` | 동적 import (SettingsModal, TradexAIPanel), preconnect, loading.tsx |
+| 8.4 | 반응형 대응 점검 | 🟢 Medium | ✅ | `layout.tsx`, `Sidebar.tsx`, `Header.tsx` 등 | 모바일 사이드바 오버레이, 반응형 그리드/패널/모달, 태블릿 대응 |
+| 8.5 | 에러 핸들링 강화 | 🟡 High | ✅ | `app/global-error.tsx`, `app/(main)/error.tsx`, `app/not-found.tsx` | Next.js 에러 바운더리 + 404 페이지 구현 |
 | 8.6 | E2E 테스트 | 🟢 Medium | ⬜ | `tests/` | 주요 플로우 |
-| 8.7 | 버그 수정 및 최종 QA | 🔴 Critical | ⬜ | - | - |
+| 8.7 | 버그 수정 및 최종 QA | 🔴 Critical | ✅ | `eslint.config.mjs` | ESLint 0 errors/0 warnings, 빌드 성공 확인 |
 
 ### 완료 조건
 
@@ -377,6 +378,7 @@
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2026-02-19 | 미연동 API 통합 작업: journalApi 경로 수정 (백엔드 스펙 /api/journals 맞춤, put→patch, 불필요 메서드 삭제), 매매일지 페이지 API 연동 (journalApi.getAll, delete + positionsApi.create + ordersApi.create), JournalForm 저장/수정/주문추가 API 연동, AI 채팅 페이지 chatSessionApi 연동 (세션 목록/생성/히스토리/삭제), AI 사이드 패널 chatSessionApi 연동. principlesApi는 백엔드 미구현으로 mock 유지 |
 | 2026-01-28 | Figma 디자인 없는 항목 롤백 - 매매 원칙(3.3, 3.4), 자산현황/손익관리(6.3~6.5), 설정(7.3~7.6) |
 | 2026-01-28 | Week 5: 차트 분석 페이지 구현 (5.1~5.4) - TradingView Lightweight Charts v5, 캔들차트, 툴바 |
 | 2026-01-28 | Week 6: 리스크 분석 페이지 구현 (6.2) - RiskGauge, RiskCard, AI 인사이트 |

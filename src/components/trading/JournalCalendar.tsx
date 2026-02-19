@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 interface TradeEntry {
   id: string
   pair: string
+  position?: 'Long' | 'Short'
+  timestamp?: string
   profit: number
   profitPercent: number
 }
@@ -97,11 +99,16 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
+  // Today's date for highlighting
+  const today = new Date()
+  const isToday = (day: number) =>
+    year === today.getFullYear() && month === today.getMonth() && day === today.getDate()
+
   // Sample data for demonstration
   const sampleTrades: DayTrades = {
     [`${year}-${String(month + 1).padStart(2, '0')}-11`]: [
-      { id: '1', pair: 'BTC/USDT', profit: 1250000, profitPercent: 5.2 },
-      { id: '2', pair: 'ETH/USDT', profit: -1250, profitPercent: -2.1 },
+      { id: '1', pair: 'BTCUSDT', position: 'Long', timestamp: '01:47:04', profit: 1250, profitPercent: 5.2 },
+      { id: '2', pair: 'ETHUSDT', position: 'Short', timestamp: '14:32:00', profit: -428, profitPercent: -2.1 },
     ],
   }
 
@@ -156,13 +163,13 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
       {/* Calendar Table */}
       <div className="flex flex-col flex-1">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 bg-gray-100 rounded-t-lg">
+        <div className="grid grid-cols-7 bg-gray-50 rounded-t-lg border border-gray-200">
           {WEEKDAYS.map((day, index) => (
             <div
               key={day}
               className={cn(
-                "py-1 px-2 flex justify-center items-center",
-                index < 6 && "border-r border-gray-300/40"
+                "py-2 px-2 flex justify-center items-center",
+                index < 6 && "border-r border-gray-200"
               )}
             >
               <span className="text-body-2-regular text-gray-600">{day}</span>
@@ -183,22 +190,20 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
 
             // Border classes based on position (Figma spec)
             const borderClasses = cn(
-              "border-gray-300/40",
-              // Top border for all cells
+              "border-gray-200",
               "border-t",
-              // Left border for all cells
               "border-l",
-              // Right border only for last column
               isLastCol && "border-r",
-              // Bottom border only for last row
               isLastRow && "border-b"
             )
+
+            const isTodayCell = calendarDay.isCurrentMonth && isToday(calendarDay.day)
 
             return (
               <div
                 key={index}
                 className={cn(
-                  "flex flex-col bg-white px-2 py-1 cursor-pointer hover:bg-gray-50 transition-colors min-h-[100px]",
+                  "flex flex-col bg-white px-2 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors min-h-[120px]",
                   borderClasses
                 )}
                 onClick={() => calendarDay.isCurrentMonth && onDateClick?.(new Date(year, month, calendarDay.day))}
@@ -206,44 +211,54 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
                 {/* Day number - right aligned */}
                 <div className={cn(
                   "text-body-2-medium text-right p-0.5",
-                  calendarDay.isCurrentMonth ? "text-gray-600" : "text-gray-400"
+                  isTodayCell
+                    ? "text-element-positive-default font-bold"
+                    : calendarDay.isCurrentMonth ? "text-gray-600" : "text-gray-400"
                 )}>
                   {formatDayLabel(calendarDay)}
                 </div>
 
-                {/* Trade cards for this day */}
+                {/* Trade cards for this day - Figma 상세 디자인 */}
                 {calendarDay.isCurrentMonth && dayTrades.length > 0 && (
-                  <div className="flex flex-col gap-0.5 mt-auto">
+                  <div className="flex flex-col gap-1 mt-1">
                     {dayTrades.slice(0, 2).map((trade) => (
                       <div
                         key={trade.id}
-                        className={cn(
-                          "rounded py-0.5 px-1 cursor-pointer hover:opacity-80 transition-opacity",
-                          trade.profit >= 0 ? "bg-gray-100" : "bg-red-100"
-                        )}
+                        className="rounded-md border border-gray-200 bg-white p-1.5 cursor-pointer hover:bg-gray-50 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation()
                           onTradeClick?.(trade)
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          {/* Color dot */}
-                          <span className={cn(
-                            "w-1.5 h-1.5 rounded-full shrink-0",
-                            trade.profit >= 0 ? "bg-green-400" : "bg-red-400"
-                          )} />
-                          {/* Coin name and profit */}
-                          <div className="flex items-center gap-1 flex-1 min-w-0">
-                            <span className="text-caption-medium text-gray-800 truncate">
-                              {trade.pair}
-                            </span>
+                        {/* Pair name + Position badge */}
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-caption-bold text-gray-800 truncate">
+                            {trade.pair}
+                          </span>
+                          {trade.position && (
                             <span className={cn(
-                              "text-body-2-bold whitespace-nowrap",
-                              trade.profit >= 0 ? "text-green-400" : "text-red-400"
+                              "text-[10px] font-medium px-1 py-px rounded shrink-0",
+                              trade.position === 'Long'
+                                ? "bg-element-positive-lighter text-element-positive-default"
+                                : "bg-element-danger-lighter text-element-danger-default"
                             )}>
-                              {formatProfit(trade.profit)}
+                              {trade.position}
                             </span>
-                          </div>
+                          )}
+                        </div>
+                        {/* Timestamp */}
+                        {trade.timestamp && (
+                          <p className="text-[10px] text-gray-400 mb-0.5">{trade.timestamp}</p>
+                        )}
+                        {/* P&L */}
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-gray-400">Closed P&L</span>
+                          <span className={cn(
+                            "text-caption-bold",
+                            trade.profit >= 0 ? "text-element-positive-default" : "text-element-danger-default"
+                          )}>
+                            {formatProfit(trade.profit)}
+                          </span>
                         </div>
                       </div>
                     ))}

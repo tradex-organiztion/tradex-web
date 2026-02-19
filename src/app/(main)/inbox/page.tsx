@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell } from "lucide-react"
+import { Bell, MoreVertical } from "lucide-react"
 import { PageHeader } from "@/components/common"
 import { Button } from "@/components/ui"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -9,16 +9,11 @@ import { cn } from "@/lib/utils"
 import { homeApi, NotificationResponse, NotificationType } from "@/lib/api"
 
 /**
- * 수신함(Inbox) 페이지
+ * 수신함(Inbox) 페이지 - 분할 패널 레이아웃
  *
- * API:
- * - GET /api/home/notifications - 전체 알림 목록
- * - GET /api/home/notifications/unread - 읽지 않은 알림만
- * - PATCH /api/home/notifications/:id/read - 읽음 처리
- * - DELETE /api/home/notifications/:id - 알림 삭제
+ * 좌측: 알림 목록
+ * 우측: 선택된 알림 상세
  */
-
-type FilterType = "all" | "unread"
 
 // 알림 타입별 라벨 및 색상
 const notificationTypeConfig: Record<NotificationType, { label: string; bgColor: string; textColor: string }> = {
@@ -28,18 +23,20 @@ const notificationTypeConfig: Record<NotificationType, { label: string; bgColor:
 }
 
 export default function InboxPage() {
-  const [filter, setFilter] = useState<FilterType>("all")
+  const [filter] = useState<"all" | "unread">("all")
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<NotificationResponse | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+
+  const selectedNotification = notifications.find((n) => n.id === selectedId) || null
 
   // 알림 목록 불러오기
   const fetchNotifications = async () => {
     setIsLoading(true)
     setError(null)
 
-    // API 호출 - 실패 시 빈 배열 반환
     const data = await (filter === "all"
       ? homeApi.getNotifications()
       : homeApi.getUnreadNotifications()
@@ -50,6 +47,10 @@ export default function InboxPage() {
 
     if (data) {
       setNotifications(data)
+      // 첫 번째 알림 자동 선택
+      if (data.length > 0 && !selectedId) {
+        setSelectedId(data[0].id)
+      }
     } else {
       setNotifications([])
       setError("API 서버에 연결할 수 없습니다.")
@@ -69,10 +70,17 @@ export default function InboxPage() {
       console.warn("Failed to mark as read:", err.message)
       return null
     })
-    // 목록에서 읽음 상태로 업데이트
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
+  }
+
+  // 알림 선택 시 자동 읽음 처리
+  const handleSelectNotification = (notification: NotificationResponse) => {
+    setSelectedId(notification.id)
+    if (!notification.read) {
+      handleMarkAsRead(notification.id)
+    }
   }
 
   // 알림 삭제 확인 모달 열기
@@ -89,155 +97,162 @@ export default function InboxPage() {
     })
     if (result !== null) {
       setNotifications((prev) => prev.filter((n) => n.id !== deleteTarget.id))
+      if (selectedId === deleteTarget.id) {
+        setSelectedId(null)
+      }
     }
     setDeleteTarget(null)
   }
 
-  // 날짜 포맷팅
+  // 날짜 포맷팅 (Figma: 절대 날짜 "2025. 11. 27. 11:39")
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
+    const y = date.getFullYear()
+    const m = (date.getMonth() + 1).toString().padStart(2, '0')
+    const d = date.getDate().toString().padStart(2, '0')
+    const h = date.getHours().toString().padStart(2, '0')
+    const min = date.getMinutes().toString().padStart(2, '0')
+    return `${y}. ${m}. ${d}. ${h}:${min}`
+  }
 
-    if (minutes < 1) return "방금 전"
-    if (minutes < 60) return `${minutes}분 전`
-    if (hours < 24) return `${hours}시간 전`
-    if (days < 7) return `${days}일 전`
+  const formatFullDate = (dateString: string) => {
+    const date = new Date(dateString)
     return date.toLocaleDateString("ko-KR", {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     })
   }
-
-  const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="수신함"
-        description={`총 ${notifications.length}개의 알림${unreadCount > 0 ? ` (읽지 않음 ${unreadCount}개)` : ""}`}
       />
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2">
-        <Button
-          variant={filter === "all" ? "primary" : "secondary"}
-          size="sm"
-          onClick={() => setFilter("all")}
-        >
-          전체
-        </Button>
-        <Button
-          variant={filter === "unread" ? "primary" : "secondary"}
-          size="sm"
-          onClick={() => setFilter("unread")}
-        >
-          읽지 않음
-        </Button>
-      </div>
-
-      {/* Notification List */}
-      <div className="bg-white rounded-[12px] shadow-normal overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center">
-            <p className="text-body-1-regular text-label-assistive">
-              알림을 불러오는 중...
-            </p>
-          </div>
-        ) : error ? (
-          <div className="p-8 text-center">
-            <p className="text-body-1-regular text-element-danger-default">{error}</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-4"
-              onClick={fetchNotifications}
-            >
-              다시 시도
-            </Button>
-          </div>
-        ) : notifications.length === 0 ? (
-          <div className="p-8 text-center">
-            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-body-1-regular text-label-assistive">
-              {filter === "unread" ? "읽지 않은 알림이 없습니다." : "알림이 없습니다."}
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-line-normal">
-            {notifications.map((notification) => {
-              const typeConfig = notificationTypeConfig[notification.type]
-              return (
-                <li
-                  key={notification.id}
-                  className={cn(
-                    "px-5 py-4 hover:bg-gray-50 transition-colors"
-                  )}
-                >
-                  <div className="space-y-3">
-                    {/* Badge + Timestamp Row */}
-                    <div className="flex items-center justify-between">
-                      <span
+      {/* Split Panel Layout */}
+      <div className="bg-white rounded-[12px] shadow-normal overflow-hidden flex min-h-[600px]">
+        {/* Left: Notification List */}
+        <div className="w-full shrink-0 border-r border-line-normal flex flex-col md:w-[380px]">
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <p className="text-body-2-regular text-label-assistive">불러오는 중...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <p className="text-body-2-regular text-element-danger-default">{error}</p>
+                <Button variant="secondary" size="sm" className="mt-4" onClick={fetchNotifications}>
+                  다시 시도
+                </Button>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-8 text-center">
+                <Bell className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-body-2-regular text-label-assistive">
+                  {filter === "unread" ? "읽지 않은 알림이 없습니다." : "알림이 없습니다."}
+                </p>
+              </div>
+            ) : (
+              <ul>
+                {notifications.map((notification) => {
+                  const typeConfig = notificationTypeConfig[notification.type]
+                  const isSelected = selectedId === notification.id
+                  return (
+                    <li key={notification.id}>
+                      <button
+                        onClick={() => handleSelectNotification(notification)}
                         className={cn(
-                          "text-caption-medium px-2 py-0.5 rounded",
-                          typeConfig.bgColor,
-                          typeConfig.textColor
+                          "w-full text-left px-4 py-3 border-b border-line-normal transition-colors",
+                          isSelected ? "bg-gray-50" : "hover:bg-gray-50/50",
+                          !notification.read && "bg-blue-50/30"
                         )}
                       >
-                        {typeConfig.label}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {!notification.read && (
-                          <span className="w-1.5 h-1.5 bg-gray-800 rounded-full" />
-                        )}
-                        <span className="text-caption-regular text-label-assistive">
-                          {formatDate(notification.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="space-y-0.5">
-                      <h3
-                        className={cn(
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className={cn(
+                            "text-caption-medium px-1.5 py-0.5 rounded",
+                            typeConfig.bgColor, typeConfig.textColor
+                          )}>
+                            {typeConfig.label}
+                          </span>
+                          <span className="flex-1" />
+                          {!notification.read && (
+                            <span className="w-1.5 h-1.5 bg-gray-800 rounded-full flex-shrink-0" />
+                          )}
+                          <span className="text-caption-regular text-label-assistive">
+                            {formatDate(notification.createdAt)}
+                          </span>
+                        </div>
+                        <p className={cn(
                           "text-body-2-medium text-label-normal",
                           !notification.read && "font-bold"
-                        )}
-                      >
-                        {notification.title}
-                      </h3>
-                      <p className="text-body-2-regular text-label-neutral">
-                        {notification.message}
-                      </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      {!notification.read && (
-                        <button
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          className="flex-1 py-1 px-2 border border-line-normal rounded text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors text-center"
-                        >
-                          읽음 처리
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteClick(notification)}
-                        className="flex-1 py-1 px-2 border border-line-normal rounded text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors text-center"
-                      >
-                        삭제
+                        )}>
+                          {notification.title}
+                        </p>
+                        <p className="text-caption-regular text-label-neutral mt-0.5 line-clamp-2">
+                          {notification.message}
+                        </p>
                       </button>
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Detail Panel */}
+        <div className="flex-1 flex flex-col">
+          {selectedNotification ? (
+            <div className="flex-1 flex flex-col">
+              {/* Detail Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-line-normal">
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-caption-medium px-2 py-0.5 rounded",
+                    notificationTypeConfig[selectedNotification.type].bgColor,
+                    notificationTypeConfig[selectedNotification.type].textColor
+                  )}>
+                    {notificationTypeConfig[selectedNotification.type].label}
+                  </span>
+                  <span className="text-caption-regular text-label-assistive">
+                    {formatFullDate(selectedNotification.createdAt)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleDeleteClick(selectedNotification)}
+                  className="p-1.5 hover:bg-gray-50 rounded transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5 text-label-assistive" />
+                </button>
+              </div>
+
+              {/* Detail Content */}
+              <div className="flex-1 px-6 py-6">
+                <h2 className="text-title-2-bold text-label-normal mb-3">
+                  {selectedNotification.title}
+                </h2>
+                <p className="text-body-1-regular text-label-neutral leading-relaxed">
+                  {selectedNotification.message}
+                </p>
+              </div>
+
+              {/* Figma에 하단 액션바 없음 */}
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <Bell className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <p className="text-body-1-regular text-label-assistive">
+                  알림을 선택하세요
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 삭제 확인 모달 */}

@@ -1,7 +1,8 @@
-import { get, post, put, del } from './client'
-import type { TradingPrinciple, TradeEntry } from '@/stores/useTradingStore'
+import { get, post, put, patch, del } from './client'
+import type { TradingPrinciple } from '@/stores/useTradingStore'
+import type { PageResponse } from './futures'
 
-// Principles API
+// Principles API (백엔드 미구현 — mock 유지)
 export interface CreatePrincipleRequest {
   title: string
   description: string
@@ -36,7 +37,57 @@ export const principlesApi = {
     get<TradingPrinciple[]>('/trading/principles/ai-recommendations'),
 }
 
+// ============================================================
 // Journal API
+// ============================================================
+
+/** 매매일지 응답 */
+export interface JournalResponse {
+  id: number
+  positionId: number
+  symbol: string
+  side: 'LONG' | 'SHORT'
+  leverage: number
+  entryPrice: number
+  exitPrice?: number
+  size: number
+  pnl: number
+  pnlPercent?: number
+  status: 'OPEN' | 'CLOSED'
+  entryTime: string
+  exitTime?: string
+  memo?: string
+  review?: string
+  preScenario?: string
+  entryReason?: string
+  indicators?: string[]
+  timeframes?: string[]
+  technicalAnalysis?: string[]
+  targetTP?: string
+  targetSL?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UpdateJournalRequest {
+  memo?: string
+  review?: string
+  preScenario?: string
+  entryReason?: string
+  indicators?: string[]
+  timeframes?: string[]
+  technicalAnalysis?: string[]
+  targetTP?: string
+  targetSL?: string
+}
+
+export interface JournalFilters {
+  page?: number
+  size?: number
+  sort?: string[]
+}
+
+// 하위 호환용 (기존 코드에서 참조)
 export interface CreateEntryRequest {
   symbol: string
   position: 'long' | 'short'
@@ -54,17 +105,6 @@ export interface UpdateEntryRequest {
   principleIds?: string[]
 }
 
-export interface JournalFilters {
-  startDate?: string
-  endDate?: string
-  position?: 'long' | 'short'
-  status?: 'open' | 'closed'
-  result?: 'profit' | 'loss'
-  search?: string
-  page?: number
-  limit?: number
-}
-
 export interface PaginatedResponse<T> {
   data: T[]
   total: number
@@ -74,31 +114,24 @@ export interface PaginatedResponse<T> {
 }
 
 export const journalApi = {
+  /** 매매일지 목록 조회 (페이지네이션) */
   getAll: (filters?: JournalFilters) =>
-    get<PaginatedResponse<TradeEntry>>('/trading/journal', { params: filters }),
+    get<PageResponse<JournalResponse>>('/api/journals', {
+      params: {
+        ...filters,
+        sort: filters?.sort?.join(','),
+      },
+    }),
 
-  getById: (id: string) =>
-    get<TradeEntry>(`/trading/journal/${id}`),
+  /** 매매일지 상세 조회 (오더 포함) */
+  getById: (id: number) =>
+    get<JournalResponse>(`/api/journals/${id}`),
 
-  create: (data: CreateEntryRequest) =>
-    post<TradeEntry>('/trading/journal', data),
+  /** 매매일지 수정 (메모, 복기 등) */
+  update: (id: number, data: UpdateJournalRequest) =>
+    patch<JournalResponse>(`/api/journals/${id}`, data),
 
-  update: (id: string, data: UpdateEntryRequest) =>
-    put<TradeEntry>(`/trading/journal/${id}`, data),
-
-  delete: (id: string) =>
-    del<void>(`/trading/journal/${id}`),
-
-  // Close position
-  close: (id: string, exitPrice: number, exitDate: string) =>
-    post<TradeEntry>(`/trading/journal/${id}/close`, { exitPrice, exitDate }),
-
-  // Stats
-  getStats: (period?: string) =>
-    get<{
-      totalTrades: number
-      winRate: number
-      totalPnL: number
-      averagePnL: number
-    }>('/trading/journal/stats', { params: { period } }),
+  /** 매매일지 삭제 */
+  delete: (id: number) =>
+    del<void>(`/api/journals/${id}`),
 }

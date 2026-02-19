@@ -96,8 +96,8 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
           >
             <defs>
               <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(19, 20, 22, 0.1)" />
-                <stop offset="100%" stopColor="rgba(19, 20, 22, 0)" />
+                <stop offset="0%" stopColor="rgba(91, 33, 182, 0.15)" />
+                <stop offset="100%" stopColor="rgba(91, 33, 182, 0)" />
               </linearGradient>
             </defs>
 
@@ -139,7 +139,7 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
             <path
               d={linePath}
               fill="none"
-              stroke="#131416"
+              stroke="#7C3AED"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -161,7 +161,7 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
               cx={highlightedPoint.x}
               cy={highlightedPoint.y}
               r="6"
-              fill="#131416"
+              fill="#7C3AED"
               stroke="white"
               strokeWidth="2"
             />
