@@ -12,40 +12,49 @@ interface Principle {
   timestamp: string
 }
 
+const _fmtTs = (daysAgo: number, hour: number, minute: number, ampm: '오전' | '오후') => {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}.${mm}.${dd} ${ampm} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
 const samplePrinciples: Principle[] = [
   {
     id: '1',
     text: '하루에 3회 이상 연속 손실이 발생하면 그날은 더 이상 거래하지 않습니다.',
     source: 'ai',
     aiDescription: '과거 데이터 분석 결과, 연속 손실 후 감정적 매매로 인한 추가 손실이 82%의 확률로 발생했습니다.',
-    timestamp: '2026.01.30 오후 01:45',
+    timestamp: _fmtTs(0, 1, 45, '오후'),
   },
   {
     id: '2',
     text: '손절 기준은 진입가 대비 2% 이하로 설정하고, 어떤 경우에도 이를 변경하거나 무시하지 않습니다.',
     source: 'ai',
     aiDescription: '손절 라인을 자주 변경하여 손실이 확대되는 경향이 있습니다.',
-    timestamp: '2026.01.30 오전 11:20',
+    timestamp: _fmtTs(0, 11, 20, '오전'),
   },
   {
     id: '3',
     text: '오후 9시 이후에는 신규 포지션을 진입하지 않습니다.',
     source: 'ai',
     aiDescription: '야간 시간대 매매에서 손실률이 높게 나타났습니다.',
-    timestamp: '2026.01.29 오후 03:15',
+    timestamp: _fmtTs(1, 3, 15, '오후'),
   },
   {
     id: '4',
     text: '포지션 진입 전 반드시 매매 일지에 진입 근거와 목표가, 손절가를 미리 작성합니다.',
     source: 'ai',
     aiDescription: '사전 시나리오 없이 진입한 매매의 손실률이 높습니다.',
-    timestamp: '2026.01.29 오전 09:00',
+    timestamp: _fmtTs(1, 9, 0, '오전'),
   },
   {
     id: '5',
     text: '전체 자산의 10% 이상을 단일 포지션에 투자하지 않습니다.',
     source: 'manual',
-    timestamp: '2026.01.28 오후 06:00',
+    timestamp: _fmtTs(2, 6, 0, '오후'),
   },
 ]
 

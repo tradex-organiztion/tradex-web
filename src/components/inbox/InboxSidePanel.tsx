@@ -24,13 +24,22 @@ const typeConfig: Record<Notification['type'], { label: string; bgColor: string;
   trade: { label: '매매 알림', bgColor: 'bg-gray-100', textColor: 'text-gray-800' },
 }
 
+const _fmtTs = (daysAgo: number, hour: number, minute: number, ampm: '오전' | '오후') => {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}.${mm}.${dd} ${ampm} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
 const sampleNotifications: Notification[] = [
   {
     id: '1',
     type: 'chart',
     title: 'BTC/USDT 볼린저밴드 하단 이탈',
     description: '설정하신 차트 트리거 알림이 발생했습니다.',
-    timestamp: '2026.01.30 오후 01:45',
+    timestamp: _fmtTs(0, 1, 45, '오후'),
     isRead: false,
     action: { label: '차트 바로가기' },
   },
@@ -39,7 +48,7 @@ const sampleNotifications: Notification[] = [
     type: 'risk',
     title: '일일 최대 손실 한도 80% 도달',
     description: '현재 일일 손실이 설정한 한도의 80%에 도달했습니다.',
-    timestamp: '2026.01.30 오전 11:20',
+    timestamp: _fmtTs(0, 11, 20, '오전'),
     isRead: false,
   },
   {
@@ -47,7 +56,7 @@ const sampleNotifications: Notification[] = [
     type: 'position_close',
     title: 'ETH/USDT 포지션 종료',
     description: '숏 포지션이 목표가 도달로 자동 청산되었습니다.',
-    timestamp: '2026.01.29 오후 03:15',
+    timestamp: _fmtTs(1, 3, 15, '오후'),
     isRead: false,
     action: { label: '매매일지 작성' },
   },
@@ -56,7 +65,7 @@ const sampleNotifications: Notification[] = [
     type: 'position_entry',
     title: 'SOL/USDT 포지션 진입',
     description: '롱 포지션 진입이 완료되었습니다. 진입가: $185.20',
-    timestamp: '2026.01.29 오전 09:00',
+    timestamp: _fmtTs(1, 9, 0, '오전'),
     isRead: false,
     action: { label: '매매일지 작성' },
   },
@@ -65,7 +74,7 @@ const sampleNotifications: Notification[] = [
     type: 'trade',
     title: '주간 거래 리포트 발행',
     description: '이번 주 거래 성과 리포트가 준비되었습니다.',
-    timestamp: '2026.01.28 오후 06:00',
+    timestamp: _fmtTs(2, 6, 0, '오후'),
     isRead: true,
     action: { label: '삭제' },
   },

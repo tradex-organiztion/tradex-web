@@ -190,7 +190,7 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
               transform: "translateX(-50%)",
             }}
           >
-            <p className="text-caption-medium text-label-assistive">2026. 01. 01</p>
+            <p className="text-caption-medium text-label-assistive">{(() => { const d = new Date(); return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}` })()}</p>
             <p className="text-title-2-bold text-label-normal">$3,890.00</p>
           </div>
         </div>

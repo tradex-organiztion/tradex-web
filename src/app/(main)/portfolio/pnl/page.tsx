@@ -67,10 +67,10 @@ const mockRanking: ProfitRankingResponse = {
 
 const mockClosedPositions: PageResponse<ClosedPositionResponse> = {
   content: [
-    { id: 1, symbol: 'BTCUSDT', side: 'LONG', size: 0.5, leverage: 20, entryPrice: 42500, exitPrice: 43200, pnl: 1250, result: 'WIN', volume: 21600, totalFee: 21.6, entryTime: '2025-12-11T14:30:00', exitTime: '2025-12-11T16:00:00' },
-    { id: 2, symbol: 'BTCUSDT', side: 'SHORT', size: 5, leverage: 10, entryPrice: 2250, exitPrice: 1950, pnl: 300, result: 'LOSS', volume: 4810, totalFee: 4.81, entryTime: '2025-12-11T14:32:00', exitTime: '2025-12-11T15:00:00' },
-    { id: 3, symbol: 'ETHUSDT', side: 'SHORT', size: 0.5, leverage: 15, entryPrice: 42500, exitPrice: 43200, pnl: 1250, result: 'WIN', volume: 21600, totalFee: 21.6, entryTime: '2025-12-11T14:34:00', exitTime: '2025-12-11T16:30:00' },
-    { id: 4, symbol: 'SOLUSDT', side: 'LONG', size: 0.5, leverage: 10, entryPrice: 42500, exitPrice: 43200, pnl: 1250, result: 'WIN', volume: 21600, totalFee: 21.6, entryTime: '2025-12-11T14:36:00', exitTime: '2025-12-11T17:00:00' },
+    { id: 1, symbol: 'BTCUSDT', side: 'LONG', size: 0.5, leverage: 20, entryPrice: 42500, exitPrice: 43200, pnl: 1250, result: 'WIN', volume: 21600, totalFee: 21.6, entryTime: new Date(Date.now() - 2 * 3600000).toISOString().slice(0, 19), exitTime: new Date(Date.now() - 0.5 * 3600000).toISOString().slice(0, 19) },
+    { id: 2, symbol: 'BTCUSDT', side: 'SHORT', size: 5, leverage: 10, entryPrice: 2250, exitPrice: 1950, pnl: 300, result: 'LOSS', volume: 4810, totalFee: 4.81, entryTime: new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 19), exitTime: new Date(Date.now() - 2 * 3600000).toISOString().slice(0, 19) },
+    { id: 3, symbol: 'ETHUSDT', side: 'SHORT', size: 0.5, leverage: 15, entryPrice: 42500, exitPrice: 43200, pnl: 1250, result: 'WIN', volume: 21600, totalFee: 21.6, entryTime: new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 19), exitTime: new Date(Date.now() - 2.5 * 3600000).toISOString().slice(0, 19) },
+    { id: 4, symbol: 'SOLUSDT', side: 'LONG', size: 0.5, leverage: 10, entryPrice: 42500, exitPrice: 43200, pnl: 1250, result: 'WIN', volume: 21600, totalFee: 21.6, entryTime: new Date(Date.now() - 5 * 3600000).toISOString().slice(0, 19), exitTime: new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 19) },
   ],
   totalElements: 4,
   totalPages: 1,

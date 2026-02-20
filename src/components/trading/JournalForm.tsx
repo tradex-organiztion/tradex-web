@@ -65,10 +65,20 @@ const availableTechnicalAnalysis = [
 ]
 
 // 자동입력용 거래 목록 (거래소에서 가져온 데이터 시뮬레이션)
+const _now = new Date()
+const _fmt = (d: Date, h: number, m: number) => {
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}.${mm}.${dd} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+const _yesterday = new Date(_now)
+_yesterday.setDate(_yesterday.getDate() - 1)
+
 const autoImportTrades = [
-  { id: 'auto-1', pair: 'BTC/USDT', position: 'Long' as const, leverage: 20, entryPrice: '98,200', exitPrice: '99,400', pnl: '+1,250', time: '2025.12.11 14:30' },
-  { id: 'auto-2', pair: 'ETH/USDT', position: 'Short' as const, leverage: 10, entryPrice: '3,450', exitPrice: '3,520', pnl: '-420', time: '2025.12.11 15:20' },
-  { id: 'auto-3', pair: 'SOL/USDT', position: 'Long' as const, leverage: 5, entryPrice: '185.20', exitPrice: '190.50', pnl: '+530', time: '2025.12.10 09:15' },
+  { id: 'auto-1', pair: 'BTC/USDT', position: 'Long' as const, leverage: 20, entryPrice: '98,200', exitPrice: '99,400', pnl: '+1,250', time: _fmt(_now, 14, 30) },
+  { id: 'auto-2', pair: 'ETH/USDT', position: 'Short' as const, leverage: 10, entryPrice: '3,450', exitPrice: '3,520', pnl: '-420', time: _fmt(_now, 15, 20) },
+  { id: 'auto-3', pair: 'SOL/USDT', position: 'Long' as const, leverage: 5, entryPrice: '185.20', exitPrice: '190.50', pnl: '+530', time: _fmt(_yesterday, 9, 15) },
 ]
 
 // 태그 선택 컴포넌트
@@ -187,7 +197,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
   const [orderType, setOrderType] = useState<'BUY' | 'SELL'>('BUY')
 
   const [formData, setFormData] = useState<Partial<JournalFormData>>({
-    date: '2025.12.11 14:30',
+    date: _fmt(_now, _now.getHours(), _now.getMinutes()),
     pair: 'BTC/USDT',
     leverage: 20,
     position: 'Long',
@@ -198,8 +208,8 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     pnl: '+1,250',
     pnlPercent: '24.5',
     result: 'Win',
-    entryTime: '2025.12.11 14:30',
-    exitTime: '2025.12.11 17:13',
+    entryTime: _fmt(_now, 14, 30),
+    exitTime: _fmt(_now, 17, 13),
     entryVolume: '4,910',
     exitVolume: '4,970',
     entryFee: '-0.98',

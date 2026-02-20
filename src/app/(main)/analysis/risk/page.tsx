@@ -752,8 +752,12 @@ function ProfitRateBarChart() {
 }
 
 export default function RiskPatternPage() {
-  const [startDate, setStartDate] = useState('2025-12-17')
-  const [endDate, setEndDate] = useState('2026-01-17')
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 1)
+    return d.toISOString().slice(0, 10)
+  })
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [activeTab, setActiveTab] = useState<RiskCategory>('entry')
 
   const currentData = RISK_DATA[activeTab]

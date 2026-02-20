@@ -48,10 +48,17 @@ function CoinIcon({ pair }: { pair: string }) {
 }
 
 // Sample data
+const _today = new Date()
+const _fmtDate = (d: Date, h: number, m: number) => {
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}.${mm}.${dd} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
 const sampleEntries: JournalEntry[] = [
   {
     id: '1',
-    date: '2025.12.11 14:30',
+    date: _fmtDate(_today, 14, 30),
     pair: 'BTC/USDT',
     leverage: 20,
     position: 'Long',
@@ -62,7 +69,7 @@ const sampleEntries: JournalEntry[] = [
   },
   {
     id: '2',
-    date: '2025.12.11 14:32',
+    date: _fmtDate(_today, 14, 32),
     pair: 'BTC/USDT',
     leverage: 10,
     position: 'Short',
@@ -73,7 +80,7 @@ const sampleEntries: JournalEntry[] = [
   },
   {
     id: '3',
-    date: '2025.12.11 14:36',
+    date: _fmtDate(_today, 14, 36),
     pair: 'ETH/USDT',
     leverage: 10,
     position: 'Short',
@@ -84,7 +91,7 @@ const sampleEntries: JournalEntry[] = [
   },
   {
     id: '4',
-    date: '2025.12.11 14:36',
+    date: _fmtDate(_today, 14, 36),
     pair: 'SOL/USDT',
     leverage: 10,
     position: 'Short',

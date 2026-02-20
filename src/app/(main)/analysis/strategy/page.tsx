@@ -118,8 +118,12 @@ export default function StrategyAnalysisPage() {
     timeframe: ['4시간봉'],
   })
 
-  const [startDate, setStartDate] = useState('2025-10-15')
-  const [endDate, setEndDate] = useState('2025-11-15')
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 1)
+    return d.toISOString().slice(0, 10)
+  })
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
 
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     setFilters((prev) => ({

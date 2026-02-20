@@ -328,13 +328,18 @@ export function Sidebar() {
   }
 
   const isActive = (href: string) => {
+    const hasHash = href.includes('#')
     const basePath = href.split('#')[0]
+
+    // Hash가 있는 항목(트레이딩 시스템, 매매 복기)은 하이라이트하지 않음
+    // 이 항목들은 같은 페이지의 섹션 링크이므로, base 항목만 하이라이트
+    if (hasHash) return false
+
     if (basePath === '/home') return pathname === '/home'
     if (basePath === '/ai') return pathname === '/ai' || pathname.startsWith('/ai/')
-    if (href === basePath) {
-      return pathname.startsWith(basePath.split('/').slice(0, 3).join('/'))
-    }
-    return pathname === basePath
+
+    // 정확한 경로 매칭 (하위 경로 포함)
+    return pathname === basePath || pathname.startsWith(basePath + '/')
   }
 
   return (
