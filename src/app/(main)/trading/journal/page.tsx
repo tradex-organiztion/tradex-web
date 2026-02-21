@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Calendar, List, Plus, SlidersHorizontal, Settings2 } from 'lucide-react'
+import { Calendar, List, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { JournalCalendar, JournalList, JournalForm } from '@/components/trading'
 import type { JournalEntry } from '@/components/trading'
@@ -252,13 +252,14 @@ export default function JournalPage() {
 
         {/* View Mode Toggle + Add Button */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1">
+          {/* Pill-style segmented toggle */}
+          <div className="flex items-center rounded-full p-0.5">
             <button
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-body-2-medium transition-colors",
+                "flex items-center gap-1 px-3 py-2 rounded-full text-body-2-medium transition-colors",
                 viewMode === 'calendar'
-                  ? "border border-label-normal text-label-normal"
-                  : "text-label-assistive hover:text-label-neutral"
+                  ? "bg-gray-200 text-label-normal"
+                  : "text-gray-400 hover:text-label-neutral"
               )}
               onClick={() => setViewMode('calendar')}
             >
@@ -267,10 +268,10 @@ export default function JournalPage() {
             </button>
             <button
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-body-2-medium transition-colors",
+                "flex items-center gap-1 px-3 py-2 rounded-lg text-body-2-medium transition-colors",
                 viewMode === 'list'
-                  ? "border border-label-normal text-label-normal"
-                  : "text-label-assistive hover:text-label-neutral"
+                  ? "bg-gray-200 text-label-normal"
+                  : "text-gray-400 hover:text-label-neutral"
               )}
               onClick={() => setViewMode('list')}
             >
@@ -278,21 +279,13 @@ export default function JournalPage() {
               리스트 보기
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-line-normal text-label-neutral hover:bg-gray-50 transition-colors">
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-line-normal text-label-neutral hover:bg-gray-50 transition-colors">
-              <Settings2 className="w-4 h-4" />
-            </button>
-            <Button
-              className="bg-element-primary-default hover:bg-element-primary-pressed gap-2"
-              onClick={handleAddNew}
-            >
-              <Plus className="w-4 h-4" />
-              수동 추가하기
-            </Button>
-          </div>
+          <Button
+            className="bg-element-primary-default hover:bg-element-primary-pressed gap-1 text-body-2-medium rounded-[4px] px-2 py-2 h-auto"
+            onClick={handleAddNew}
+          >
+            <Plus className="w-4 h-4" />
+            수동 추가하기
+          </Button>
         </div>
 
         {/* Loading State */}

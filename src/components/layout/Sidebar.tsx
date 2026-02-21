@@ -7,12 +7,6 @@ import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useState, useRef, useEffect } from 'react'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 
 // 아이콘 컴포넌트들
 function IconHome({ className }: { className?: string }) {
@@ -29,6 +23,15 @@ function IconAI({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M8 1.33333V3.33333M8 12.6667V14.6667M3.33333 8H1.33333M14.6667 8H12.6667M12.2427 12.2427L10.8284 10.8284M12.2427 3.75736L10.8284 5.17157M3.75736 12.2427L5.17157 10.8284M3.75736 3.75736L5.17157 5.17157" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
+    </svg>
+  )
+}
+
+function IconInbox({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 8H10.6667L9.33333 10H6.66667L5.33333 8H2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3.63333 3.40667L2 8V12C2 12.3536 2.14048 12.6928 2.39052 12.9428C2.64057 13.1929 2.97971 13.3333 3.33333 13.3333H12.6667C13.0203 13.3333 13.3594 13.1929 13.6095 12.9428C13.8595 12.6928 14 12.3536 14 12V8L12.3667 3.40667C12.2728 3.13909 12.0968 2.90671 11.8636 2.74351C11.6304 2.58031 11.3519 2.49429 11.0667 2.5H4.93333C4.64808 2.49429 4.36961 2.58031 4.1364 2.74351C3.9032 2.90671 3.72722 3.13909 3.63333 3.40667Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -81,15 +84,6 @@ function IconProfit({ className }: { className?: string }) {
   )
 }
 
-function IconToggle({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="3" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-      <rect x="9" y="3" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-    </svg>
-  )
-}
-
 interface NavItem {
   label: string
   href: string
@@ -107,6 +101,7 @@ const navSections: NavSection[] = [
     items: [
       { label: '홈', href: '/home', icon: IconHome },
       { label: 'Tradex AI', href: '/ai', icon: IconAI },
+      { label: '수신함', href: '/inbox', icon: IconInbox },
     ],
   },
   {
@@ -134,12 +129,10 @@ const navSections: NavSection[] = [
 // 프로필 호버 드롭다운 컴포넌트
 function ProfileDropdown({
   user,
-  isSidebarCollapsed,
   onLogout,
   onOpenSettings,
 }: {
   user: { username?: string; profileImageUrl?: string | null } | null
-  isSidebarCollapsed: boolean
   onLogout: () => void
   onOpenSettings: (tab: 'account' | 'general' | 'notification') => void
 }) {
@@ -162,25 +155,6 @@ function ProfileDropdown({
     }
   }, [])
 
-  const profileAvatar = (
-    <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-100">
-      {user?.profileImageUrl ? (
-        <Image
-          src={user.profileImageUrl}
-          alt={user.username || 'User'}
-          width={28}
-          height={28}
-          className="size-full object-cover"
-        />
-      ) : (
-        <svg className="size-4 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="5.5" r="3" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M2.5 14C2.5 11.5147 4.96243 9.5 8 9.5C11.0376 9.5 13.5 11.5147 13.5 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-        </svg>
-      )}
-    </div>
-  )
-
   return (
     <div
       ref={dropdownRef}
@@ -189,29 +163,31 @@ function ProfileDropdown({
       onMouseLeave={handleMouseLeave}
     >
       {/* Profile Trigger */}
-      {!isSidebarCollapsed ? (
-        <button className="flex w-full items-center gap-3 rounded-lg px-0 py-1 text-left transition-colors hover:bg-gray-50">
-          {profileAvatar}
-          <span className="text-body-2-bold text-label-normal">
-            {user?.username || 'User'}
-          </span>
-        </button>
-      ) : (
-        <button className="flex w-full justify-center py-1">
-          {profileAvatar}
-        </button>
-      )}
+      <button className="flex w-full items-center gap-3 rounded-lg px-0 py-1 text-left transition-colors hover:bg-gray-50">
+        <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-100">
+          {user?.profileImageUrl ? (
+            <Image
+              src={user.profileImageUrl}
+              alt={user.username || 'User'}
+              width={28}
+              height={28}
+              className="size-full object-cover"
+            />
+          ) : (
+            <svg className="size-4 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="5.5" r="3" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M2.5 14C2.5 11.5147 4.96243 9.5 8 9.5C11.0376 9.5 13.5 11.5147 13.5 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+          )}
+        </div>
+        <span className="text-body-2-bold text-label-normal">
+          {user?.username || 'User'}
+        </span>
+      </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div
-          className={cn(
-            'absolute z-50 min-w-[160px] rounded-lg border border-line-normal bg-white py-1 shadow-emphasize',
-            isSidebarCollapsed
-              ? 'bottom-0 left-full ml-2'
-              : 'bottom-full left-0 mb-2'
-          )}
-        >
+        <div className="absolute bottom-full left-0 z-50 mb-2 min-w-[160px] rounded-lg border border-line-normal bg-white py-1 shadow-emphasize">
           <button
             className="flex w-full items-center gap-2 px-3 py-2 text-body-2-medium text-label-normal transition-colors hover:bg-gray-50"
             onClick={() => {
@@ -270,14 +246,14 @@ export function Sidebar() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024
       setIsMobile(mobile)
-      if (mobile && !isSidebarCollapsed) {
+      if (mobile) {
         setSidebarCollapsed(true)
       }
     }
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
-  }, [setIsMobile, setSidebarCollapsed, isSidebarCollapsed])
+  }, [setIsMobile, setSidebarCollapsed])
 
   const handleLoginClick = () => {
     logout() // 데모 모드 해제 및 상태 초기화
@@ -291,11 +267,12 @@ export function Sidebar() {
     if (hasHash) return false
     if (basePath === '/home') return pathname === '/home'
     if (basePath === '/ai') return pathname === '/ai' || pathname.startsWith('/ai/')
+    if (basePath === '/inbox') return pathname === '/inbox' || pathname.startsWith('/inbox/')
     return pathname === basePath || pathname.startsWith(basePath + '/')
   }
 
   return (
-    <TooltipProvider delayDuration={0}>
+    <>
       {/* Mobile overlay backdrop */}
       {isMobile && !isSidebarCollapsed && (
         <div
@@ -305,41 +282,24 @@ export function Sidebar() {
       )}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 flex h-screen flex-col bg-white transition-all duration-300',
+          'fixed left-0 top-0 z-40 flex h-screen w-[200px] flex-col bg-white',
           'border-r border-gray-300/60',
-          isMobile
-            ? isSidebarCollapsed ? '-translate-x-full w-[200px]' : 'translate-x-0 w-[200px]'
-            : isSidebarCollapsed ? 'w-16' : 'w-[200px]'
+          isMobile && (isSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'),
+          isMobile && 'transition-transform duration-300'
         )}
       >
-        {/* Header: Logo + Toggle */}
-        <div className="flex items-center justify-between border-b border-gray-300/60 px-5" style={{ height: '48px' }}>
-          {(!isSidebarCollapsed || isMobile) ? (
-            <>
-              <Link href="/home" className="flex items-center">
-                <Image
-                  src="/images/logo-black.svg"
-                  alt="Tradex"
-                  width={80}
-                  height={13}
-                  className="h-[13px] w-auto"
-                />
-              </Link>
-              <button
-                onClick={() => setSidebarCollapsed(true)}
-                className="flex size-5 items-center justify-center rounded text-gray-500 hover:text-gray-800"
-              >
-                <IconToggle className="size-4" />
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setSidebarCollapsed(false)}
-              className="mx-auto flex size-5 items-center justify-center rounded text-gray-500 hover:text-gray-800"
-            >
-              <IconToggle className="size-4" />
-            </button>
-          )}
+        {/* Header: Logo - Figma: Tradex icon + "Jay's Tradex" */}
+        <div className="flex items-center gap-2.5 px-5" style={{ height: '48px' }}>
+          <Link href="/home" className="flex items-center gap-2.5">
+            <Image
+              src="/images/tradex-icon.svg"
+              alt="Tradex"
+              width={28}
+              height={28}
+              className="size-7"
+            />
+            <span className="text-body-1-bold text-label-normal">Jay&apos;s Tradex</span>
+          </Link>
         </div>
 
         {/* Navigation */}
@@ -348,7 +308,7 @@ export function Sidebar() {
             {navSections.map((section, sectionIndex) => (
               <div key={sectionIndex} className="flex flex-col gap-1">
                 {/* Section Title */}
-                {section.title && (!isSidebarCollapsed || isMobile) && (
+                {section.title && (
                   <div className="px-2 py-1">
                     <span className="text-caption-medium text-gray-400">
                       {section.title}
@@ -361,47 +321,30 @@ export function Sidebar() {
                   const Icon = item.icon
                   const active = isActive(item.href)
 
-                  const linkContent = (
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-2 rounded-lg px-2 py-1 text-body-2-medium transition-colors',
-                        active
-                          ? 'bg-gray-50 text-gray-900'
-                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                      )}
-                    >
-                      <Icon className="size-4 shrink-0" />
-                      {(!isSidebarCollapsed || isMobile) && (
-                        <>
-                          <span className="flex-1">{item.label}</span>
-                          {item.badge && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-400 px-1.5 text-caption-medium text-white">
-                              {item.badge}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </Link>
+                  return (
+                    <div key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => {
+                          if (isMobile) setSidebarCollapsed(true)
+                        }}
+                        className={cn(
+                          'flex items-center gap-2 rounded-lg px-2 py-1 text-body-2-medium transition-colors',
+                          active
+                            ? 'text-gray-900 font-semibold'
+                            : 'text-gray-500 hover:text-gray-900'
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge && (
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-400 px-1.5 text-caption-medium text-white">
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    </div>
                   )
-
-                  if (isSidebarCollapsed && !isMobile) {
-                    return (
-                      <Tooltip key={item.href}>
-                        <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                        <TooltipContent side="right" className="flex items-center gap-2">
-                          {item.label}
-                          {item.badge && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-400 px-1.5 text-caption-medium text-white">
-                              {item.badge}
-                            </span>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    )
-                  }
-
-                  return <div key={item.href}>{linkContent}</div>
                 })}
               </div>
             ))}
@@ -411,40 +354,15 @@ export function Sidebar() {
         {/* Profile Section */}
         <div className="border-t border-gray-300/60 px-5 py-3">
           {isDemoMode ? (
-            // 데모 모드일 때: 로그인 버튼 표시
-            (!isSidebarCollapsed || isMobile) ? (
-              <button
-                onClick={handleLoginClick}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-body-2-medium text-white transition-colors hover:bg-gray-800"
-              >
-                로그인
-              </button>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleLoginClick}
-                    className="flex w-full justify-center"
-                  >
-                    <div className="flex size-7 items-center justify-center rounded-lg bg-gray-900 text-white">
-                      <svg className="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 2H12.6667C13.0203 2 13.3594 2.14048 13.6095 2.39052C13.8595 2.64057 14 2.97971 14 3.33333V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M6.66667 11.3333L10 8L6.66667 4.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M10 8H2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  로그인
-                </TooltipContent>
-              </Tooltip>
-            )
+            <button
+              onClick={handleLoginClick}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-body-2-medium text-white transition-colors hover:bg-gray-800"
+            >
+              로그인
+            </button>
           ) : (
-            // 로그인 상태일 때: 유저 프로필 + 호버 드롭다운
             <ProfileDropdown
               user={user}
-              isSidebarCollapsed={isSidebarCollapsed && !isMobile}
               onLogout={() => {
                 logout()
                 router.push('/login')
@@ -454,6 +372,6 @@ export function Sidebar() {
           )}
         </div>
       </aside>
-    </TooltipProvider>
+    </>
   )
 }

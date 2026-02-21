@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 /**
  * Tradex Design System - Input Component
- * Based on Figma: https://www.figma.com/design/bIuxiR3Mqy0PfLkxIQv4Oa
+ * Based on Figma: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221
  *
  * States:
  * - default: Normal state

@@ -34,15 +34,13 @@ function IconAI({ className }: { className?: string }) {
 }
 
 export function Header() {
-  const { isSidebarCollapsed, isAIPanelOpen, isMobile, setSidebarCollapsed, toggleAIPanel } = useUIStore()
+  const { isAIPanelOpen, isMobile, setSidebarCollapsed, toggleAIPanel } = useUIStore()
 
   return (
     <header
       className={cn(
         'fixed right-0 top-0 z-30 flex items-center justify-end gap-2 border-b border-gray-300/60 bg-white px-9 transition-all duration-300',
-        isMobile
-          ? 'left-0'
-          : isSidebarCollapsed ? 'left-16' : 'left-[200px]',
+        isMobile ? 'left-0' : 'left-[200px]',
         isAIPanelOpen && !isMobile && 'right-96'
       )}
       style={{ height: '48px' }}
@@ -62,7 +60,6 @@ export function Header() {
       {/* Right-aligned header buttons */}
       <button
         onClick={() => {
-          // Navigate to inbox
           window.location.href = '/inbox'
         }}
         className="flex h-7 items-center gap-0.5 rounded border border-gray-300 bg-white px-2 text-body-2-medium text-gray-900 transition-colors hover:bg-gray-50"

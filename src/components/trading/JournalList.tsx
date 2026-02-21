@@ -106,9 +106,10 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
   return (
     <div className="bg-white overflow-hidden">
       {/* Table Header */}
-      <div className="grid grid-cols-6 gap-4 px-6 py-3 border-b border-line-normal">
+      <div className="grid grid-cols-7 gap-4 px-6 py-3 border-b border-line-normal">
         <div className="text-body-2-medium text-label-assistive">날짜</div>
-        <div className="text-body-2-medium text-label-assistive">거래 페어</div>
+        <div className="text-body-2-medium text-label-assistive">거래소</div>
+        <div className="text-body-2-medium text-label-assistive">거래 종목</div>
         <div className="text-body-2-medium text-label-assistive">포지션</div>
         <div className="text-body-2-medium text-label-assistive">손익</div>
         <div className="text-body-2-medium text-label-assistive">사전 시나리오</div>
@@ -120,12 +121,25 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
         {entries.map((entry) => (
           <div
             key={entry.id}
-            className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors items-center"
+            className="grid grid-cols-7 gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors items-center"
             onClick={() => onEntryClick?.(entry)}
           >
             {/* Date */}
             <div className="text-body-2-regular text-label-normal">
               {entry.date}
+            </div>
+
+            {/* Exchange */}
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#F3BA2F] flex items-center justify-center">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 1L7.5 2.5L4.5 5.5L3 4L6 1Z" fill="white"/>
+                  <path d="M7.5 2.5L11 6L9.5 7.5L6 4L7.5 2.5Z" fill="white"/>
+                  <path d="M9.5 7.5L6 11L4.5 9.5L8 6L9.5 7.5Z" fill="white"/>
+                  <path d="M4.5 9.5L1 6L2.5 4.5L6 8L4.5 9.5Z" fill="white"/>
+                </svg>
+              </div>
+              <span className="text-body-2-regular text-label-normal">바이낸스</span>
             </div>
 
             {/* Trading Pair with Coin Icon */}
@@ -134,13 +148,13 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
               <span className="text-body-2-medium text-label-normal">{entry.pair}</span>
             </div>
 
-            {/* Position - Outline style */}
+            {/* Position - Filled pill style */}
             <div>
               <span className={cn(
-                "inline-flex items-center px-3 py-1 rounded text-body-2-medium border",
+                "inline-flex items-center px-3 py-1 rounded text-body-2-medium",
                 entry.position === 'Long'
-                  ? "border-element-positive-default text-element-positive-default"
-                  : "border-element-danger-default text-element-danger-default"
+                  ? "bg-element-positive-lighter text-element-positive-default"
+                  : "bg-element-danger-lighter text-element-danger-default"
               )}>
                 {entry.position}
               </span>
@@ -154,7 +168,7 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
               {entry.profit >= 0 ? '+' : ''}{entry.profit.toLocaleString()}({entry.profitPercent}%)
             </div>
 
-            {/* Pre-Scenario Status - Tag style */}
+            {/* Pre-Scenario Status */}
             <div>
               {entry.hasPreScenario ? (
                 <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-caption-medium text-label-neutral">
@@ -165,7 +179,7 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
               )}
             </div>
 
-            {/* Post-Review Status - Tag style */}
+            {/* Post-Review Status */}
             <div>
               {entry.hasPostReview ? (
                 <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-caption-medium text-label-neutral">

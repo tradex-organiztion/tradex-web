@@ -25,7 +25,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { isSidebarCollapsed, isAIPanelOpen, isMobile } = useUIStore();
+  const { isAIPanelOpen, isMobile } = useUIStore();
   const isFullscreen = fullscreenPaths.some(p => pathname.startsWith(p));
 
   return (
@@ -37,9 +37,7 @@ export default function MainLayout({
         className={cn(
           'pt-16 transition-all duration-300 min-h-screen',
           isFullscreen ? 'bg-white' : 'bg-gray-50',
-          isMobile
-            ? 'pl-0'
-            : isSidebarCollapsed ? 'pl-16' : 'pl-[200px]',
+          isMobile ? 'pl-0' : 'pl-[200px]',
           isAIPanelOpen && !isMobile && 'pr-[400px]'
         )}
       >

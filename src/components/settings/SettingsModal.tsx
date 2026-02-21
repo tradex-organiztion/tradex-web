@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
+import { LogOut, Check, CreditCard, X as XIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
 import { useAuthStore } from '@/stores/useAuthStore'
@@ -21,42 +21,64 @@ import {
 
 type SettingsTab = 'account' | 'general' | 'notification' | 'subscription'
 
-const sidebarTabs: { id: SettingsTab; label: string }[] = [
-  { id: 'account', label: '계정 설정' },
-  { id: 'general', label: '기본 설정' },
-  { id: 'notification', label: '알림 설정' },
-  { id: 'subscription', label: '구독 관리' },
+const TABS: { id: SettingsTab; label: string }[] = [
+  { id: 'account', label: '계정' },
+  { id: 'general', label: '기본' },
+  { id: 'notification', label: '알림' },
+  { id: 'subscription', label: '구독' },
 ]
 
-// 설정 버튼 컴포넌트 (Figma: 1px solid #E6E5E3, borderRadius 6px)
-function SettingButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+// Toggle switch component
+function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
-      onClick={onClick}
-      className="px-2.5 py-1 text-caption-medium text-label-normal border border-line-normal rounded-md hover:bg-gray-50 transition-colors"
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors",
+        checked ? "bg-gray-900" : "bg-gray-300"
+      )}
     >
-      {children}
+      <span className={cn(
+        "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform mt-0.5",
+        checked ? "translate-x-[22px]" : "translate-x-0.5"
+      )} />
     </button>
   )
 }
 
-// 연결된 거래소 표시 컴포넌트
-function ConnectedExchange({ name, apiKey, onRemove }: { name: string; apiKey: string; onRemove: () => void }) {
+// Radio option component
+function RadioOption({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
   return (
-    <div className="flex items-center gap-3 py-3">
-      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-        <span className="text-caption-medium text-gray-500">{name.charAt(0)}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-caption-medium text-label-normal">{name}</p>
-        <p className="text-[10px] text-label-assistive font-mono truncate">{apiKey}</p>
-      </div>
-      <button
-        onClick={onRemove}
-        className="p-1 text-label-assistive hover:text-label-danger rounded transition-colors"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
+    <button
+      onClick={onClick}
+      className="flex items-center justify-between px-4 py-3 border-b border-line-normal last:border-b-0 hover:bg-gray-50 transition-colors w-full text-left"
+    >
+      <span className="text-body-2-regular text-label-normal">{label}</span>
+      {selected && (
+        <div className="w-5 h-5 rounded-full bg-gray-900 flex items-center justify-center">
+          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+        </div>
+      )}
+    </button>
+  )
+}
+
+// Exchange icon helper
+function ExchangeIcon({ name }: { name: string }) {
+  const colors: Record<string, string> = {
+    Binance: 'bg-[#F3BA2F]',
+    바이낸스: 'bg-[#F3BA2F]',
+    Bybit: 'bg-[#F7A600]',
+    바이비트: 'bg-[#F7A600]',
+  }
+  const bg = colors[name] || 'bg-gray-400'
+
+  return (
+    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-caption-bold", bg)}>
+      {name.charAt(0)}
     </div>
   )
 }
@@ -67,7 +89,6 @@ export function SettingsModal() {
   const { user, logout, isDemoMode } = useAuthStore()
 
   // Modal states
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isExchangeModalOpen, setIsExchangeModalOpen] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
@@ -100,14 +121,14 @@ export function SettingsModal() {
     setIsExchangeModalOpen(false)
   }
 
-  const userData = {
-    email: user?.email || 'jay@tradx.kr',
-    exchanges: exchangeKeys.length > 0
-      ? exchangeKeys.map((k) => ({ id: String(k.id), name: k.exchangeName, apiKey: k.apiKey }))
-      : isDemoMode
-        ? [{ id: '1', name: 'Binance', apiKey: 'xXJDt3nPok3aWjA4Ns' }]
-        : [],
-  }
+  const exchanges = exchangeKeys.length > 0
+    ? exchangeKeys.map((k) => ({ id: String(k.id), name: k.exchangeName, active: k.active }))
+    : isDemoMode
+      ? [
+          { id: '1', name: '바이낸스', active: true },
+          { id: '2', name: '바이비트', active: false },
+        ]
+      : []
 
   const handleLogout = () => {
     setIsLogoutModalOpen(false)
@@ -128,65 +149,52 @@ export function SettingsModal() {
           onClick={closeSettings}
         />
 
-        {/* Modal Content - Figma: 968px × 602px, responsive */}
-        <div className="relative w-full max-w-[968px] h-[602px] max-h-[90vh] flex rounded-xl overflow-hidden shadow-heavy">
-          {/* Left Sidebar - Figma: 210px, #F9F8F7 background */}
-          <div className="w-[180px] shrink-0 bg-[#F9F8F7] rounded-l-xl flex flex-col py-6 px-3 md:w-[210px] md:px-4">
-            <div className="flex flex-col gap-1">
-              {sidebarTabs.map((tab) => {
-                const isActive = settingsTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSettingsTab(tab.id)}
-                    className={cn(
-                      "text-left px-3 py-2 rounded-lg text-body-2-medium transition-colors",
-                      isActive
-                        ? "bg-white text-label-normal shadow-sm"
-                        : "text-label-neutral hover:bg-white/50"
-                    )}
-                  >
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </div>
+        {/* Modal Content - Figma: horizontal tabs, white background */}
+        <div className="relative w-full max-w-[780px] max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-heavy flex flex-col">
+          {/* Horizontal Tabs - Figma style */}
+          <div className="flex border-b border-line-normal px-8 pt-6">
+            {TABS.map((tab) => {
+              const isActive = settingsTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSettingsTab(tab.id)}
+                  className={cn(
+                    "px-6 pb-3 text-body-1-medium transition-colors relative",
+                    isActive
+                      ? "text-label-normal"
+                      : "text-label-assistive hover:text-label-neutral"
+                  )}
+                >
+                  {tab.label}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-900" />
+                  )}
+                </button>
+              )
+            })}
           </div>
 
-          {/* Right Content - Figma: white background */}
-          <div className="flex-1 bg-white rounded-r-[10px] flex flex-col overflow-y-auto">
-            {/* Content */}
-            <div className="px-8 py-6 flex-1">
-              {/* 계정 설정 */}
-              {settingsTab === 'account' && (
-                <AccountSettings
-                  userData={userData}
-                  onEmailChange={() => setIsEmailModalOpen(true)}
-                  onPasswordChange={() => setIsPasswordModalOpen(true)}
-                  onExchangeAdd={() => setIsExchangeModalOpen(true)}
-                  onExchangeRemove={(id) => handleRemoveExchange(Number(id))}
-                />
-              )}
-
-              {/* 기본 설정 */}
-              {settingsTab === 'general' && <GeneralSettings />}
-
-              {/* 알림 설정 */}
-              {settingsTab === 'notification' && <NotificationSettings />}
-
-              {/* 구독 관리 */}
-              {settingsTab === 'subscription' && <SubscriptionSettings />}
-            </div>
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-8 py-6">
+            {settingsTab === 'account' && (
+              <AccountSettings
+                nickname={user?.username || '오정길(Jay)'}
+                exchanges={exchanges}
+                onPasswordChange={() => setIsPasswordModalOpen(true)}
+                onExchangeAdd={() => setIsExchangeModalOpen(true)}
+                onExchangeRemove={(id) => handleRemoveExchange(Number(id))}
+                onLogout={() => setIsLogoutModalOpen(true)}
+              />
+            )}
+            {settingsTab === 'general' && <GeneralSettings />}
+            {settingsTab === 'notification' && <NotificationSettings />}
+            {settingsTab === 'subscription' && <SubscriptionSettings />}
           </div>
         </div>
       </div>
 
       {/* Sub-modals */}
-      <EmailChangeModal
-        open={isEmailModalOpen}
-        onOpenChange={setIsEmailModalOpen}
-        currentEmail={userData.email}
-      />
       <PasswordChangeModal
         open={isPasswordModalOpen}
         onOpenChange={setIsPasswordModalOpen}
@@ -206,275 +214,371 @@ export function SettingsModal() {
   )
 }
 
-// 계정 설정 탭
+// 계정 설정 탭 - Figma: avatar + nickname, password, exchange API, logout
 function AccountSettings({
-  userData,
-  onEmailChange,
+  nickname,
+  exchanges,
   onPasswordChange,
   onExchangeAdd,
   onExchangeRemove,
+  onLogout,
 }: {
-  userData: { email: string; exchanges: { id: string; name: string; apiKey: string }[] }
-  onEmailChange: () => void
+  nickname: string
+  exchanges: { id: string; name: string; active: boolean }[]
   onPasswordChange: () => void
   onExchangeAdd: () => void
   onExchangeRemove: (id: string) => void
+  onLogout: () => void
 }) {
   return (
-    <div>
-      <h2 className="text-body-1-medium text-label-normal mb-0">계정 설정</h2>
-      <div className="border-b border-line-normal mt-4 mb-0" />
-
-      {/* 이메일 */}
-      <div className="flex items-center justify-between py-5">
-        <div>
-          <p className="text-caption-medium text-label-normal">이메일</p>
-          <p className="text-[10px] text-label-assistive mt-0.5">{userData.email}</p>
+    <div className="flex flex-col gap-6">
+      {/* 닉네임 - Figma: avatar + input */}
+      <div className="flex items-start gap-6">
+        {/* Avatar */}
+        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+          <svg className="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          </svg>
         </div>
-        <SettingButton onClick={onEmailChange}>이메일 변경</SettingButton>
-      </div>
-      <div className="border-b border-line-normal" />
-
-      {/* 비밀번호 */}
-      <div className="flex items-center justify-between py-5">
-        <div>
-          <p className="text-caption-medium text-label-normal">비밀번호</p>
-          <p className="text-[10px] text-label-assistive mt-0.5">계정 로그인에 사용할 비밀번호를 설정하세요</p>
-        </div>
-        <SettingButton onClick={onPasswordChange}>비밀번호 변경</SettingButton>
-      </div>
-      <div className="border-b border-line-normal" />
-
-      {/* 거래소 */}
-      <div className="flex items-start justify-between py-5">
         <div className="flex-1">
-          <p className="text-caption-medium text-label-normal">거래소</p>
-          <p className="text-[10px] text-label-assistive mt-0.5">내 계정에 연결된 거래소를 확인하세요</p>
-
-          {/* 연결된 거래소 목록 */}
-          {userData.exchanges.length > 0 && (
-            <div className="mt-3">
-              {userData.exchanges.map((exchange) => (
-                <ConnectedExchange
-                  key={exchange.id}
-                  name={exchange.name}
-                  apiKey={exchange.apiKey}
-                  onRemove={() => onExchangeRemove(exchange.id)}
-                />
-              ))}
-            </div>
-          )}
+          <label className="text-body-2-medium text-label-normal mb-2 block">닉네임</label>
+          <Input
+            defaultValue={nickname}
+            className="h-[48px]"
+          />
         </div>
-        <SettingButton onClick={onExchangeAdd}>거래소 추가</SettingButton>
+      </div>
+
+      {/* 비밀번호 - Figma: title + description + button */}
+      <div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-body-1-bold text-label-normal">비밀번호</p>
+            <p className="text-body-2-regular text-label-neutral mt-1">계정 보안을 위해 정기적으로 비밀번호를 변경하세요.</p>
+          </div>
+          <button
+            onClick={onPasswordChange}
+            className="px-4 py-2 text-body-2-medium text-label-normal border border-line-normal rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+          >
+            비밀번호 변경
+          </button>
+        </div>
+      </div>
+
+      {/* 거래소 API 연동 - Figma: title + description + exchange list */}
+      <div>
+        <p className="text-body-1-bold text-label-normal">거래소 API 연동</p>
+        <p className="text-body-2-regular text-label-neutral mt-1">실시간 매매 데이터를 받아오기 위해 거래소 API를 연동하세요.</p>
+
+        <div className="flex flex-col gap-3 mt-4">
+          {exchanges.map((exchange) => (
+            <div key={exchange.id} className="flex items-center justify-between px-4 py-3 border border-line-normal rounded-lg">
+              <div className="flex items-center gap-3">
+                <ExchangeIcon name={exchange.name} />
+                <span className="text-body-2-medium text-label-normal">{exchange.name}</span>
+                <span className={cn(
+                  "text-caption-medium px-2 py-0.5 rounded",
+                  exchange.active
+                    ? "bg-green-100 text-green-400"
+                    : "bg-red-100 text-red-400"
+                )}>
+                  {exchange.active ? '정상' : '오류'}
+                </span>
+              </div>
+              <button
+                onClick={() => onExchangeRemove(exchange.id)}
+                className="px-4 py-2 text-body-2-medium text-label-normal border border-line-normal rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          ))}
+
+          {/* 거래소 추가 버튼 */}
+          <button
+            onClick={onExchangeAdd}
+            className="flex items-center justify-center py-3 border border-line-normal rounded-lg text-body-2-medium text-label-neutral hover:bg-gray-50 transition-colors"
+          >
+            + 거래소 추가
+          </button>
+        </div>
+      </div>
+
+      {/* 로그아웃 */}
+      <div>
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-2 px-4 py-2 text-body-2-medium text-label-neutral border border-line-normal rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          로그아웃
+        </button>
       </div>
     </div>
   )
 }
 
-// 기본 설정 탭
+// 기본 설정 탭 - Figma: theme radio list + language radio list
 function GeneralSettings() {
-  return (
-    <div>
-      <h2 className="text-body-1-medium text-label-normal mb-0">기본 설정</h2>
-      <div className="border-b border-line-normal mt-4 mb-0" />
+  const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system')
+  const [language, setLanguage] = useState<'ko' | 'en'>('ko')
 
+  return (
+    <div className="flex flex-col gap-8">
       {/* 테마 */}
-      <div className="py-5">
-        <p className="text-caption-medium text-label-normal">테마</p>
-        <p className="text-[10px] text-label-assistive mt-0.5">기기에서 사용할 테마를 설정해 보세요.</p>
+      <div>
+        <p className="text-body-1-bold text-label-normal">테마</p>
+        <p className="text-body-2-regular text-label-neutral mt-1">기기에서 사용할 테마를 설정하세요.</p>
+        <div className="mt-4 border border-line-normal rounded-lg overflow-hidden">
+          <RadioOption label="시스템 설정" selected={theme === 'system'} onClick={() => setTheme('system')} />
+          <RadioOption label="라이트 모드" selected={theme === 'light'} onClick={() => setTheme('light')} />
+          <RadioOption label="다크 모드" selected={theme === 'dark'} onClick={() => setTheme('dark')} />
+        </div>
       </div>
-      <div className="border-b border-line-normal" />
 
       {/* 언어 */}
-      <div className="py-5">
-        <p className="text-caption-medium text-label-normal">언어</p>
-        <p className="text-[10px] text-label-assistive mt-0.5">Tradex에서 사용하는 언어를 변경하세요.</p>
+      <div>
+        <p className="text-body-1-bold text-label-normal">언어</p>
+        <p className="text-body-2-regular text-label-neutral mt-1">Tradex에서 사용하는 언어를 변경하세요.</p>
+        <div className="mt-4 border border-line-normal rounded-lg overflow-hidden">
+          <RadioOption label="한국어" selected={language === 'ko'} onClick={() => setLanguage('ko')} />
+          <RadioOption label="영어" selected={language === 'en'} onClick={() => setLanguage('en')} />
+        </div>
       </div>
     </div>
   )
 }
 
-// 알림 설정 탭
+// 알림 설정 탭 - Figma: push notification toggles
 function NotificationSettings() {
+  const [pushEnabled, setPushEnabled] = useState(true)
+  const [notifications, setNotifications] = useState({
+    positionEntry: true,
+    positionExit: true,
+    riskWarning: true,
+    journalReminder: true,
+    chartAlert: true,
+  })
+
+  const toggleNotification = (key: keyof typeof notifications) => {
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
   return (
-    <div>
-      <h2 className="text-body-1-medium text-label-normal mb-0">알림 설정</h2>
-      <div className="border-b border-line-normal mt-4 mb-0" />
-
+    <div className="flex flex-col gap-8">
       {/* 푸시 알림 */}
-      <div className="py-5">
-        <p className="text-caption-medium text-label-normal">푸시 알림</p>
-        <p className="text-[10px] text-label-assistive mt-0.5">진입 트리거 알림, 매매 원칙 위반 알림 등의 푸시 알림을 받아볼 수 있습니다.</p>
+      <div>
+        <p className="text-body-1-bold text-label-normal">푸시 알림</p>
+        <p className="text-body-2-regular text-label-neutral mt-1">모바일 및 데스크톱 푸시 알림을 설정하세요.</p>
+        <div className="mt-4 border border-line-normal rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-body-2-regular text-label-normal">포지션 진입 알림</span>
+            <ToggleSwitch checked={pushEnabled} onChange={setPushEnabled} />
+          </div>
+        </div>
       </div>
-      <div className="border-b border-line-normal" />
 
-      {/* 앱 내 알림 */}
-      <div className="py-5">
-        <p className="text-caption-medium text-label-normal">앱 내 알림</p>
-        <p className="text-[10px] text-label-assistive mt-0.5">Tradex 사용 중에도 즉시 알림을 받아 볼 수 있습니다.</p>
+      {/* 모든 요금제 */}
+      <div>
+        <p className="text-body-1-bold text-label-normal">모든 요금제</p>
+        <p className="text-body-2-regular text-label-neutral mt-1">비즈니스에 맞는 플랜을 선택하세요.</p>
+        <div className="mt-4 border border-line-normal rounded-lg overflow-hidden">
+          {[
+            { key: 'positionEntry' as const, label: '포지선 진입 알림' },
+            { key: 'positionExit' as const, label: '포지션 종료 알림' },
+            { key: 'riskWarning' as const, label: '리스크 경고' },
+            { key: 'journalReminder' as const, label: '매매 일지 작성 리마인더' },
+            { key: 'chartAlert' as const, label: '차트 알림' },
+          ].map((item, index, arr) => (
+            <div
+              key={item.key}
+              className={cn(
+                "flex items-center justify-between px-4 py-3",
+                index < arr.length - 1 && "border-b border-line-normal"
+              )}
+            >
+              <span className="text-body-2-regular text-label-normal">{item.label}</span>
+              <ToggleSwitch checked={notifications[item.key]} onChange={() => toggleNotification(item.key)} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-// 구독 관리 탭
+// 구독 관리 탭 - Figma: current plan + plan cards + payment + billing history
 const plans = [
   {
     id: 'free',
-    name: 'Free',
-    price: '무료',
-    description: '기본 기능으로 시작하기',
+    name: '무료',
+    price: '₩0',
+    period: '/월',
     features: [
       '기본 차트 분석',
-      '매매일지 10건/월',
-      'AI 분석 3회/일',
-      '기본 지표',
+      '최대 3개 포지션 추적',
+      '주간 리포트',
+      '커뮤니티 접근',
     ],
-    current: true,
   },
   {
     id: 'pro',
-    name: 'Pro',
-    price: '₩29,900',
+    name: '프로',
+    price: '₩29,000',
     period: '/월',
-    description: '트레이더를 위한 프리미엄',
+    popular: true,
+    current: true,
     features: [
-      '고급 차트 분석',
-      '매매일지 무제한',
-      'AI 분석 무제한',
-      '고급 지표 + 트리거',
-      '실시간 알림',
-      '포트폴리오 분석',
+      '무제한 포지션 추적',
+      '고급 차트 지표',
+      'AI 매매 원칙 추천',
+      '일일 리포트',
+      '리스크 분석',
+      '우선 고객 지원',
     ],
-    recommended: true,
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: '₩99,900',
+    id: 'premium',
+    name: '프리미엄',
+    price: '₩99,000',
     period: '/월',
-    description: '팀 및 기관 투자자',
     features: [
-      'Pro의 모든 기능',
-      '팀 공유 대시보드',
-      'API 액세스',
-      '전담 매니저',
-      '커스텀 리포트',
-      '우선 지원',
+      '프로 플랜의 모든 기능',
+      '무제한 거래소 연동',
+      '실시간 알림',
+      '맞춤형 전략 백테스팅',
+      'API 접근',
+      '전담 계정 매니저',
     ],
   },
 ]
 
 function SubscriptionSettings() {
   return (
-    <div>
-      <h2 className="text-body-1-medium text-label-normal mb-0">구독 관리</h2>
-      <p className="text-caption-regular text-label-assistive mt-1">
-        현재 플랜을 관리하고 업그레이드할 수 있습니다.
-      </p>
-      <div className="border-b border-line-normal mt-4 mb-6" />
-
-      {/* Plan Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className={cn(
-              "relative flex flex-col rounded-xl border p-5 transition-colors",
-              plan.recommended
-                ? "border-gray-900 bg-gray-50"
-                : plan.current
-                  ? "border-line-focused bg-white"
-                  : "border-line-normal bg-white"
-            )}
-          >
-            {plan.recommended && (
-              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gray-900 text-white text-[10px] font-medium rounded-full">
-                추천
-              </span>
-            )}
-            <h3 className="text-body-1-bold text-label-normal">{plan.name}</h3>
-            <div className="flex items-baseline gap-0.5 mt-2">
-              <span className="text-title-1-bold text-label-normal">{plan.price}</span>
-              {plan.period && (
-                <span className="text-caption-regular text-label-assistive">{plan.period}</span>
-              )}
-            </div>
-            <p className="text-caption-regular text-label-assistive mt-1">{plan.description}</p>
-
-            <div className="border-t border-line-normal my-4" />
-
-            <ul className="flex-1 space-y-2">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-2 text-caption-regular text-label-neutral">
-                  <svg className="w-3.5 h-3.5 text-element-positive-default shrink-0" viewBox="0 0 16 16" fill="none">
-                    <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button
-              className={cn(
-                "mt-4 w-full py-2.5 rounded-lg text-body-2-medium transition-colors",
-                plan.current
-                  ? "bg-gray-100 text-label-assistive cursor-default"
-                  : plan.recommended
-                    ? "bg-gray-900 text-white hover:bg-gray-800"
-                    : "border border-line-normal text-label-normal hover:bg-gray-50"
-              )}
-              disabled={plan.current}
-            >
-              {plan.current ? '현재 플랜' : '업그레이드'}
-            </button>
+    <div className="flex flex-col gap-6">
+      {/* 현재 요금제 */}
+      <div>
+        <p className="text-body-1-bold text-label-normal">현재 요금제</p>
+        <div className="mt-3 flex items-center justify-between px-4 py-4 border border-line-normal rounded-lg">
+          <div>
+            <p className="text-body-2-medium text-label-normal">프로 플랜</p>
+            <p className="text-caption-regular text-label-assistive">다음 결제일 : 2026.02.28</p>
           </div>
-        ))}
+          <span className="text-title-1-bold text-label-normal">₩29,000 <span className="text-body-2-regular text-label-assistive">/월</span></span>
+        </div>
       </div>
 
-      {/* Billing Info */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-caption-medium text-label-normal">현재 플랜: Free</p>
-            <p className="text-[10px] text-label-assistive mt-0.5">다음 결제일: -</p>
+      {/* 모든 요금제 */}
+      <div>
+        <p className="text-body-1-bold text-label-normal">모든 요금제</p>
+        <p className="text-body-2-regular text-label-neutral mt-1">트레이딩 스타일에 맞는 플랜을 선택하세요.</p>
+
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={cn(
+                "relative flex flex-col rounded-xl border p-5",
+                plan.current
+                  ? "border-gray-900"
+                  : "border-line-normal"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="text-body-1-bold text-label-normal">{plan.name}</h3>
+                {plan.popular && (
+                  <span className="px-2 py-0.5 bg-gray-900 text-white text-[10px] font-medium rounded">
+                    인기
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-0.5 mt-3">
+                <span className="text-title-1-bold text-label-normal">{plan.price}</span>
+                <span className="text-caption-regular text-label-assistive">{plan.period}</span>
+              </div>
+
+              <ul className="flex-1 space-y-2 mt-5">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2 text-caption-regular text-label-neutral">
+                    <div className="w-4 h-4 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
+                      <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                    </div>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                className={cn(
+                  "mt-5 w-full py-2.5 rounded-lg text-body-2-medium transition-colors",
+                  plan.current
+                    ? "bg-gray-900 text-white"
+                    : "border border-line-normal text-label-normal hover:bg-gray-50"
+                )}
+              >
+                {plan.current ? '현재 플랜' : '플랜 변경'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 결제 수단 */}
+      <div>
+        <p className="text-body-1-bold text-label-normal">결제 수단</p>
+        <div className="mt-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between px-4 py-3 border border-line-normal rounded-lg">
+            <div className="flex items-center gap-3">
+              <CreditCard className="w-5 h-5 text-label-neutral" />
+              <span className="text-body-2-regular text-label-normal">1234-****-****-1234</span>
+            </div>
+            <button className="px-3 py-1.5 text-caption-medium text-label-normal border border-line-normal rounded-md hover:bg-gray-50 transition-colors">
+              변경
+            </button>
           </div>
-          <button className="text-caption-medium text-label-assistive hover:text-label-normal transition-colors">
-            결제 내역 보기
+          <button className="flex items-center justify-center py-3 border border-line-normal rounded-lg text-body-2-medium text-label-neutral hover:bg-gray-50 transition-colors">
+            + 새 결제 수단 추가
           </button>
         </div>
       </div>
-    </div>
-  )
-}
 
-// 이메일 변경 모달
-function EmailChangeModal({ open, onOpenChange, currentEmail }: { open: boolean; onOpenChange: (open: boolean) => void; currentEmail: string }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="p-6 rounded-xl shadow-emphasize max-w-md">
-        <DialogHeader className="items-center gap-1">
-          <DialogTitle className="text-title-2-bold text-label-normal text-center">이메일 변경</DialogTitle>
-          <DialogDescription className="text-body-1-medium text-label-neutral text-center">
-            로그인에 사용될 이메일 주소를 변경합니다.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 mt-4">
-          <div>
-            <label className="text-body-2-medium text-label-normal mb-1.5 block">현재 이메일</label>
-            <Input value={currentEmail} disabled className="h-[50px] bg-gray-50" />
-          </div>
-          <div>
-            <label className="text-body-2-medium text-label-normal mb-1.5 block">새 이메일</label>
-            <Input placeholder="새 이메일 주소를 입력하세요" className="h-[50px]" />
-          </div>
+      {/* 결제 내역 */}
+      <div>
+        <p className="text-body-1-bold text-label-normal">결제 내역</p>
+        <div className="mt-3 border border-line-normal rounded-lg overflow-hidden">
+          {[
+            { plan: '프로 플랜', date: '2026.01.28', amount: '₩29,000' },
+            { plan: '프로 플랜', date: '2025.12.28', amount: '₩29,000' },
+            { plan: '프로 플랜', date: '2025.11.28', amount: '₩29,000' },
+          ].map((item, index, arr) => (
+            <div
+              key={index}
+              className={cn(
+                "flex items-center justify-between px-4 py-3",
+                index < arr.length - 1 && "border-b border-line-normal"
+              )}
+            >
+              <div>
+                <p className="text-body-2-medium text-label-normal">{item.plan}</p>
+                <p className="text-caption-regular text-label-assistive">{item.date}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-caption-medium px-2 py-0.5 bg-green-100 text-green-400 rounded">완료</span>
+                <span className="text-body-2-bold text-label-normal">{item.amount}</span>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="flex gap-3 mt-4">
-          <Button variant="secondary" className="flex-1 h-12 border-line-normal rounded-lg" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button className="flex-1 h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-lg">변경하기</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+
+      {/* 구독 해지 */}
+      <div>
+        <button className="flex items-center gap-2 px-4 py-2 text-body-2-medium text-label-neutral border border-line-normal rounded-lg hover:bg-gray-50 transition-colors">
+          <XIcon className="w-4 h-4" />
+          구독 해지
+        </button>
+      </div>
+    </div>
   )
 }
 

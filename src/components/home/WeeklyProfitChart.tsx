@@ -111,9 +111,8 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
                   y1={y}
                   x2={chartWidth - padding.right}
                   y2={y}
-                  stroke="#CDD1D5"
-                  strokeWidth="0.5"
-                  strokeDasharray="4 4"
+                  stroke="#D7D7D7"
+                  strokeWidth="1"
                 />
               );
             })}
@@ -126,7 +125,7 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
                 y={padding.top + (i / 4) * innerHeight + 4}
                 textAnchor="end"
                 className="text-[12px]"
-                fill="#6D7882"
+                fill="#8F8F8F"
               >
                 {label}
               </text>
@@ -174,7 +173,7 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
                 y={chartHeight + 20}
                 textAnchor="middle"
                 className="text-[12px]"
-                fill="#6D7882"
+                fill="#8F8F8F"
               >
                 {p.date}
               </text>

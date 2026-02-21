@@ -31,12 +31,47 @@ const SUGGESTED_PROMPTS = [
   },
 ]
 
+// Action menu SVG icons
+function IconCamera({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14.6667 12.6667C14.6667 13.0203 14.5262 13.3594 14.2761 13.6095C14.0261 13.8595 13.687 14 13.3333 14H2.66667C2.31305 14 1.97391 13.8595 1.72386 13.6095C1.47381 13.3594 1.33334 13.0203 1.33334 12.6667V5.33333C1.33334 4.97971 1.47381 4.64057 1.72386 4.39052C1.97391 4.14048 2.31305 4 2.66667 4H5.33334L6.66667 2H9.33334L10.6667 4H13.3333C13.687 4 14.0261 4.14048 14.2761 4.39052C14.5262 4.64057 14.6667 4.97971 14.6667 5.33333V12.6667Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="8" cy="8.66667" r="2.66667" stroke="currentColor" strokeWidth="1.2"/>
+    </svg>
+  )
+}
+
+function IconChartBar({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 13.3333V6.66667M10 13.3333V2.66667M2 13.3333V10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconEdit({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.3333 2.00004C11.5084 1.82494 11.7163 1.68605 11.9451 1.59129C12.1739 1.49653 12.4191 1.44775 12.6667 1.44775C12.9143 1.44775 13.1594 1.49653 13.3882 1.59129C13.617 1.68605 13.8249 1.82494 14 2.00004C14.1751 2.17513 14.314 2.383 14.4088 2.61181C14.5035 2.84062 14.5523 3.08578 14.5523 3.33337C14.5523 3.58097 14.5035 3.82613 14.4088 4.05494C14.314 4.28375 14.1751 4.49161 14 4.66671L5 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconBell({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5.33333C12 4.27247 11.5786 3.25505 10.8284 2.50491C10.0783 1.75476 9.06087 1.33333 8 1.33333C6.93913 1.33333 5.92172 1.75476 5.17157 2.50491C4.42143 3.25505 4 4.27247 4 5.33333C4 10 2 11.3333 2 11.3333H14C14 11.3333 12 10 12 5.33333Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9.15333 13.3333C8.97268 13.6451 8.71003 13.9027 8.39434 14.0773C8.07865 14.2519 7.72165 14.3371 7.36133 14.3238C7.00101 14.3105 6.65134 14.1993 6.34914 14.0023C6.04695 13.8052 5.80351 13.5296 5.64533 13.2053" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 // Action menu items
 const ACTION_MENU_ITEMS = [
-  { icon: '📷', label: '사진 및 파일 업로드' },
-  { icon: '📊', label: '차트 분석 요청' },
-  { icon: '📝', label: '매매일지 작성' },
-  { icon: '🔔', label: '트리거 설정' },
+  { icon: IconCamera, label: '사진 및 파일 업로드' },
+  { icon: IconChartBar, label: '차트 분석 요청' },
+  { icon: IconEdit, label: '매매일지 작성' },
+  { icon: IconBell, label: '트리거 설정' },
 ]
 
 function formatDate(dateStr: string) {
@@ -92,14 +127,17 @@ export default function TradexAIPage() {
 
   return (
     <div className="min-h-[calc(100vh-48px)] flex flex-col items-center justify-center px-9 py-8 gap-[60px]">
-      {/* Logo - Figma: 203x32px */}
-      <Image
-        src="/tradex-logo-black.svg"
-        alt="Tradex"
-        width={203}
-        height={32}
-        priority
-      />
+      {/* Logo - Figma: Tradex wave icon + text, centered */}
+      <div className="flex items-center gap-3">
+        <Image
+          src="/images/tradex-icon.svg"
+          alt="Tradex"
+          width={48}
+          height={48}
+          priority
+        />
+        <span className="text-[40px] font-bold text-label-normal tracking-tight">Tradex</span>
+      </div>
 
       {/* Bottom Section - Figma: width 700px, gap 16px */}
       <div className="w-full max-w-[700px] flex flex-col gap-4">
@@ -150,18 +188,21 @@ export default function TradexAIPage() {
           {/* Action Menu Dropdown */}
           {isActionMenuOpen && (
             <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-line-normal rounded-xl shadow-emphasize py-2 z-10">
-              {ACTION_MENU_ITEMS.map((item, index) => (
-                <button
-                  key={index}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-body-2-regular text-label-neutral hover:bg-gray-50 transition-colors"
-                  onClick={() => {
-                    setIsActionMenuOpen(false)
-                  }}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {ACTION_MENU_ITEMS.map((item, index) => {
+                const ItemIcon = item.icon
+                return (
+                  <button
+                    key={index}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-body-2-regular text-label-neutral hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setIsActionMenuOpen(false)
+                    }}
+                  >
+                    <ItemIcon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>

@@ -16,9 +16,11 @@ Tradex는 AI 기반 트레이딩 분석 및 매매일지 관리 서비스입니�
 
 ## 디자인 시스템
 
-> **Figma (최신 - Tradex_0221)**: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221
-> **Figma (이전)**: https://www.figma.com/design/bIuxiR3Mqy0PfLkxIQv4Oa
+> **Figma (파일)**: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221
+> **Figma (Web 페이지 - UI 구현 기준)**: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221?node-id=4001-20898&m=dev
 > **리디자인 진행 추적**: `docs/REDESIGN_PROGRESS.md`
+>
+> **중요**: 웹 UI 구현 시 반드시 `node-id=4001-20898` (Web 페이지)를 기준으로 작업할 것.
 
 ### ⚠️ 디자인 구현 원칙 (필수)
 

@@ -2,7 +2,7 @@
 
 > **새 Figma**: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221
 > **작업 시작일**: 2026-02-21
-> **마지막 업데이트**: 2026-02-21
+> **마지막 업데이트**: 2026-02-22
 
 ## 요약
 
@@ -151,3 +151,21 @@
 | OAuth 리다이렉트 | bg, spinner 색상 토큰화 | `src/app/oauth2/redirect/page.tsx` |
 | AuthProvider | spinner 색상 토큰화 | `src/components/providers/AuthProvider.tsx` |
 | 시맨틱 토큰 일괄 적용 | `text-gray-800` → `text-label-normal`, `text-gray-600` → `text-label-neutral` | 전체 페이지 파일 |
+
+## Figma 스크린샷 1:1 비교 구조 수정 (2026-02-22)
+
+| 항목 | 변경 내용 | 파일 |
+|------|----------|------|
+| 사이드바 항상 확장 | 데스크톱 200px 고정, 접기 토글 제거 | `Sidebar.tsx` |
+| 사이드바 로고 | Tradex 아이콘 + "Jay's Tradex" 텍스트 | `Sidebar.tsx` |
+| 수신함 네비 추가 | 사이드바 상단 그룹에 수신함 항목 추가 | `Sidebar.tsx` |
+| 활성 항목 스타일 | bg-gray-50 제거, text bold만 적용 | `Sidebar.tsx` |
+| 헤더 offset 고정 | left-[200px] 고정 (collapsed 조건 제거) | `Header.tsx` |
+| MainLayout offset 고정 | pl-[200px] 고정 | `MainLayout.tsx`, `layout.tsx` |
+| StatCard 레이아웃 | change badge + subValue 같은 줄로 변경 | `StatCard.tsx` |
+| 주간 수익 차트 | 라인 색상 purple(#7C3AED)으로 변경 | `WeeklyProfitChart.tsx` |
+| 매매일지 토글 | 활성 border-gray-900 적용 | `journal/page.tsx` |
+| 캘린더 트레이드 카드 | Closed P&L(USDT) 인라인 레이아웃 | `JournalCalendar.tsx` |
+| Tradex AI 로고 | 텍스트 로고 → 아이콘 로고(64px)로 변경 | `ai/page.tsx` |
+| AI 액션 메뉴 | 이모지 → SVG 아이콘으로 교체 | `ai/page.tsx` |
+| Tradex 아이콘 SVG | 새 아이콘 에셋 생성 | `public/images/tradex-icon.svg` |

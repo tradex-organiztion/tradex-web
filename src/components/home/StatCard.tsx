@@ -13,15 +13,6 @@ interface StatCardProps {
   className?: string;
 }
 
-/**
- * StatCard - Figma Tradex_0221 기준
- * - 배경: white, border: 0.6px #D7D7D7, border-radius: 12px
- * - 패딩: 20px 24px
- * - 타이틀: Body 2/Medium, #767676
- * - 값: Title 1/Bold, #121212
- * - Badge: solid-pastel, rounded-[4px], padding 2px 8px
- * - subValue: Body 2/Regular, #8F8F8F
- */
 export function StatCard({
   title,
   value,
@@ -42,12 +33,14 @@ export function StatCard({
           <div className="flex items-center gap-2">
             <p className="text-title-1-bold text-label-normal">{value}</p>
             {change && (
-              <span className={cn(
-                "text-caption-medium rounded px-2 py-0.5",
-                change.variant === "positive"
-                  ? "bg-green-100 text-green-400"
-                  : "bg-red-100 text-red-400"
-              )}>
+              <span
+                className={cn(
+                  "text-caption-medium rounded-[4px] px-2 py-0.5",
+                  change.variant === "positive"
+                    ? "bg-green-100 text-green-400"
+                    : "bg-red-100 text-red-400"
+                )}
+              >
                 {change.label}
               </span>
             )}

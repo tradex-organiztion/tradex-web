@@ -139,7 +139,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
 
   return (
     <div className="flex flex-col gap-3 h-full">
-      {/* Calendar Header - Figma: gap 16px between elements */}
+      {/* Calendar Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={goToPrevMonth}
@@ -163,14 +163,11 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
       {/* Calendar Table */}
       <div className="flex flex-col flex-1">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 bg-gray-50 rounded-t-lg border border-gray-200">
-          {WEEKDAYS.map((day, index) => (
+        <div className="grid grid-cols-7 bg-gray-100 rounded-t-lg">
+          {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className={cn(
-                "py-2 px-2 flex justify-center items-center",
-                index < 6 && "border-r border-gray-200"
-              )}
+              className="py-2 px-2 flex justify-center items-center"
             >
               <span className="text-body-2-regular text-label-neutral">{day}</span>
             </div>
@@ -188,80 +185,74 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
             const isLastRow = rowIndex === totalRows - 1
             const isLastCol = colIndex === 6
 
-            // Border classes based on position (Figma spec)
-            const borderClasses = cn(
-              "border-gray-200",
-              "border-t",
-              "border-l",
-              isLastCol && "border-r",
-              isLastRow && "border-b"
-            )
-
             const isTodayCell = calendarDay.isCurrentMonth && isToday(calendarDay.day)
 
             return (
               <div
                 key={index}
                 className={cn(
-                  "flex flex-col bg-white px-2 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors min-h-[120px]",
-                  borderClasses
+                  "flex flex-col bg-white px-2 py-1 cursor-pointer hover:bg-gray-50 transition-colors min-h-[100px]",
+                  "border-gray-300",
+                  "border-t-[0.4px] border-l-[0.4px]",
+                  isLastCol && "border-r-[0.4px]",
+                  isLastRow && "border-b-[0.4px]"
                 )}
                 onClick={() => calendarDay.isCurrentMonth && onDateClick?.(new Date(year, month, calendarDay.day))}
               >
                 {/* Day number - right aligned */}
-                <div className={cn(
-                  "text-body-2-medium text-right p-0.5",
-                  isTodayCell
-                    ? "text-element-positive-default font-bold"
-                    : calendarDay.isCurrentMonth ? "text-label-neutral" : "text-gray-400"
-                )}>
-                  {formatDayLabel(calendarDay)}
+                <div className="flex justify-end p-0.5">
+                  {isTodayCell ? (
+                    <span className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-900 text-white text-body-2-medium">
+                      {calendarDay.day}
+                    </span>
+                  ) : (
+                    <span className={cn(
+                      "text-body-2-medium w-6 text-center",
+                      calendarDay.isCurrentMonth ? "text-label-neutral" : "text-gray-400"
+                    )}>
+                      {formatDayLabel(calendarDay)}
+                    </span>
+                  )}
                 </div>
 
-                {/* Trade cards for this day - Figma 상세 디자인 */}
+                {/* Trade entries - Figma: colored left bar + pair + profit */}
                 {calendarDay.isCurrentMonth && dayTrades.length > 0 && (
                   <div className="flex flex-col gap-1 mt-1">
-                    {dayTrades.slice(0, 2).map((trade) => (
-                      <div
-                        key={trade.id}
-                        className="rounded-md border border-gray-200 bg-white p-1.5 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onTradeClick?.(trade)
-                        }}
-                      >
-                        {/* Pair name + Position badge */}
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-caption-bold text-label-normal truncate">
-                            {trade.pair}
-                          </span>
-                          {trade.position && (
-                            <span className={cn(
-                              "text-[10px] font-medium px-1 py-px rounded shrink-0",
-                              trade.position === 'Long'
-                                ? "bg-element-positive-lighter text-element-positive-default"
-                                : "bg-element-danger-lighter text-element-danger-default"
-                            )}>
-                              {trade.position}
-                            </span>
+                    {dayTrades.slice(0, 2).map((trade) => {
+                      const isPositive = trade.profit >= 0
+                      return (
+                        <div
+                          key={trade.id}
+                          className={cn(
+                            "rounded-[4px] px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity",
+                            isPositive ? "bg-gray-100" : "bg-red-100"
                           )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onTradeClick?.(trade)
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            {/* Colored left bar */}
+                            <div className={cn(
+                              "w-[3px] h-3 rounded-full shrink-0",
+                              isPositive ? "bg-green-400" : "bg-red-400"
+                            )} />
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="text-caption-medium text-label-normal truncate">
+                                {trade.pair.includes('/') ? trade.pair : `${trade.pair.replace('USDT', '')}/USDT`}
+                              </span>
+                              <span className={cn(
+                                "text-body-2-bold whitespace-nowrap",
+                                isPositive ? "text-green-400" : "text-red-400"
+                              )}>
+                                {formatProfit(trade.profit)}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        {/* Timestamp */}
-                        {trade.timestamp && (
-                          <p className="text-[10px] text-gray-400 mb-0.5">{trade.timestamp}</p>
-                        )}
-                        {/* P&L */}
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-gray-400">Closed P&L</span>
-                          <span className={cn(
-                            "text-caption-bold",
-                            trade.profit >= 0 ? "text-element-positive-default" : "text-element-danger-default"
-                          )}>
-                            {formatProfit(trade.profit)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                     {dayTrades.length > 2 && (
                       <div className="text-caption-regular text-gray-500 px-1">
                         +{dayTrades.length - 2}개 더보기
