@@ -43,7 +43,7 @@ export default function ChartPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)]" style={{ margin: 0 }}>
+    <div className="flex flex-col h-[calc(100vh-48px)]" style={{ margin: 0 }}>
       <Script src="/charting_library/charting_library.standalone.js" strategy="beforeInteractive" />
 
       {/* Chart toolbar with AI actions */}

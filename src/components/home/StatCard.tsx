@@ -14,9 +14,13 @@ interface StatCardProps {
 }
 
 /**
- * StatCard - Figma 디자인 기준
- * - 퍼센트 변동은 Badge가 아닌 일반 색상 텍스트로 표시
- * - subValue 옆에 변동률 표시
+ * StatCard - Figma Tradex_0221 기준
+ * - 배경: white, border: 0.6px #D7D7D7, border-radius: 12px
+ * - 패딩: 20px 24px
+ * - 타이틀: Body 2/Medium, #767676
+ * - 값: Title 1/Bold, #121212
+ * - Badge: solid-pastel, rounded-[4px], padding 2px 8px
+ * - subValue: Body 2/Regular, #8F8F8F
  */
 export function StatCard({
   title,
@@ -28,28 +32,28 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "bg-white rounded-[10px] shadow-normal px-6 py-5 h-[154px] flex-1 flex flex-col justify-center overflow-hidden",
+        "bg-white rounded-xl border-[0.6px] border-gray-300 px-6 py-5 flex-1 flex flex-col justify-center overflow-hidden",
         className
       )}
     >
       <div className="flex flex-col gap-2">
         <p className="text-body-2-medium text-label-neutral">{title}</p>
         <div className="flex flex-col gap-1">
-          <p className="text-title-1-bold text-label-normal">{value}</p>
-          {(subValue || change) && (
-            <div className="flex items-center gap-2">
-              {subValue && (
-                <p className="text-body-2-regular text-label-assistive">{subValue}</p>
-              )}
-              {change && (
-                <span className={cn(
-                  "text-body-2-bold",
-                  change.variant === "positive" ? "text-label-positive" : "text-label-danger"
-                )}>
-                  {change.label}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-2">
+            <p className="text-title-1-bold text-label-normal">{value}</p>
+            {change && (
+              <span className={cn(
+                "text-caption-medium rounded px-2 py-0.5",
+                change.variant === "positive"
+                  ? "bg-green-100 text-green-400"
+                  : "bg-red-100 text-red-400"
+              )}>
+                {change.label}
+              </span>
+            )}
+          </div>
+          {subValue && (
+            <p className="text-body-2-regular text-gray-500">{subValue}</p>
           )}
         </div>
       </div>

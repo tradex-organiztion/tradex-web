@@ -31,7 +31,7 @@ function Checkbox({
           <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
         )}
       </div>
-      <span className="text-body-2-regular text-gray-600">{label}</span>
+      <span className="text-body-2-regular text-label-neutral">{label}</span>
     </label>
   )
 }
@@ -142,7 +142,7 @@ export default function StrategyAnalysisPage() {
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-2">
           <h1 className="text-title-1-bold text-label-normal">전략 분석</h1>
-          <p className="text-body-1-regular text-label-assistive">
+          <p className="text-body-1-regular text-label-neutral">
             나의 트레이딩 전략과 승률을 분석하고 최고의 성과를 만들어 보세요.
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function StrategyAnalysisPage() {
             value={startDate}
             onChange={setStartDate}
           />
-          <span className="text-body-1-regular text-gray-800">~</span>
+          <span className="text-body-1-regular text-label-normal">~</span>
           <DatePickerCalendar
             value={endDate}
             onChange={setEndDate}
@@ -191,7 +191,7 @@ export default function StrategyAnalysisPage() {
       {/* 전략 선택 + 분석 리포트 (좌우 분리) */}
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* 왼쪽: 전략 선택 */}
-        <div className="w-full shrink-0 bg-white rounded-xl border border-line-normal lg:w-[380px]">
+        <div className="w-full shrink-0 bg-white rounded-xl border-[0.6px] border-gray-300 lg:w-[380px]">
           <div className="p-5 border-b border-line-normal">
             <h2 className="text-title-2-bold text-label-normal">전략 선택</h2>
             <p className="text-body-2-regular text-label-assistive mt-0.5">
@@ -201,7 +201,7 @@ export default function StrategyAnalysisPage() {
           <div className="p-5 flex flex-col gap-5">
             {/* 지표 */}
             <div className="flex flex-col gap-2">
-              <span className="text-body-2-medium text-gray-800">지표</span>
+              <span className="text-body-2-medium text-label-normal">지표</span>
               <div className="flex flex-wrap gap-2">
                 {['볼린저 밴드', 'RSI', 'MACD', 'EMA'].map((item) => (
                   <Checkbox
@@ -216,7 +216,7 @@ export default function StrategyAnalysisPage() {
 
             {/* 스타일 */}
             <div className="flex flex-col gap-2">
-              <span className="text-body-2-medium text-gray-800">스타일</span>
+              <span className="text-body-2-medium text-label-normal">스타일</span>
               <div className="flex gap-2">
                 {['스캘핑', '스윙'].map((item) => (
                   <Checkbox
@@ -231,7 +231,7 @@ export default function StrategyAnalysisPage() {
 
             {/* 기술적 분석 */}
             <div className="flex flex-col gap-2">
-              <span className="text-body-2-medium text-gray-800">기술적 분석</span>
+              <span className="text-body-2-medium text-label-normal">기술적 분석</span>
               <div className="flex flex-wrap gap-2">
                 {['지지/저항선', '피보나치 되돌림', '추세선', '채널'].map((item) => (
                   <Checkbox
@@ -246,7 +246,7 @@ export default function StrategyAnalysisPage() {
 
             {/* 포지션 */}
             <div className="flex flex-col gap-2">
-              <span className="text-body-2-medium text-gray-800">포지션</span>
+              <span className="text-body-2-medium text-label-normal">포지션</span>
               <div className="flex gap-2">
                 {['Long', 'Short'].map((item) => (
                   <Checkbox
@@ -261,7 +261,7 @@ export default function StrategyAnalysisPage() {
 
             {/* 시장 */}
             <div className="flex flex-col gap-2">
-              <span className="text-body-2-medium text-gray-800">시장</span>
+              <span className="text-body-2-medium text-label-normal">시장</span>
               <div className="flex gap-2">
                 {['상승장', '하락장', '횡보장'].map((item) => (
                   <Checkbox
@@ -276,7 +276,7 @@ export default function StrategyAnalysisPage() {
 
             {/* 타임프레임 */}
             <div className="flex flex-col gap-2">
-              <span className="text-body-2-medium text-gray-800">타임프레임</span>
+              <span className="text-body-2-medium text-label-normal">타임프레임</span>
               <div className="flex flex-wrap gap-2">
                 {['15분봉', '1시간봉', '4시간봉', '일봉'].map((item) => (
                   <Checkbox
@@ -292,7 +292,7 @@ export default function StrategyAnalysisPage() {
         </div>
 
         {/* 오른쪽: 분석 리포트 */}
-        <div className="flex-1 bg-white rounded-xl border border-line-normal">
+        <div className="flex-1 bg-white rounded-xl border-[0.6px] border-gray-300">
           <div className="p-5 border-b border-line-normal">
             <h2 className="text-title-2-bold text-label-normal">분석 리포트</h2>
             <p className="text-body-2-regular text-label-assistive mt-0.5">
@@ -304,27 +304,27 @@ export default function StrategyAnalysisPage() {
             <div className="p-5 flex flex-col gap-5">
               {/* 통계 카드 그리드 */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="border border-line-normal rounded-lg p-4">
+                <div className="border-[0.6px] border-gray-300 rounded-lg p-4">
                   <p className="text-caption-regular text-label-assistive mb-1">승률</p>
                   <p className="text-title-1-bold text-label-normal">68.5%</p>
                 </div>
-                <div className="border border-line-normal rounded-lg p-4">
+                <div className="border-[0.6px] border-gray-300 rounded-lg p-4">
                   <p className="text-caption-regular text-label-assistive mb-1">총 거래</p>
                   <p className="text-title-1-bold text-label-normal">143회</p>
                 </div>
-                <div className="border border-line-normal rounded-lg p-4">
+                <div className="border-[0.6px] border-gray-300 rounded-lg p-4">
                   <p className="text-caption-regular text-label-assistive mb-1">평균 수익</p>
                   <p className="text-title-1-bold text-element-positive-default">+1,743달러(2.4%)</p>
                 </div>
-                <div className="border border-line-normal rounded-lg p-4">
+                <div className="border-[0.6px] border-gray-300 rounded-lg p-4">
                   <p className="text-caption-regular text-label-assistive mb-1">평균 R/R 비율</p>
                   <p className="text-title-1-bold text-label-normal">2.10</p>
                 </div>
-                <div className="border border-line-normal rounded-lg p-4">
+                <div className="border-[0.6px] border-gray-300 rounded-lg p-4">
                   <p className="text-caption-regular text-label-assistive mb-1">누적 수익</p>
                   <p className="text-title-1-bold text-element-positive-default">+43,759달러(18.3%)</p>
                 </div>
-                <div className="border border-line-normal rounded-lg p-4">
+                <div className="border-[0.6px] border-gray-300 rounded-lg p-4">
                   <p className="text-caption-regular text-label-assistive mb-1">최대 연속 기록(승/패)</p>
                   <p className="text-title-1-bold text-label-normal">+8/-4</p>
                 </div>
@@ -337,7 +337,7 @@ export default function StrategyAnalysisPage() {
                   className="flex-1 rounded-lg flex flex-col gap-3"
                   style={{ border: '0.6px solid #D7D7D7', padding: '12px 16px' }}
                 >
-                  <span className="text-body-2-medium text-gray-600">손익 그래프</span>
+                  <span className="text-body-2-medium text-label-neutral">손익 그래프</span>
                   <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
                   <p className="text-caption-regular text-label-assistive">
                     지난 30일간 볼린저 밴드 지표와 스윙 매매 전략만 적용했다면 아래와 같은 수익을 달성할 수 있었습니다.

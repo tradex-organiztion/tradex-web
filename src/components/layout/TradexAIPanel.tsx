@@ -181,9 +181,9 @@ export function TradexAIPanel() {
   if (!isAIPanelOpen) return null
 
   return (
-    <div className="fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col bg-white shadow-emphasize border-l border-[#D7D7D7] md:w-[400px]">
+    <div className="fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col bg-white shadow-emphasize border-l border-gray-300 md:w-[400px]">
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 h-12 border-b border-[#D7D7D7]">
+      <div className="flex items-center gap-2 px-5 h-12 border-b border-gray-300">
         <button
           onClick={() => setAIPanelOpen(false)}
           className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
@@ -242,7 +242,7 @@ export function TradexAIPanel() {
                   <div className="pl-[60px]">
                     <div className="flex justify-end gap-4">
                       <div className="flex flex-col items-end gap-2 flex-1">
-                        <div className="bg-white border border-[#D7D7D7] rounded-tl-xl rounded-bl-xl rounded-br-xl px-5 py-4">
+                        <div className="bg-white border border-gray-300 rounded-tl-xl rounded-bl-xl rounded-br-xl px-5 py-4">
                           <p className="text-body-1-regular text-gray-800">{message.content}</p>
                         </div>
                         <span className="text-caption-regular text-gray-500">{message.timestamp}</span>
@@ -311,7 +311,7 @@ export function TradexAIPanel() {
       </div>
 
       {/* Input Area */}
-      <div className="px-5 py-3 border-t border-[#D7D7D7]">
+      <div className="px-5 py-3 border-t border-gray-300">
         <div className="flex items-center gap-4 py-2">
           <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100">
             <Plus className="w-5 h-5 text-gray-800" />

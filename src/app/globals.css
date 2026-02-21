@@ -4,8 +4,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ===== Tradex Design System ===== */
-/* Based on Figma: https://www.figma.com/design/bIuxiR3Mqy0PfLkxIQv4Oa */
-/* Updated: 2026-02-12 (dark mode support) */
+/* Based on Figma: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221 */
+/* Updated: 2026-02-21 (Tradex_0221 redesign) */
 
 /* ============================================================
    Primitive Colors

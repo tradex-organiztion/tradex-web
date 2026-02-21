@@ -18,7 +18,7 @@ import { homeApi, NotificationResponse, NotificationType } from "@/lib/api"
 // 알림 타입별 라벨 및 색상
 const notificationTypeConfig: Record<NotificationType, { label: string; bgColor: string; textColor: string }> = {
   POSITION_ENTRY: { label: "포지션 진입", bgColor: "bg-element-positive-lighter", textColor: "text-element-positive-default" },
-  POSITION_EXIT: { label: "포지션 종료", bgColor: "bg-gray-100", textColor: "text-gray-800" },
+  POSITION_EXIT: { label: "포지션 종료", bgColor: "bg-gray-100", textColor: "text-label-normal" },
   RISK_WARNING: { label: "리스크 경고", bgColor: "bg-element-danger-lighter", textColor: "text-element-danger-default" },
 }
 
@@ -133,7 +133,7 @@ export default function InboxPage() {
       />
 
       {/* Split Panel Layout */}
-      <div className="bg-white rounded-[12px] shadow-normal overflow-hidden flex min-h-[600px]">
+      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 overflow-hidden flex min-h-[600px]">
         {/* Left: Notification List */}
         <div className="w-full shrink-0 border-r border-line-normal flex flex-col md:w-[380px]">
           {/* List */}

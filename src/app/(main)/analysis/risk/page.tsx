@@ -270,7 +270,7 @@ function AIInsightBox({ children }: { children: React.ReactNode }) {
       >
         AI 인사이트
       </span>
-      <p className="text-body-1-regular text-gray-800">{children}</p>
+      <p className="text-body-1-regular text-label-normal">{children}</p>
     </div>
   )
 }
@@ -338,7 +338,7 @@ function HourlyWinRateChart() {
       className="flex-1 rounded-lg bg-white p-4 flex flex-col gap-3"
       style={{ border: '0.6px solid #D7D7D7' }}
     >
-      <span className="text-body-2-medium text-gray-600">시간대별 승률</span>
+      <span className="text-body-2-medium text-label-neutral">시간대별 승률</span>
       <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
 
       <div className="relative">
@@ -455,7 +455,7 @@ function SituationWinRateChart() {
       className="flex-1 rounded-lg bg-white p-4 flex flex-col gap-3"
       style={{ border: '0.6px solid #D7D7D7' }}
     >
-      <span className="text-body-2-medium text-gray-600">상황별 승률</span>
+      <span className="text-body-2-medium text-label-neutral">상황별 승률</span>
       <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
 
       <div className="relative">
@@ -574,7 +574,7 @@ function WeeklyProfitCurveChart() {
       style={{ border: '0.6px solid #D7D7D7' }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-body-2-medium text-gray-600">주간 수익 곡선</span>
+        <span className="text-body-2-medium text-label-neutral">주간 수익 곡선</span>
         <span className="text-caption-regular text-gray-500">최근 7일간의 누적 수익금 추이입니다.</span>
       </div>
       <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
@@ -649,7 +649,7 @@ function CumulativeProfitChart() {
       style={{ border: '0.6px solid #D7D7D7' }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-body-2-medium text-gray-600">누적 수익</span>
+        <span className="text-body-2-medium text-label-neutral">누적 수익</span>
         <span className="text-title-2-bold text-element-positive-default">+$43,759</span>
       </div>
       <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
@@ -715,7 +715,7 @@ function ProfitRateBarChart() {
       className="flex-1 rounded-lg bg-white p-4 flex flex-col gap-3"
       style={{ border: '0.6px solid #D7D7D7' }}
     >
-      <span className="text-body-2-medium text-gray-600">수익률(%)</span>
+      <span className="text-body-2-medium text-label-neutral">수익률(%)</span>
       <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
       <div className="relative">
         <svg
@@ -768,8 +768,8 @@ export default function RiskPatternPage() {
       <div className="flex flex-col gap-8">
         {/* Page Header */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-title-1-bold text-gray-800">리스크 패턴</h1>
-          <p className="text-body-1-regular text-gray-600">
+          <h1 className="text-title-1-bold text-label-normal">리스크 패턴</h1>
+          <p className="text-body-1-regular text-label-neutral">
             반복되는 실수와 습관을 파악하여 손실을 최소화하세요.
           </p>
         </div>
@@ -781,7 +781,7 @@ export default function RiskPatternPage() {
               value={startDate}
               onChange={setStartDate}
             />
-            <span className="text-body-1-regular text-gray-800">~</span>
+            <span className="text-body-1-regular text-label-normal">~</span>
             <DatePickerCalendar
               value={endDate}
               onChange={setEndDate}
@@ -806,15 +806,15 @@ export default function RiskPatternPage() {
                 className="bg-gray-50 p-5"
                 style={{ borderBottom: '0.6px solid #D7D7D7' }}
               >
-                <span className="text-body-1-regular text-gray-600 block">가장 치명적인 리스크</span>
-                <span className="text-title-2-bold text-gray-800">패턴 분석</span>
+                <span className="text-body-1-regular text-label-neutral block">가장 치명적인 리스크</span>
+                <span className="text-title-2-bold text-label-normal">패턴 분석</span>
               </div>
               {/* 하단: 값 영역 (흰색 배경) */}
               <div className="bg-white p-5">
-                <span className="text-body-2-medium text-gray-600 block">손절 후 즉각 재진입(복수매매) 손실 기여도</span>
+                <span className="text-body-2-medium text-label-neutral block">손절 후 즉각 재진입(복수매매) 손실 기여도</span>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-title-1-bold text-red-400">42%</span>
-                  <span className="text-caption-regular text-gray-600">14회 발생</span>
+                  <span className="text-caption-regular text-label-neutral">14회 발생</span>
                 </div>
               </div>
             </div>
@@ -829,15 +829,15 @@ export default function RiskPatternPage() {
                 className="bg-gray-50 p-5"
                 style={{ borderBottom: '0.6px solid #D7D7D7' }}
               >
-                <span className="text-body-1-regular text-gray-600 block">가장 자주 발생하는</span>
-                <span className="text-title-2-bold text-gray-800">습관</span>
+                <span className="text-body-1-regular text-label-neutral block">가장 자주 발생하는</span>
+                <span className="text-title-2-bold text-label-normal">습관</span>
               </div>
               {/* 하단: 값 영역 (흰색 배경) */}
               <div className="bg-white p-5">
-                <span className="text-body-2-medium text-gray-600 block">계획 외 진입 발생 비율</span>
+                <span className="text-body-2-medium text-label-neutral block">계획 외 진입 발생 비율</span>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-title-1-bold text-red-400">38%</span>
-                  <span className="text-caption-regular text-gray-600">48건 발생</span>
+                  <span className="text-caption-regular text-label-neutral">48건 발생</span>
                 </div>
               </div>
             </div>
@@ -852,15 +852,15 @@ export default function RiskPatternPage() {
                 className="bg-gray-50 p-5"
                 style={{ borderBottom: '0.6px solid #D7D7D7' }}
               >
-                <span className="text-body-1-regular text-gray-600 block">리스크 패턴으로 인한</span>
-                <span className="text-title-2-bold text-gray-800">손실 비중</span>
+                <span className="text-body-1-regular text-label-neutral block">리스크 패턴으로 인한</span>
+                <span className="text-title-2-bold text-label-normal">손실 비중</span>
               </div>
               {/* 하단: 값 영역 (흰색 배경) */}
               <div className="bg-white p-5">
-                <span className="text-body-2-medium text-gray-600 block">패턴별 누적 손실</span>
+                <span className="text-body-2-medium text-label-neutral block">패턴별 누적 손실</span>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-title-1-bold text-red-400">42%(-₩18,750)</span>
-                  <span className="text-caption-regular text-gray-600">전체 손실 중</span>
+                  <span className="text-caption-regular text-label-neutral">전체 손실 중</span>
                 </div>
               </div>
             </div>
@@ -876,8 +876,8 @@ export default function RiskPatternPage() {
               className="bg-gray-50 p-5"
               style={{ borderBottom: '0.6px solid #D7D7D7' }}
             >
-              <span className="text-body-1-regular text-gray-600 block">Tradex DNA 분석</span>
-              <span className="text-title-2-bold text-gray-800">AI 기반 종합 분석 리포트</span>
+              <span className="text-body-1-regular text-label-neutral block">Tradex DNA 분석</span>
+              <span className="text-title-2-bold text-label-normal">AI 기반 종합 분석 리포트</span>
             </div>
             {/* 하단: 콘텐츠 영역 (흰색 배경) */}
             <div className="bg-white p-5 flex flex-col gap-5">
@@ -888,14 +888,14 @@ export default function RiskPatternPage() {
 
               {/* Recommendations - 가로 배치, gap 32px */}
               <div className="flex gap-8">
-                <span className="text-body-1-bold text-gray-800 shrink-0">핵심 개선 권장사항</span>
+                <span className="text-body-1-bold text-label-normal shrink-0">핵심 개선 권장사항</span>
                 <div className="flex flex-col gap-2">
                   {RECOMMENDATIONS.map((item, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center shrink-0">
                         <Check className="w-3 h-3 text-white" />
                       </div>
-                      <span className="text-body-1-regular text-gray-800">{item}</span>
+                      <span className="text-body-1-regular text-label-normal">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -912,7 +912,7 @@ export default function RiskPatternPage() {
       <div className="flex flex-col gap-8">
         {/* Section Header + Tabs */}
         <div className="flex flex-col gap-3">
-          <h2 className="text-title-2-bold text-gray-800">상세 분석</h2>
+          <h2 className="text-title-2-bold text-label-normal">상세 분석</h2>
 
           {/* Tabs - gap 12px */}
           <div className="flex items-center gap-3">
@@ -924,7 +924,7 @@ export default function RiskPatternPage() {
                   "px-3 py-2 rounded-lg text-body-1-medium transition-colors",
                   activeTab === tab.id
                     ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                    : "bg-gray-100 text-label-normal hover:bg-gray-200"
                 )}
               >
                 {tab.label}
@@ -943,8 +943,8 @@ export default function RiskPatternPage() {
             className="bg-white p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">{currentData.description}</span>
-            <span className="text-title-2-bold text-gray-800">{currentData.title}</span>
+            <span className="text-body-1-regular text-label-neutral block">{currentData.description}</span>
+            <span className="text-title-2-bold text-label-normal">{currentData.title}</span>
           </div>
 
           {/* 하단: 콘텐츠 영역 (흰색 배경) */}
@@ -970,9 +970,9 @@ export default function RiskPatternPage() {
                   >
                     {/* Main Stat */}
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-body-2-medium text-gray-600">{stat.label}</span>
+                      <span className="text-body-2-medium text-label-neutral">{stat.label}</span>
                       {stat.value && (
-                        <span className="text-title-1-bold text-gray-800">{stat.value}</span>
+                        <span className="text-title-1-bold text-label-normal">{stat.value}</span>
                       )}
                     </div>
 
@@ -983,8 +983,8 @@ export default function RiskPatternPage() {
                         <div className="flex flex-col gap-1">
                           {stat.details.map((detail, idx) => (
                             <div key={idx} className="flex justify-between items-center">
-                              <span className="text-caption-regular text-gray-600">{detail.label}</span>
-                              <span className="text-body-2-bold text-gray-800">{detail.value}</span>
+                              <span className="text-caption-regular text-label-neutral">{detail.label}</span>
+                              <span className="text-body-2-bold text-label-normal">{detail.value}</span>
                             </div>
                           ))}
                         </div>
@@ -1008,7 +1008,7 @@ export default function RiskPatternPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-1">
                     <span className="text-caption-regular text-green-400">Best</span>
-                    <span className="text-body-1-bold text-gray-800">{currentData.best.label}</span>
+                    <span className="text-body-1-bold text-label-normal">{currentData.best.label}</span>
                   </div>
                   <span className="text-title-1-bold text-green-400">{currentData.best.value}</span>
                 </div>
@@ -1025,7 +1025,7 @@ export default function RiskPatternPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-1">
                     <span className="text-caption-regular text-red-400">Worst</span>
-                    <span className="text-body-1-bold text-gray-800">{currentData.worst.label}</span>
+                    <span className="text-body-1-bold text-label-normal">{currentData.worst.label}</span>
                   </div>
                   <span className="text-title-1-bold text-red-400">{currentData.worst.value}</span>
                 </div>
@@ -1040,7 +1040,7 @@ export default function RiskPatternPage() {
 
       {/* Section 3: 리스크 진단 + 주간 성과 */}
       <div className="flex flex-col gap-8">
-        <h2 className="text-title-2-bold text-gray-800">리스크 진단</h2>
+        <h2 className="text-title-2-bold text-label-normal">리스크 진단</h2>
 
         {/* 리스크 진단 점수 */}
         <div
@@ -1051,8 +1051,8 @@ export default function RiskPatternPage() {
             className="bg-gray-50 p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">현재 나의 매매 습관 점수입니다.</span>
-            <span className="text-title-2-bold text-gray-800">리스크 진단 점수</span>
+            <span className="text-body-1-regular text-label-neutral block">현재 나의 매매 습관 점수입니다.</span>
+            <span className="text-title-2-bold text-label-normal">리스크 진단 점수</span>
           </div>
           <div className="bg-white p-5 flex flex-col gap-5">
             {RISK_SCORE_ITEMS.map((item) => {
@@ -1061,7 +1061,7 @@ export default function RiskPatternPage() {
               return (
                 <div key={item.label} className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-body-2-medium text-gray-800">{item.label}</span>
+                    <span className="text-body-2-medium text-label-normal">{item.label}</span>
                     <span className={cn("text-body-2-bold", levelColor)}>{item.level}</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -1090,16 +1090,16 @@ export default function RiskPatternPage() {
               className="bg-gray-50 p-5"
               style={{ borderBottom: '0.6px solid #D7D7D7' }}
             >
-              <span className="text-body-1-regular text-gray-600 block">이전 7일 대비</span>
-              <span className="text-title-2-bold text-gray-800">최근 7일 승률(Win Rate)</span>
+              <span className="text-body-1-regular text-label-neutral block">이전 7일 대비</span>
+              <span className="text-title-2-bold text-label-normal">최근 7일 승률(Win Rate)</span>
             </div>
             <div className="bg-white p-5 flex flex-col gap-4">
               <div className="flex items-end gap-3">
-                <span className="text-display-2-bold text-gray-800">{WEEKLY_WINRATE.current.winRate}%</span>
+                <span className="text-display-2-bold text-label-normal">{WEEKLY_WINRATE.current.winRate}%</span>
                 <span className="text-body-1-bold text-green-400 pb-1">+{WEEKLY_WINRATE.current.change}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-body-2-regular text-gray-600">
+                <span className="text-body-2-regular text-label-neutral">
                   {WEEKLY_WINRATE.current.wins}승 {WEEKLY_WINRATE.current.losses}패
                 </span>
                 <span className="text-caption-regular text-gray-500">|</span>
@@ -1139,7 +1139,7 @@ export default function RiskPatternPage() {
 
       {/* Section 4: 수익 분석 */}
       <div className="flex flex-col gap-8">
-        <h2 className="text-title-2-bold text-gray-800">수익 분석</h2>
+        <h2 className="text-title-2-bold text-label-normal">수익 분석</h2>
 
         {/* 누적 수익 + 수익률(%) */}
         <div className="flex gap-4">
@@ -1158,12 +1158,12 @@ export default function RiskPatternPage() {
               className="bg-gray-50 p-5"
               style={{ borderBottom: '0.6px solid #D7D7D7' }}
             >
-              <span className="text-body-1-regular text-gray-600 block">총 수익 / 총 손실</span>
-              <span className="text-title-2-bold text-gray-800">수익 팩터</span>
+              <span className="text-body-1-regular text-label-neutral block">총 수익 / 총 손실</span>
+              <span className="text-title-2-bold text-label-normal">수익 팩터</span>
             </div>
             <div className="bg-white p-5 flex flex-col gap-4">
               <div className="flex items-end gap-2">
-                <span className="text-display-2-bold text-gray-800">1.85</span>
+                <span className="text-display-2-bold text-label-normal">1.85</span>
                 <span className="text-body-2-bold text-green-400 pb-2">우수</span>
               </div>
               <div className="h-3 bg-gray-100 rounded-full overflow-hidden relative">
@@ -1197,7 +1197,7 @@ export default function RiskPatternPage() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                   <span className="text-caption-regular text-green-400">Best</span>
-                  <span className="text-body-1-bold text-gray-800">계획대로 청산 시 평균수익</span>
+                  <span className="text-body-1-bold text-label-normal">계획대로 청산 시 평균수익</span>
                 </div>
                 <span className="text-title-1-bold text-green-400">+5.2%</span>
               </div>
@@ -1213,7 +1213,7 @@ export default function RiskPatternPage() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                   <span className="text-caption-regular text-red-400">Worst</span>
-                  <span className="text-body-1-bold text-gray-800">조기 청산 시 평균 수익</span>
+                  <span className="text-body-1-bold text-label-normal">조기 청산 시 평균 수익</span>
                 </div>
                 <span className="text-title-1-bold text-red-400">+1.4%</span>
               </div>
@@ -1221,7 +1221,7 @@ export default function RiskPatternPage() {
             {/* 차이 표시 */}
             <div className="text-center py-2">
               <span className="text-caption-medium text-gray-500">
-                계획대로 청산 시 평균 <span className="text-body-2-bold text-gray-800">3.8%p</span> 더 높은 수익
+                계획대로 청산 시 평균 <span className="text-body-2-bold text-label-normal">3.8%p</span> 더 높은 수익
               </span>
             </div>
           </div>
@@ -1236,8 +1236,8 @@ export default function RiskPatternPage() {
             className="bg-gray-50 p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">청산 방식별 성과</span>
-            <span className="text-title-2-bold text-gray-800">종료 주문 승률</span>
+            <span className="text-body-1-regular text-label-neutral block">청산 방식별 성과</span>
+            <span className="text-title-2-bold text-label-normal">종료 주문 승률</span>
           </div>
           <div className="bg-white p-5 flex flex-col gap-3">
             <div className="flex gap-3">
@@ -1248,8 +1248,8 @@ export default function RiskPatternPage() {
                   style={{ border: '0.6px solid #D7D7D7' }}
                 >
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-body-2-medium text-gray-600">{stat.label}</span>
-                    <span className="text-title-1-bold text-gray-800">{stat.value}</span>
+                    <span className="text-body-2-medium text-label-neutral">{stat.label}</span>
+                    <span className="text-title-1-bold text-label-normal">{stat.value}</span>
                   </div>
                   {stat.details && (
                     <>
@@ -1257,8 +1257,8 @@ export default function RiskPatternPage() {
                       <div className="flex flex-col gap-1">
                         {stat.details.map((detail, idx) => (
                           <div key={idx} className="flex justify-between items-center">
-                            <span className="text-caption-regular text-gray-600">{detail.label}</span>
-                            <span className="text-body-2-bold text-gray-800">{detail.value}</span>
+                            <span className="text-caption-regular text-label-neutral">{detail.label}</span>
+                            <span className="text-body-2-bold text-label-normal">{detail.value}</span>
                           </div>
                         ))}
                       </div>
@@ -1282,13 +1282,13 @@ export default function RiskPatternPage() {
             className="bg-gray-50 p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">포지션별 평균 보유 기간</span>
-            <span className="text-title-2-bold text-gray-800">보유 시간</span>
+            <span className="text-body-1-regular text-label-neutral block">포지션별 평균 보유 기간</span>
+            <span className="text-title-2-bold text-label-normal">보유 시간</span>
           </div>
           <div className="bg-white p-5 flex flex-col gap-4">
             {HOLD_TIME_DATA.map((item) => (
               <div key={item.label} className="flex items-center gap-4">
-                <span className="text-body-2-medium text-gray-800 w-24 shrink-0">{item.label}</span>
+                <span className="text-body-2-medium text-label-normal w-24 shrink-0">{item.label}</span>
                 <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden relative">
                   <div
                     className="h-full rounded-lg flex items-center px-3"
@@ -1325,7 +1325,7 @@ export default function RiskPatternPage() {
 
       {/* Section 5: 종합 분석 */}
       <div className="flex flex-col gap-8">
-        <h2 className="text-title-2-bold text-gray-800">종합 분석</h2>
+        <h2 className="text-title-2-bold text-label-normal">종합 분석</h2>
 
         {/* 포트폴리오 리스크 경고 */}
         <div
@@ -1336,8 +1336,8 @@ export default function RiskPatternPage() {
             className="bg-gray-50 p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">현재 포트폴리오 상태</span>
-            <span className="text-title-2-bold text-gray-800">포트폴리오 리스크 경고</span>
+            <span className="text-body-1-regular text-label-neutral block">현재 포트폴리오 상태</span>
+            <span className="text-title-2-bold text-label-normal">포트폴리오 리스크 경고</span>
           </div>
           <div className="bg-white p-5 flex flex-col gap-3">
             {PORTFOLIO_WARNINGS.map((warning, index) => {
@@ -1387,8 +1387,8 @@ export default function RiskPatternPage() {
             className="bg-gray-50 p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">기본 차트 분석</span>
-            <span className="text-title-2-bold text-gray-800">기술적 레벨 (4시간봉)</span>
+            <span className="text-body-1-regular text-label-neutral block">기본 차트 분석</span>
+            <span className="text-title-2-bold text-label-normal">기술적 레벨 (4시간봉)</span>
           </div>
           <div className="bg-white p-5">
             <div className="grid grid-cols-2 gap-3">
@@ -1396,7 +1396,7 @@ export default function RiskPatternPage() {
                 const statusColor =
                   level.status === 'positive' ? 'text-green-400'
                   : level.status === 'danger' ? 'text-red-400'
-                  : 'text-gray-600'
+                  : 'text-label-neutral'
                 const dotColor =
                   level.status === 'positive' ? '#13C34E'
                   : level.status === 'danger' ? '#FF0015'
@@ -1412,7 +1412,7 @@ export default function RiskPatternPage() {
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: dotColor }}
                       />
-                      <span className="text-body-2-medium text-gray-800">{level.label}</span>
+                      <span className="text-body-2-medium text-label-normal">{level.label}</span>
                     </div>
                     <span className={cn("text-body-2-bold", statusColor)}>{level.value}</span>
                   </div>
@@ -1431,8 +1431,8 @@ export default function RiskPatternPage() {
             className="bg-gray-50 p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
           >
-            <span className="text-body-1-regular text-gray-600 block">Tradex AI Assistant가 학습하여 이후 전략 분석에 활용해요.</span>
-            <span className="text-title-2-bold text-gray-800">AI 기반 종합 분석 리포트</span>
+            <span className="text-body-1-regular text-label-neutral block">Tradex AI Assistant가 학습하여 이후 전략 분석에 활용해요.</span>
+            <span className="text-title-2-bold text-label-normal">AI 기반 종합 분석 리포트</span>
           </div>
           <div className="bg-white p-5 flex flex-col gap-5">
             <AIInsightBox>
@@ -1440,14 +1440,14 @@ export default function RiskPatternPage() {
             </AIInsightBox>
 
             <div className="flex gap-8">
-              <span className="text-body-1-bold text-gray-800 shrink-0">분석 결과</span>
+              <span className="text-body-1-bold text-label-normal shrink-0">분석 결과</span>
               <div className="flex flex-col gap-2">
                 {AI_REPORT_INSIGHTS.map((insight, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />
                     </div>
-                    <span className="text-body-1-regular text-gray-800">{insight}</span>
+                    <span className="text-body-1-regular text-label-normal">{insight}</span>
                   </div>
                 ))}
               </div>

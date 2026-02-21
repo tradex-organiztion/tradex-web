@@ -33,15 +33,6 @@ function IconAI({ className }: { className?: string }) {
   )
 }
 
-function IconInbox({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 8H10.6667L9.33333 10H6.66667L5.33333 8H2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M3.63333 3.40667L2 8V12C2 12.3536 2.14048 12.6928 2.39052 12.9428C2.64057 13.1929 2.97971 13.3333 3.33333 13.3333H12.6667C13.0203 13.3333 13.3594 13.1929 13.6095 12.9428C13.8595 12.6928 14 12.3536 14 12V8L12.3667 3.40667C12.2728 3.13909 12.0968 2.90671 11.8636 2.74351C11.6304 2.58031 11.3519 2.49429 11.0667 2.5H4.93333C4.64808 2.49429 4.36961 2.58031 4.1364 2.74351C3.9032 2.90671 3.72722 3.13909 3.63333 3.40667Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-
 function IconChart({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -57,37 +48,6 @@ function IconJournal({ className }: { className?: string }) {
       <path d="M9.33333 1.33333H4C3.64638 1.33333 3.30724 1.47381 3.05719 1.72386C2.80714 1.97391 2.66667 2.31304 2.66667 2.66667V13.3333C2.66667 13.687 2.80714 14.0261 3.05719 14.2761C3.30724 14.5262 3.64638 14.6667 4 14.6667H12C12.3536 14.6667 12.6928 14.5262 12.9428 14.2761C13.1929 14.0261 13.3333 13.687 13.3333 13.3333V5.33333L9.33333 1.33333Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M9.33333 1.33333V5.33333H13.3333" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M5.33333 8.66667L7.33333 10.6667L10.6667 6.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-
-function IconTradingSystem({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 2V4M8 12V14M4 8H2M14 8H12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M12.5 3.5L10.8 5.2M5.2 10.8L3.5 12.5M12.5 12.5L10.8 10.8M5.2 5.2L3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
-function IconScenario({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 1.33333V4.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M8 4.66667C9.10457 4.66667 10 5.5621 10 6.66667C10 7.77124 9.10457 8.66667 8 8.66667C6.89543 8.66667 6 7.77124 6 6.66667C6 5.5621 6.89543 4.66667 8 4.66667Z" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M8 8.66667V14.6667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M4.66667 12L8 14.6667L11.3333 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-
-function IconReview({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9.33333 1.33333H4C3.64638 1.33333 3.30724 1.47381 3.05719 1.72386C2.80714 1.97391 2.66667 2.31304 2.66667 2.66667V13.3333C2.66667 13.687 2.80714 14.0261 3.05719 14.2761C3.30724 14.5262 3.64638 14.6667 4 14.6667H12C12.3536 14.6667 12.6928 14.5262 12.9428 14.2761C13.1929 14.0261 13.3333 13.687 13.3333 13.3333V5.33333L9.33333 1.33333Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M9.33333 1.33333V5.33333H13.3333" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M6 8.66667L7.33333 10L10 7.33333" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -147,22 +107,18 @@ const navSections: NavSection[] = [
     items: [
       { label: '홈', href: '/home', icon: IconHome },
       { label: 'Tradex AI', href: '/ai', icon: IconAI },
-      { label: '수신함', href: '/inbox', icon: IconInbox },
     ],
   },
   {
     title: 'Chart',
     items: [
       { label: '차트 분석', href: '/chart', icon: IconChart },
-      { label: '트레이딩 시스템', href: '/chart#trading-system', icon: IconTradingSystem },
     ],
   },
   {
     title: 'Trading Log',
     items: [
-      { label: '매매 기록 관리', href: '/trading/journal', icon: IconJournal },
-      { label: '매매 원칙', href: '/trading/principles', icon: IconScenario },
-      { label: '매매 복기', href: '/trading/journal#review', icon: IconReview },
+      { label: '매매일지 관리', href: '/trading/journal', icon: IconJournal },
     ],
   },
   {
@@ -207,7 +163,7 @@ function ProfileDropdown({
   }, [])
 
   const profileAvatar = (
-    <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+    <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-gray-100">
       {user?.profileImageUrl ? (
         <Image
           src={user.profileImageUrl}
@@ -217,9 +173,10 @@ function ProfileDropdown({
           className="size-full object-cover"
         />
       ) : (
-        <span className="text-caption-medium text-gray-500">
-          {user?.username?.charAt(0) || 'U'}
-        </span>
+        <svg className="size-4 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="5.5" r="3" stroke="currentColor" strokeWidth="1.2"/>
+          <path d="M2.5 14C2.5 11.5147 4.96243 9.5 8 9.5C11.0376 9.5 13.5 11.5147 13.5 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+        </svg>
       )}
     </div>
   )
@@ -331,14 +288,9 @@ export function Sidebar() {
     const hasHash = href.includes('#')
     const basePath = href.split('#')[0]
 
-    // Hash가 있는 항목(트레이딩 시스템, 매매 복기)은 하이라이트하지 않음
-    // 이 항목들은 같은 페이지의 섹션 링크이므로, base 항목만 하이라이트
     if (hasHash) return false
-
     if (basePath === '/home') return pathname === '/home'
     if (basePath === '/ai') return pathname === '/ai' || pathname.startsWith('/ai/')
-
-    // 정확한 경로 매칭 (하위 경로 포함)
     return pathname === basePath || pathname.startsWith(basePath + '/')
   }
 
@@ -353,14 +305,15 @@ export function Sidebar() {
       )}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-gray-300 bg-white shadow-normal transition-all duration-300',
+          'fixed left-0 top-0 z-40 flex h-screen flex-col bg-white transition-all duration-300',
+          'border-r border-gray-300/60',
           isMobile
             ? isSidebarCollapsed ? '-translate-x-full w-[200px]' : 'translate-x-0 w-[200px]'
             : isSidebarCollapsed ? 'w-16' : 'w-[200px]'
         )}
       >
         {/* Header: Logo + Toggle */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-300 px-5">
+        <div className="flex items-center justify-between border-b border-gray-300/60 px-5" style={{ height: '48px' }}>
           {(!isSidebarCollapsed || isMobile) ? (
             <>
               <Link href="/home" className="flex items-center">
@@ -397,7 +350,7 @@ export function Sidebar() {
                 {/* Section Title */}
                 {section.title && (!isSidebarCollapsed || isMobile) && (
                   <div className="px-2 py-1">
-                    <span className="text-caption-medium text-label-disabled">
+                    <span className="text-caption-medium text-gray-400">
                       {section.title}
                     </span>
                   </div>
@@ -414,8 +367,8 @@ export function Sidebar() {
                       className={cn(
                         'flex items-center gap-2 rounded-lg px-2 py-1 text-body-2-medium transition-colors',
                         active
-                          ? 'bg-background-gray text-label-normal'
-                          : 'text-label-assistive hover:bg-background-gray hover:text-label-normal'
+                          ? 'bg-gray-50 text-gray-900'
+                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                       )}
                     >
                       <Icon className="size-4 shrink-0" />
@@ -456,13 +409,13 @@ export function Sidebar() {
         </nav>
 
         {/* Profile Section */}
-        <div className="border-t border-gray-300 px-5 py-3">
+        <div className="border-t border-gray-300/60 px-5 py-3">
           {isDemoMode ? (
             // 데모 모드일 때: 로그인 버튼 표시
             (!isSidebarCollapsed || isMobile) ? (
               <button
                 onClick={handleLoginClick}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-body-2-medium text-white transition-colors hover:bg-black-light"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-body-2-medium text-white transition-colors hover:bg-gray-800"
               >
                 로그인
               </button>
@@ -473,7 +426,7 @@ export function Sidebar() {
                     onClick={handleLoginClick}
                     className="flex w-full justify-center"
                   >
-                    <div className="flex size-7 items-center justify-center rounded-lg bg-black text-white">
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-gray-900 text-white">
                       <svg className="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 2H12.6667C13.0203 2 13.3594 2.14048 13.6095 2.39052C13.8595 2.64057 14 2.97971 14 3.33333V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M6.66667 11.3333L10 8L6.66667 4.66667" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>

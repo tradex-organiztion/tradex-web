@@ -477,7 +477,7 @@ function FindAccountContent() {
 
 export default function FindAccountPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F4F5F6] flex items-center justify-center">로딩중...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">로딩중...</div>}>
       <FindAccountContent />
     </Suspense>
   )

@@ -454,8 +454,8 @@ export default function SignupPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-[#FFF9F9] border border-[#FF0015] rounded-[8px] px-4 py-3">
-                <p className="text-body-2-regular text-[#FF0015]">{error}</p>
+              <div className="bg-red-100 border border-red-400 rounded-lg px-4 py-3">
+                <p className="text-body-2-regular text-red-400">{error}</p>
               </div>
             )}
 

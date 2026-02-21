@@ -78,7 +78,7 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
   const highlightedPoint = points[highlightedIndex];
 
   return (
-    <div className={cn("bg-white rounded-[10px] shadow-normal px-6 py-5", className)}>
+    <div className={cn("bg-white rounded-xl border-[0.6px] border-gray-300 px-6 py-5", className)}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-0.5">
           <p className="text-body-1-bold text-label-normal">주간 수익 곡선</p>
@@ -96,8 +96,8 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
           >
             <defs>
               <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(91, 33, 182, 0.15)" />
-                <stop offset="100%" stopColor="rgba(91, 33, 182, 0)" />
+                <stop offset="0%" stopColor="#F1F1F1" />
+                <stop offset="100%" stopColor="#FFFFFF" />
               </linearGradient>
             </defs>
 
@@ -139,8 +139,8 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
             <path
               d={linePath}
               fill="none"
-              stroke="#7C3AED"
-              strokeWidth="2"
+              stroke="#323232"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -151,17 +151,17 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
               y1={padding.top}
               x2={highlightedPoint.x}
               y2={padding.top + innerHeight}
-              stroke="#CDD1D5"
+              stroke="#BDC1CA"
               strokeWidth="1"
-              strokeDasharray="4 4"
+              strokeDasharray="3 3"
             />
 
             {/* Highlighted point */}
             <circle
               cx={highlightedPoint.x}
               cy={highlightedPoint.y}
-              r="6"
-              fill="#7C3AED"
+              r="7"
+              fill="#121212"
               stroke="white"
               strokeWidth="2"
             />
@@ -183,14 +183,14 @@ export function WeeklyProfitChart({ data, chartData, className }: WeeklyProfitCh
 
           {/* Tooltip */}
           <div
-            className="absolute bg-white border border-line-normal rounded-[6px] shadow-heavy px-4 py-2"
+            className="absolute bg-white border border-gray-300 rounded-lg shadow-heavy px-4 py-2"
             style={{
               left: `${(highlightedPoint.x / chartWidth) * 100 + 10}%`,
               top: `${((highlightedPoint.y - 20) / (chartHeight + 30)) * 100}%`,
               transform: "translateX(-50%)",
             }}
           >
-            <p className="text-caption-medium text-label-assistive">{(() => { const d = new Date(); return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}` })()}</p>
+            <p className="text-caption-medium text-gray-500">{(() => { const d = new Date(); return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}` })()}</p>
             <p className="text-title-2-bold text-label-normal">$3,890.00</p>
           </div>
         </div>

@@ -2,16 +2,16 @@
 
 import { ReactNode } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 /**
- * Auth Layout - Figma Design에 맞춘 인증 페이지 레이아웃
- * Figma: https://www.figma.com/design/bIuxiR3Mqy0PfLkxIQv4Oa
- *
- * 회색 배경(#F4F5F6)에 중앙에 흰색 카드 형태
+ * Auth Layout - Figma Tradex_0221 기준
+ * 배경: #F8F8F8 (gray-50)
+ * 헤더: white, padding 16px 100px
  */
 
 interface AuthLayoutProps {
@@ -28,22 +28,19 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F5F6]">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-[#FFFFFF] px-[100px] py-4">
+      <header className="bg-white px-[100px] py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <span
-              className="text-[22px] font-semibold"
-              style={{
-                backgroundImage: "linear-gradient(156deg, #000 0%, #323232 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Tradex
-            </span>
+            <Image
+              src="/images/logo-black.svg"
+              alt="Tradex"
+              width={120}
+              height={19}
+              className="h-[19px] w-auto"
+            />
           </Link>
 
           {/* Header Buttons */}
@@ -51,7 +48,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <Button variant="secondary" size="md" onClick={handleDemoMode}>
               데모 체험하기
             </Button>
-            <Button variant="primary" size="md">
+            <Button variant="primary" size="md" onClick={() => router.push("/signup")}>
               무료로 시작하기
             </Button>
           </div>
@@ -67,8 +64,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 }
 
 /**
- * Auth Card - 인증 폼을 감싸는 카드 컴포넌트
- * Figma 기준: padding 32px, gap 32px, border-radius 12px
+ * Auth Card - Figma Tradex_0221 기준
+ * padding 32px, gap 24px, border-radius 12px, shadow/emphasize
  */
 interface AuthCardProps {
   children: ReactNode
@@ -80,12 +77,12 @@ export function AuthCard({ children, title, className }: AuthCardProps) {
   return (
     <div
       className={cn(
-        "w-[424px] rounded-[12px] bg-[#FFFFFF] p-8 shadow-emphasize flex flex-col gap-6",
+        "w-[424px] rounded-xl bg-white p-8 shadow-emphasize flex flex-col gap-6",
         className
       )}
     >
       {title && (
-        <h1 className="text-center text-title-1-bold text-gray-800">
+        <h1 className="text-center text-title-1-bold text-gray-900">
           {title}
         </h1>
       )}
@@ -96,10 +93,7 @@ export function AuthCard({ children, title, className }: AuthCardProps) {
 
 /**
  * Social Login Buttons
- *
- * OAuth2 소셜 로그인 버튼
- * - Kakao: https://api.tradex.so/oauth2/authorization/kakao
- * - Google: https://api.tradex.so/oauth2/authorization/google
+ * Kakao, Naver, Google 소셜 로그인
  */
 import { startOAuthLogin, type OAuthProvider } from "@/lib/api/auth"
 
@@ -134,7 +128,7 @@ export function SocialLoginButtons() {
       <button
         type="button"
         onClick={() => handleSocialLogin("google")}
-        className="flex size-[54px] items-center justify-center rounded-full border border-[#D7D7D7] bg-[#FFFFFF] transition-opacity hover:opacity-90"
+        className="flex size-[54px] items-center justify-center rounded-full border border-gray-300 bg-white transition-opacity hover:opacity-90"
         aria-label="구글로 로그인"
       >
         <GoogleIcon />

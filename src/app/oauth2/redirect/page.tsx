@@ -27,11 +27,11 @@ import { authApi } from "@/lib/api/auth"
 // 로딩 화면 컴포넌트
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-[#F4F5F6] flex items-center justify-center">
-      <div className="w-[424px] rounded-[12px] bg-[#FFFFFF] p-8 shadow-emphasize flex flex-col items-center gap-6">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-[424px] rounded-xl bg-white p-8 shadow-emphasize flex flex-col items-center gap-6">
         {/* Loading Spinner */}
-        <div className="w-12 h-12 border-4 border-[#E6E8EA] border-t-[#131416] rounded-full animate-spin" />
-        <p className="text-body-1-medium text-[#464C53]">
+        <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin" />
+        <p className="text-body-1-medium text-gray-600">
           로그인 처리 중...
         </p>
       </div>

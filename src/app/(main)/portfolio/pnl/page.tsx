@@ -287,7 +287,7 @@ export default function PnLPage() {
       <PortfolioTabNav />
 
       {/* 손익 Card */}
-      <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col gap-8">
+      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-8">
         {/* Card Header + Filters */}
         <div className="flex items-center justify-between">
           <h2 className="text-title-2-bold text-label-normal">손익</h2>
@@ -332,7 +332,7 @@ export default function PnLPage() {
       </div>
 
       {/* 손익 랭킹 Card */}
-      <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col gap-5">
+      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-5">
         <h2 className="text-title-2-bold text-label-normal">손익 랭킹</h2>
         <div className="space-y-5">
           {topPairs.map((pair) => (
@@ -363,7 +363,7 @@ export default function PnLPage() {
       </div>
 
       {/* 체결 완료 주문 / 종료된 포지션 Card */}
-      <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col gap-5">
+      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-5">
         <h2 className="text-title-2-bold text-label-normal">체결 완료 주문 / 종료된 포지션</h2>
 
         {/* Detail Summary Cards */}

@@ -68,7 +68,7 @@ export function RiskScoreCard({
   className,
 }: RiskScoreCardProps) {
   return (
-    <div className={cn("bg-white rounded-[10px] shadow-normal px-6 py-5 flex-1", className)}>
+    <div className={cn("bg-white rounded-xl border-[0.6px] border-gray-300 px-6 py-5 flex-1", className)}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-0.5">
           <p className="text-body-1-bold text-label-normal">리스크 진단 점수</p>
@@ -82,21 +82,18 @@ export function RiskScoreCard({
             {items.map((item, index) => {
               const config = levelConfig[item.level];
               return (
-                <div key={index}>
-                  {index > 0 && <div className="h-px bg-gray-100 mb-5" />}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between h-5">
-                      <p className="text-body-2-medium text-label-normal">{item.label}</p>
-                      <p className={cn("text-body-2-bold", config.textColor)}>
-                        {config.label}
-                      </p>
-                    </div>
-                    <div className="w-full h-2 bg-element-primary-disabled rounded-full">
-                      <div
-                        className={cn("h-2 rounded-full", config.bgColor)}
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
+                <div key={index} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between h-5">
+                    <p className="text-body-2-medium text-label-normal">{item.label}</p>
+                    <p className={cn("text-body-2-bold", config.textColor)}>
+                      {config.label}
+                    </p>
+                  </div>
+                  <div className="w-full h-2 bg-element-primary-disabled rounded-full">
+                    <div
+                      className={cn("h-2 rounded-full", config.bgColor)}
+                      style={{ width: `${item.percentage}%` }}
+                    />
                   </div>
                 </div>
               );

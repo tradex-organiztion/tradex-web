@@ -431,7 +431,7 @@ export default function AssetsPage() {
         {summaryCards.map((card) => (
           <div
             key={card.label}
-            className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 space-y-2"
+            className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 space-y-2"
           >
             <p className="text-body-2-medium text-label-neutral">{card.label}</p>
             <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ export default function AssetsPage() {
       </div>
 
       {/* 누적 손익 Card */}
-      <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col gap-8">
+      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <h2 className="text-title-2-bold text-label-normal">누적 손익</h2>
           <div className="flex gap-1">
@@ -499,7 +499,7 @@ export default function AssetsPage() {
       </div>
 
       {/* 총 자산 현황 Card */}
-      <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col gap-5">
+      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-5">
         <h2 className="text-title-2-bold text-label-normal">총 자산 현황</h2>
         <div className="h-48">
           <LineChart data={totalAssetChartData} color="#131416" showArea />
@@ -509,7 +509,7 @@ export default function AssetsPage() {
       {/* Bottom Section: 일일손익 + 자산분포 */}
       <div className="grid grid-cols-[1fr_auto] gap-3">
         {/* 일일손익 */}
-        <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col gap-5">
+        <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-5">
           <h2 className="text-title-2-bold text-label-normal">일일 손익 (KRW)</h2>
 
           {/* Summary Stat Boxes */}
@@ -602,7 +602,7 @@ export default function AssetsPage() {
         </div>
 
         {/* 자산분포 */}
-        <div className="bg-white rounded-xl border border-line-normal shadow-normal py-5 px-6 flex flex-col items-center gap-4 w-full md:w-[340px] shrink-0">
+        <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col items-center gap-4 w-full md:w-[340px] shrink-0">
           <h2 className="text-title-2-bold text-label-normal self-start">자산 분포 (KRW)</h2>
 
           {/* Donut Chart */}

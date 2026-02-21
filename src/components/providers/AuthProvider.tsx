@@ -101,8 +101,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // 초기 로딩 중
   if (isChecking || isLoading) {
     return (
-      <div className="min-h-screen bg-[#F4F5F6] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#E6E8EA] border-t-[#131416] rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin" />
       </div>
     )
   }

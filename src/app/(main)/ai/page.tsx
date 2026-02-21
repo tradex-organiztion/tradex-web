@@ -91,7 +91,7 @@ export default function TradexAIPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-9 py-8 gap-[60px]">
+    <div className="min-h-[calc(100vh-48px)] flex flex-col items-center justify-center px-9 py-8 gap-[60px]">
       {/* Logo - Figma: 203x32px */}
       <Image
         src="/tradex-logo-black.svg"
@@ -105,7 +105,7 @@ export default function TradexAIPage() {
       <div className="w-full max-w-[700px] flex flex-col gap-4">
         {/* Prompt Input - Figma: 700x52px, rounded-full, shadow-emphasize */}
         <div className="relative" ref={actionMenuRef}>
-          <div className="flex items-center h-[52px] bg-white border border-[#D7D7D7] rounded-full px-3 gap-4 shadow-emphasize">
+          <div className="flex items-center h-[52px] bg-white border border-gray-300 rounded-full px-3 gap-4 shadow-emphasize">
             {/* Plus Button */}
             <Button
               variant="ghost"
@@ -113,7 +113,7 @@ export default function TradexAIPage() {
               className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
               onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
             >
-              <Plus className="w-5 h-5 text-gray-800" />
+              <Plus className="w-5 h-5 text-label-normal" />
             </Button>
 
             {/* Input */}
@@ -142,7 +142,7 @@ export default function TradexAIPage() {
                 size="icon"
                 className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
               >
-                <Mic className="w-5 h-5 text-gray-800" />
+                <Mic className="w-5 h-5 text-label-normal" />
               </Button>
             )}
           </div>
@@ -212,9 +212,9 @@ export default function TradexAIPage() {
                     className="flex items-center gap-4 px-3 py-3 text-left rounded-[200px] hover:bg-gray-50 transition-colors"
                   >
                     <div className="w-5 h-5 shrink-0 flex items-center justify-center">
-                      <IconComponent className="w-[14px] h-[14px] text-gray-600" />
+                      <IconComponent className="w-[14px] h-[14px] text-label-neutral" />
                     </div>
-                    <span className="text-body-2-regular text-gray-600">
+                    <span className="text-body-2-regular text-label-neutral">
                       {prompt.text}
                     </span>
                   </button>
@@ -234,9 +234,9 @@ export default function TradexAIPage() {
                   className="flex items-center gap-4 px-3 py-3 text-left rounded-[200px] hover:bg-gray-50 transition-colors"
                 >
                   <div className="w-5 h-5 shrink-0 flex items-center justify-center">
-                    <IconComponent className="w-[14px] h-[14px] text-gray-600" />
+                    <IconComponent className="w-[14px] h-[14px] text-label-neutral" />
                   </div>
-                  <span className="text-body-2-regular text-gray-600">
+                  <span className="text-body-2-regular text-label-neutral">
                     {prompt.text}
                   </span>
                 </button>

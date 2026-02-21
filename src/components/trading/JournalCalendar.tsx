@@ -146,9 +146,9 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
           className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
           aria-label="이전 달"
         >
-          <ChevronLeft className="w-5 h-5 text-gray-800" strokeWidth={1.5} />
+          <ChevronLeft className="w-5 h-5 text-label-normal" strokeWidth={1.5} />
         </button>
-        <span className="text-body-1-bold text-gray-800">
+        <span className="text-body-1-bold text-label-normal">
           {year}년 {month + 1}월
         </span>
         <button
@@ -156,7 +156,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
           className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
           aria-label="다음 달"
         >
-          <ChevronRight className="w-5 h-5 text-gray-800" strokeWidth={1.5} />
+          <ChevronRight className="w-5 h-5 text-label-normal" strokeWidth={1.5} />
         </button>
       </div>
 
@@ -172,7 +172,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
                 index < 6 && "border-r border-gray-200"
               )}
             >
-              <span className="text-body-2-regular text-gray-600">{day}</span>
+              <span className="text-body-2-regular text-label-neutral">{day}</span>
             </div>
           ))}
         </div>
@@ -213,7 +213,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
                   "text-body-2-medium text-right p-0.5",
                   isTodayCell
                     ? "text-element-positive-default font-bold"
-                    : calendarDay.isCurrentMonth ? "text-gray-600" : "text-gray-400"
+                    : calendarDay.isCurrentMonth ? "text-label-neutral" : "text-gray-400"
                 )}>
                   {formatDayLabel(calendarDay)}
                 </div>
@@ -232,7 +232,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
                       >
                         {/* Pair name + Position badge */}
                         <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-caption-bold text-gray-800 truncate">
+                          <span className="text-caption-bold text-label-normal truncate">
                             {trade.pair}
                           </span>
                           {trade.position && (

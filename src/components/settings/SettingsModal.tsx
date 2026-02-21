@@ -129,9 +129,9 @@ export function SettingsModal() {
         />
 
         {/* Modal Content - Figma: 968px × 602px, responsive */}
-        <div className="relative w-full max-w-[968px] h-[602px] max-h-[90vh] flex rounded-[10px] overflow-hidden shadow-heavy">
+        <div className="relative w-full max-w-[968px] h-[602px] max-h-[90vh] flex rounded-xl overflow-hidden shadow-heavy">
           {/* Left Sidebar - Figma: 210px, #F9F8F7 background */}
-          <div className="w-[180px] shrink-0 bg-[#F9F8F7] rounded-l-[10px] flex flex-col py-6 px-3 md:w-[210px] md:px-4">
+          <div className="w-[180px] shrink-0 bg-[#F9F8F7] rounded-l-xl flex flex-col py-6 px-3 md:w-[210px] md:px-4">
             <div className="flex flex-col gap-1">
               {sidebarTabs.map((tab) => {
                 const isActive = settingsTab === tab.id
