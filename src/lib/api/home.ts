@@ -44,7 +44,7 @@ export interface HomeSummaryResponse {
 }
 
 /** 알림 타입 */
-export type NotificationType = 'POSITION_ENTRY' | 'POSITION_EXIT' | 'RISK_WARNING'
+export type NotificationType = 'POSITION_ENTRY' | 'POSITION_EXIT' | 'RISK_WARNING' | 'CHART_ALERT' | 'TRADE_ALERT'
 
 /**
  * 알림 응답
@@ -54,7 +54,7 @@ export interface NotificationResponse {
   type: NotificationType
   title: string
   message: string
-  positionId: number | null
+  positionId?: number | null
   createdAt: string
   read: boolean
 }

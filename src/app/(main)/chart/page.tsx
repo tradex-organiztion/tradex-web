@@ -44,10 +44,15 @@ export default function ChartPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-48px)]" style={{ margin: 0 }}>
-      <Script src="/charting_library/charting_library.standalone.js" strategy="beforeInteractive" />
+      <Script src="/charting_library/charting_library.standalone.js" strategy="afterInteractive" />
 
       {/* Chart toolbar with AI actions */}
-      <div className="flex items-center justify-end gap-2 px-3 py-1.5 border-b border-line-normal bg-white">
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-line-normal bg-white">
+        {/* Chart title & symbol info - Figma D-1 */}
+        <span className="text-body-1-bold text-label-normal">Chart Analysis</span>
+        <span className="text-body-1-medium text-label-normal ml-4">{selectedSymbol || 'BTC/USDT'}</span>
+        <span className="text-body-1-medium text-label-positive">+2.45%</span>
+        <div className="flex-1" />
         <button
           onClick={handleAnalyzeChart}
           disabled={!widgetInstance || isAnalyzing}

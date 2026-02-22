@@ -20,4 +20,4 @@ export { useThemeStore } from './useThemeStore'
 export type { Theme } from './useThemeStore'
 
 export { useAIChatStore, generateMessageId } from './useAIChatStore'
-export type { AIMessage, Conversation } from './useAIChatStore'
+export type { AIMessage, AIAttachment, Conversation } from './useAIChatStore'

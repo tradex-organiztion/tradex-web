@@ -105,8 +105,8 @@ const sampleEntries: JournalEntry[] = [
 export function JournalList({ entries = sampleEntries, onEntryClick }: JournalListProps) {
   return (
     <div className="bg-white overflow-hidden">
-      {/* Table Header */}
-      <div className="grid grid-cols-7 gap-4 px-6 py-3 border-b border-line-normal">
+      {/* Table Header - Figma: padding 4px 16px, gap 16px, border-radius 8px 8px 0 0, bg #F1F1F1 */}
+      <div className="grid grid-cols-7 gap-4 px-4 py-1 rounded-t-lg bg-gray-100">
         <div className="text-body-2-medium text-label-assistive">날짜</div>
         <div className="text-body-2-medium text-label-assistive">거래소</div>
         <div className="text-body-2-medium text-label-assistive">거래 종목</div>

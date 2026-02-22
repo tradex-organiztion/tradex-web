@@ -454,6 +454,8 @@ const plans = [
 ]
 
 function SubscriptionSettings() {
+  const [isUnsubscribeModalOpen, setIsUnsubscribeModalOpen] = useState(false)
+
   return (
     <div className="flex flex-col gap-6">
       {/* 현재 요금제 */}
@@ -573,45 +575,131 @@ function SubscriptionSettings() {
 
       {/* 구독 해지 */}
       <div>
-        <button className="flex items-center gap-2 px-4 py-2 text-body-2-medium text-label-neutral border border-line-normal rounded-lg hover:bg-gray-50 transition-colors">
+        <button
+          onClick={() => setIsUnsubscribeModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 text-body-2-medium text-label-neutral border border-line-normal rounded-lg hover:bg-gray-50 transition-colors"
+        >
           <XIcon className="w-4 h-4" />
           구독 해지
         </button>
       </div>
+
+      {/* 구독 해지 확인 모달 - Figma L-1 */}
+      <UnsubscribeConfirmModal
+        open={isUnsubscribeModalOpen}
+        onOpenChange={setIsUnsubscribeModalOpen}
+        onConfirm={() => {
+          setIsUnsubscribeModalOpen(false)
+        }}
+      />
     </div>
   )
 }
 
-// 비밀번호 변경 모달
+// 비밀번호 변경 모달 - Figma: 휴대폰 인증 + 기존/새 비밀번호 + 완료 버튼
 function PasswordChangeModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [showOldPassword, setShowOldPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="p-6 rounded-xl shadow-emphasize max-w-md">
-        <DialogHeader className="items-center gap-1">
+      <DialogContent showCloseButton={false} className="p-8 rounded-xl shadow-emphasize max-w-md">
+        <DialogHeader className="items-center">
           <DialogTitle className="text-title-2-bold text-label-normal text-center">비밀번호 변경</DialogTitle>
-          <DialogDescription className="text-body-1-medium text-label-neutral text-center">
-            안전한 비밀번호로 계정을 보호하세요.
-          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 mt-4">
+        <div className="space-y-6 mt-6">
+          {/* 휴대폰 번호 */}
           <div>
-            <label className="text-body-2-medium text-label-normal mb-1.5 block">현재 비밀번호</label>
-            <Input type="password" placeholder="현재 비밀번호를 입력하세요" className="h-[50px]" />
+            <label className="text-body-2-medium text-label-normal mb-2 block">휴대폰 번호</label>
+            <div className="flex gap-2">
+              <Input placeholder="휴대폰 번호를 입력해주세요." className="h-[50px] flex-1" />
+              <button className="px-4 py-2.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors shrink-0">
+                인증번호
+              </button>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input placeholder="인증 번호를 입력해주세요." className="h-[50px] flex-1" />
+              <button className="px-4 py-2.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors shrink-0">
+                확인
+              </button>
+            </div>
           </div>
+
+          {/* 기존 비밀번호 */}
           <div>
-            <label className="text-body-2-medium text-label-normal mb-1.5 block">새 비밀번호</label>
-            <Input type="password" placeholder="최소 8자 이상 입력하세요" className="h-[50px]" />
-            <p className="text-caption-regular text-label-assistive mt-1">영문, 숫자, 특수문자 조합 8자 이상</p>
+            <label className="text-body-2-medium text-label-normal mb-2 block">기존 비밀번호</label>
+            <div className="relative">
+              <Input
+                type={showOldPassword ? 'text' : 'password'}
+                placeholder="영문, 숫자, 기호 포함 8~16자"
+                className="h-[50px] pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOldPassword(!showOldPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
           </div>
+
+          {/* 새 비밀번호 */}
           <div>
-            <label className="text-body-2-medium text-label-normal mb-1.5 block">새 비밀번호 확인</label>
-            <Input type="password" placeholder="새 비밀번호를 다시 입력하세요" className="h-[50px]" />
+            <label className="text-body-2-medium text-label-normal mb-2 block">새 비밀번호</label>
+            <div className="relative">
+              <Input
+                type={showNewPassword ? 'text' : 'password'}
+                placeholder="영문, 숫자, 기호 포함 8~16자"
+                className="h-[50px] pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* 새 비밀번호 확인 */}
+          <div>
+            <label className="text-body-2-medium text-label-normal mb-2 block">새 비밀번호 확인</label>
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="다시 한번 입력해주세요."
+                className="h-[50px] pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-        <div className="flex gap-3 mt-4">
-          <Button variant="secondary" className="flex-1 h-12 border-line-normal rounded-lg" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button className="flex-1 h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-lg">변경하기</Button>
-        </div>
+
+        {/* 완료 버튼 */}
+        <Button
+          disabled
+          className="w-full h-12 mt-6 bg-gray-100 text-label-disabled rounded-lg disabled:opacity-100"
+        >
+          완료
+        </Button>
       </DialogContent>
     </Dialog>
   )
@@ -751,7 +839,7 @@ function ExchangeAddModal({ open, onOpenChange, onAdded, isDemoMode }: {
   )
 }
 
-// 로그아웃 확인 모달
+// 로그아웃 확인 모달 - Figma L-2
 function LogoutConfirmModal({ open, onOpenChange, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -762,6 +850,34 @@ function LogoutConfirmModal({ open, onOpenChange, onConfirm }: { open: boolean; 
         <DialogFooter className="flex-row gap-3 mt-2">
           <Button variant="secondary" className="flex-1 h-12 border-line-normal rounded-lg" onClick={() => onOpenChange(false)}>취소</Button>
           <Button className="flex-1 h-12 bg-gray-800 hover:bg-gray-700 text-white rounded-lg" onClick={onConfirm}>로그아웃</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// 구독 해지 확인 모달 - Figma L-1
+function UnsubscribeConfirmModal({ open, onOpenChange, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void }) {
+  const [reason, setReason] = useState("")
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="w-[440px] p-6 rounded-xl shadow-emphasize">
+        <DialogHeader className="items-center gap-2">
+          <DialogTitle className="text-title-2-bold text-label-normal text-center">플랜을 정말 해지하시겠습니까?</DialogTitle>
+          <DialogDescription className="text-body-2-regular text-label-neutral text-center">
+            다음 결제일인 2026년 2월 20일에 무료 요금제로 전환됩니다.
+          </DialogDescription>
+        </DialogHeader>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="해지 이유가 있다면 알려주세요.(선택)"
+          className="w-full h-[120px] mt-2 p-4 border border-line-normal rounded-lg text-body-2-regular text-label-normal placeholder:text-label-assistive resize-none focus:outline-none focus:border-line-focused"
+        />
+        <DialogFooter className="flex-row gap-3 mt-2">
+          <Button variant="secondary" className="flex-1 h-12 border-line-normal rounded-lg" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="flex-1 h-12 bg-gray-800 hover:bg-gray-700 text-white rounded-lg" onClick={onConfirm}>해지</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

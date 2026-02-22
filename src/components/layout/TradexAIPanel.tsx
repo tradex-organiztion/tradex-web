@@ -1,37 +1,36 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Plus, Mic, Send, TrendingUp, Search, Target, Bell, Newspaper } from 'lucide-react'
+import { Plus, Mic, ArrowUp, Square, FileText, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useUIStore, useChartStore, useTriggerStore, useAIChatStore, generateMessageId } from '@/stores'
-import type { AIMessage } from '@/stores'
+import type { AIMessage, AIAttachment } from '@/stores'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { aiApi, chatSessionApi } from '@/lib/api/ai'
 import { captureChartContext } from '@/lib/chart/chartContext'
 import { executeAICommands } from '@/lib/chart/aiCommandExecutor'
 
-// Suggestion prompts matching Figma design
+// Suggestion prompts matching Figma design - using emoji icons
 const SUGGESTION_PROMPTS = [
   {
-    icon: TrendingUp,
+    emoji: '✏️',
     text: '현재 차트에서 4시간봉 기준으로 지지/저항선을 분석하고 차트에 그려줘',
   },
   {
-    icon: Search,
+    emoji: '🔑',
     text: '최근 90일의 내 모든 거래에서 4시간 봉 기준으로 EMA 지표만 사용했을 경우, 예상되는 결과를 보여줘',
   },
   {
-    icon: Target,
+    emoji: '📊',
     text: '최근 7일 간 내 매매 전략 별 승률을 분석하고, 문제점을 분석해서 내 매매 원칙을 설정해줘',
   },
   {
-    icon: Bell,
+    emoji: '🔔',
     text: '1시간 봉 기준으로 볼린저 밴드를 터치할 때 진입 트리거를 설정해줘',
   },
   {
-    icon: Newspaper,
+    emoji: '📰',
     text: '오늘 매매 시작 전 알아야 하는 이슈와 비트코인 시장 상황을 브리핑 해줘',
   },
 ]
@@ -55,7 +54,10 @@ export function TradexAIPanel() {
   const [panelConvId, setPanelConvId] = useState<string | null>(
     activeConversationId
   )
+  const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([])
   const sessionsLoaded = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const currentConv = conversations.find((c) => c.id === panelConvId)
   const messages = currentConv?.messages || []
@@ -70,6 +72,11 @@ export function TradexAIPanel() {
     })
   }, [isAIPanelOpen])
 
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages.length])
+
   const getTimestamp = useCallback(() => {
     return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
   }, [])
@@ -78,7 +85,6 @@ export function TradexAIPanel() {
     const localId = createConversation('사이드 패널 대화')
     setPanelConvId(localId)
 
-    // Best-effort backend session creation
     chatSessionApi.createSession().catch((err) => {
       console.warn('Failed to create backend session:', err.message)
     })
@@ -86,7 +92,8 @@ export function TradexAIPanel() {
 
   const handleSend = useCallback(async (text?: string) => {
     const messageText = text || input
-    if (!messageText.trim() || isLoading) return
+    if (!messageText.trim() && attachedFiles.length === 0) return
+    if (isLoading) return
 
     // Ensure we have a conversation
     let convId = panelConvId
@@ -94,7 +101,6 @@ export function TradexAIPanel() {
       convId = createConversation('사이드 패널 대화')
       setPanelConvId(convId)
 
-      // Best-effort backend session creation
       chatSessionApi.createSession().catch((err) => {
         console.warn('Failed to create backend session:', err.message)
       })
@@ -105,10 +111,12 @@ export function TradexAIPanel() {
       role: 'user',
       content: messageText,
       timestamp: getTimestamp(),
+      attachments: attachedFiles.length > 0 ? [...attachedFiles] : undefined,
     }
 
     addMessage(convId, userMessage)
     setInput('')
+    setAttachedFiles([])
     setIsLoading(true)
 
     // Create placeholder assistant message for streaming
@@ -161,7 +169,7 @@ export function TradexAIPanel() {
     }).catch(() => {
       setIsLoading(false)
     })
-  }, [input, isLoading, getTimestamp, widgetInstance, addTrigger, addMessage, updateMessageContent, createConversation, panelConvId])
+  }, [input, isLoading, getTimestamp, widgetInstance, addTrigger, addMessage, updateMessageContent, createConversation, panelConvId, attachedFiles])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -178,11 +186,30 @@ export function TradexAIPanel() {
     router.push(panelConvId ? `/ai/chat?id=${panelConvId}` : '/ai')
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    const newAttachments: AIAttachment[] = Array.from(files).map((file) => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    }))
+    setAttachedFiles((prev) => [...prev, ...newAttachments])
+    e.target.value = ''
+  }
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
   if (!isAIPanelOpen) return null
+
+  const hasInput = input.trim() || attachedFiles.length > 0
 
   return (
     <div className="fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col bg-white shadow-emphasize border-l border-gray-300 md:w-[400px]">
-      {/* Header */}
+      {/* Header - Figma: >> icon + expand icon */}
       <div className="flex items-center gap-2 px-5 h-12 border-b border-gray-300">
         <button
           onClick={() => setAIPanelOpen(false)}
@@ -196,95 +223,97 @@ export function TradexAIPanel() {
         >
           <Image src="/icons/icon-expand.svg" alt="Expand" width={20} height={20} />
         </button>
-        <div className="flex-1" />
-        <button
-          onClick={handleNewConversation}
-          className="text-caption-medium text-label-assistive hover:text-label-normal transition-colors"
-        >
-          새 대화
-        </button>
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
         {messages.length === 0 ? (
-          /* Empty State with Suggestions */
+          /* Empty State with Suggestions - Figma C-7 */
           <div className="flex flex-col h-full">
-            <div className="flex-1 flex items-center justify-center">
-              <Image src="/tradex-logo-black.svg" alt="Tradex" width={203} height={32} priority />
-            </div>
-            <div className="flex flex-col gap-4">
-              {SUGGESTION_PROMPTS.map((prompt, index) => {
-                const IconComponent = prompt.icon
-                return (
-                  <button
-                    key={index}
-                    className="flex items-center gap-4 px-3 text-left hover:bg-gray-50 rounded-[200px] transition-colors"
-                    onClick={() => handleSend(prompt.text)}
-                  >
-                    <div className="w-5 h-5 shrink-0 flex items-center justify-center">
-                      <IconComponent className="w-[14px] h-[14px] text-gray-600" />
-                    </div>
-                    <span className="text-body-2-regular text-gray-600 py-1">
-                      {prompt.text}
-                    </span>
-                  </button>
-                )
-              })}
+            <div className="flex-1" />
+            <div className="flex flex-col gap-3">
+              {SUGGESTION_PROMPTS.map((prompt, index) => (
+                <button
+                  key={index}
+                  className="flex items-center gap-3 px-3 py-1 text-left hover:bg-gray-50 rounded-lg transition-colors"
+                  onClick={() => handleSend(prompt.text)}
+                >
+                  <span className="w-5 h-5 shrink-0 flex items-center justify-center text-[14px] leading-none">
+                    {prompt.emoji}
+                  </span>
+                  <span className="text-body-2-regular text-label-neutral truncate">
+                    {prompt.text}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         ) : (
-          /* Chat Messages */
+          /* Chat Messages - Figma C-8 */
           <div className="flex flex-col gap-4">
             {messages.map((message) => (
-              <div key={message.id} className="w-[360px]">
+              <div key={message.id}>
                 {message.role === 'user' ? (
-                  <div className="pl-[60px]">
-                    <div className="flex justify-end gap-4">
-                      <div className="flex flex-col items-end gap-2 flex-1">
-                        <div className="bg-white border border-gray-300 rounded-tl-xl rounded-bl-xl rounded-br-xl px-5 py-4">
-                          <p className="text-body-1-regular text-gray-800">{message.content}</p>
-                        </div>
-                        <span className="text-caption-regular text-gray-500">{message.timestamp}</span>
+                  <div className="flex justify-end gap-3">
+                    <div className="flex flex-col items-end gap-1.5 flex-1 min-w-0">
+                      <div className="max-w-[85%] bg-white border border-line-normal rounded-2xl px-4 py-3">
+                        {/* File attachments in message */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {message.attachments.map((file, i) => (
+                              <div key={i} className="inline-flex items-center gap-2 bg-gray-50 border border-line-normal rounded-full px-3 py-1.5">
+                                <FileText className="w-4 h-4 text-label-assistive" />
+                                <span className="text-body-2-medium text-label-normal">{file.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {message.content && (
+                          <p className="text-body-2-regular text-label-normal">{message.content}</p>
+                        )}
                       </div>
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarImage src="/avatar.png" />
-                        <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">U</AvatarFallback>
-                      </Avatar>
+                      <span className="text-caption-regular text-label-assistive">{message.timestamp}</span>
+                    </div>
+                    <div className="h-8 w-8 shrink-0 rounded-full bg-gray-200 flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z" fill="#8F8F8F"/>
+                        <path d="M8 9.5C5.33 9.5 2 10.84 2 12.5V14H14V12.5C14 10.84 10.67 9.5 8 9.5Z" fill="#8F8F8F"/>
+                      </svg>
                     </div>
                   </div>
                 ) : (
-                  <div className="pr-[60px]">
-                    <div className="flex gap-4">
-                      <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
-                        <Image src="/tradex-logo-black.svg" alt="Tradex AI" width={20} height={20} className="invert" />
-                      </div>
-                      <div className="flex flex-col gap-2 flex-1">
-                        <div className="bg-gray-50 rounded-tr-xl rounded-bl-xl rounded-br-xl px-5 py-4">
-                          <p className="text-body-2-regular text-gray-800">{message.content}</p>
-                          {message.stats && (
-                            <div className="mt-4 grid grid-cols-2 gap-3">
-                              <div className="bg-white rounded-lg px-4 py-3">
-                                <p className="text-caption-regular text-gray-500 mb-1">승률</p>
-                                <p className="text-body-1-bold text-gray-800">{message.stats.winRate}</p>
-                              </div>
-                              <div className="bg-white rounded-lg px-4 py-3">
-                                <p className="text-caption-regular text-gray-500 mb-1">순이익</p>
-                                <p className="text-body-1-bold text-green-400">{message.stats.profit}</p>
-                              </div>
-                              <div className="bg-white rounded-lg px-4 py-3">
-                                <p className="text-caption-regular text-gray-500 mb-1">총 거래 수</p>
-                                <p className="text-body-1-bold text-gray-800">{message.stats.totalTrades}</p>
-                              </div>
-                              <div className="bg-white rounded-lg px-4 py-3">
-                                <p className="text-caption-regular text-gray-500 mb-1">수익 팩터</p>
-                                <p className="text-body-1-bold text-gray-800">{message.stats.profitFactor}</p>
-                              </div>
+                  <div className="flex gap-3">
+                    <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 17L10 12L14 16L19 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M15 11H19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                      <div className="bg-gray-50 rounded-tr-xl rounded-bl-xl rounded-br-xl px-4 py-3">
+                        <p className="text-body-2-regular text-label-normal whitespace-pre-wrap">{message.content}</p>
+                        {message.stats && (
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <div className="bg-white rounded-lg px-3 py-2.5">
+                              <p className="text-caption-regular text-label-assistive mb-0.5">승률</p>
+                              <p className="text-body-1-bold text-label-normal">{message.stats.winRate}</p>
                             </div>
-                          )}
-                        </div>
-                        <span className="text-caption-regular text-gray-500">{message.timestamp}</span>
+                            <div className="bg-white rounded-lg px-3 py-2.5">
+                              <p className="text-caption-regular text-label-assistive mb-0.5">순이익</p>
+                              <p className="text-body-1-bold text-label-positive">{message.stats.profit}</p>
+                            </div>
+                            <div className="bg-white rounded-lg px-3 py-2.5">
+                              <p className="text-caption-regular text-label-assistive mb-0.5">총 거래</p>
+                              <p className="text-body-1-bold text-label-normal">{message.stats.totalTrades}</p>
+                            </div>
+                            <div className="bg-white rounded-lg px-3 py-2.5">
+                              <p className="text-caption-regular text-label-assistive mb-0.5">수익 팩터</p>
+                              <p className="text-body-1-bold text-label-normal">{message.stats.profitFactor}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
+                      <span className="text-caption-regular text-label-assistive">{message.timestamp}</span>
                     </div>
                   </div>
                 )}
@@ -293,28 +322,51 @@ export function TradexAIPanel() {
 
             {/* Loading State */}
             {isLoading && (
-              <div className="w-[360px] pr-[60px]">
-                <div className="flex gap-4">
-                  <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
-                    <Image src="/tradex-logo-black.svg" alt="Tradex AI" width={20} height={20} className="invert" />
-                  </div>
-                  <div className="flex items-center gap-1.5 px-5 py-4">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
-                  </div>
+              <div className="flex gap-3">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 17L10 12L14 16L19 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M15 11H19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className="flex items-center gap-1.5 px-4 py-3">
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
+
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="px-5 py-3 border-t border-gray-300">
-        <div className="flex items-center gap-4 py-2">
-          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100">
-            <Plus className="w-5 h-5 text-gray-800" />
+      {/* Input Area - Figma: bottom bar with border-t */}
+      <div className="px-4 py-3 border-t border-gray-300">
+        {/* Attached files */}
+        {attachedFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {attachedFiles.map((file, i) => (
+              <div key={i} className="inline-flex items-center gap-2 bg-gray-50 border border-line-normal rounded-full px-3 py-1.5">
+                <FileText className="w-4 h-4 text-label-assistive" />
+                <span className="text-body-2-medium text-label-normal truncate max-w-[200px]">{file.name}</span>
+                <button onClick={() => removeFile(i)} className="hover:opacity-70">
+                  <X className="w-4 h-4 text-label-assistive" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Plus className="w-5 h-5 text-label-normal" />
           </Button>
           <input
             type="text"
@@ -322,23 +374,41 @@ export function TradexAIPanel() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="무엇이든 물어보세요!"
-            className="flex-1 bg-transparent text-body-1-regular text-gray-800 placeholder:text-gray-400 focus:outline-none"
+            className="flex-1 bg-transparent text-body-2-regular text-label-normal placeholder:text-label-disabled focus:outline-none"
           />
-          {input.trim() ? (
+          {isLoading ? (
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 shrink-0 rounded-full bg-gray-800 hover:bg-gray-700"
+              className="h-9 w-9 shrink-0 rounded-full bg-gray-900 hover:bg-gray-800"
+              onClick={() => setIsLoading(false)}
+            >
+              <Square className="w-3.5 h-3.5 text-white fill-white" />
+            </Button>
+          ) : hasInput ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0 rounded-full bg-gray-900 hover:bg-gray-800"
               onClick={() => handleSend()}
             >
-              <Send className="w-4 h-4 text-white" />
+              <ArrowUp className="w-4 h-4 text-white" />
             </Button>
           ) : (
             <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100">
-              <Mic className="w-5 h-5 text-gray-800" />
+              <Mic className="w-5 h-5 text-label-normal" />
             </Button>
           )}
         </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFileSelect}
+        />
       </div>
     </div>
   )

@@ -271,20 +271,6 @@ export default function SignupPage() {
                     ? "이름은 2-100자로 입력해주세요."
                     : undefined
                 }
-                rightElement={
-                  username ? (
-                    <button
-                      type="button"
-                      onClick={() => setUsername("")}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="10" cy="10" r="8" fill="currentColor" fillOpacity="0.2"/>
-                        <path d="M7.5 7.5L12.5 12.5M12.5 7.5L7.5 12.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                      </svg>
-                    </button>
-                  ) : undefined
-                }
               />
 
               {/* 휴대폰 번호 - Figma 순서: 2번째 */}
@@ -331,39 +317,31 @@ export default function SignupPage() {
                   </Button>
                 </div>
 
-                {isSmsSent && !isSmsVerified && (
-                  <div className="flex gap-2">
-                    <TextField
-                      placeholder="인증 번호를 입력해주세요."
-                      value={verificationCode}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
-                        setVerificationCode(value)
-                        setSmsError(null)
-                      }}
-                      disabled={smsLoading}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={!isCodeValid(verificationCode) || smsLoading}
-                      onClick={handleVerifySms}
-                    >
-                      {smsLoading ? "확인 중..." : "확인"}
-                    </Button>
-                  </div>
-                )}
-
-                {isSmsVerified && (
-                  <p className="text-body-2-regular text-success-500">
-                    휴대폰 인증이 완료되었습니다.
-                  </p>
-                )}
-
-                {smsError && (
-                  <p className="text-body-2-regular text-error-500">{smsError}</p>
-                )}
+                {/* Verification Code Row - Figma: 항상 표시 */}
+                <div className="flex gap-2">
+                  <TextField
+                    placeholder="인증 번호를 입력해주세요."
+                    value={verificationCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
+                      setVerificationCode(value)
+                      setSmsError(null)
+                    }}
+                    disabled={!isSmsSent || smsLoading || isSmsVerified}
+                    className="flex-1"
+                    messageType={isSmsVerified ? "success" : (smsError ? "error" : undefined)}
+                    message={isSmsVerified ? "인증이 완료되었습니다." : (smsError || undefined)}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="mt-0"
+                    disabled={!isSmsSent || !isCodeValid(verificationCode) || smsLoading || isSmsVerified}
+                    onClick={handleVerifySms}
+                  >
+                    {smsLoading ? "확인 중..." : "확인"}
+                  </Button>
+                </div>
               </div>
 
               {/* 이메일 - Figma 순서: 3번째 */}
@@ -452,10 +430,14 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Error Message */}
+            {/* Error Message - inline with icon */}
             {error && (
-              <div className="bg-red-100 border border-red-400 rounded-lg px-4 py-3">
-                <p className="text-body-2-regular text-red-400">{error}</p>
+              <div className="flex items-center gap-1">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="9" r="8" fill="#FF0015"/>
+                  <path d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <p className="text-body-2-regular text-[#FF0015]">{error}</p>
               </div>
             )}
 

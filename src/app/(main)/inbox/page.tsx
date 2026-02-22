@@ -7,12 +7,15 @@ import { Button } from "@/components/ui"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { homeApi, NotificationResponse, NotificationType } from "@/lib/api"
+import { useAuthStore } from "@/stores"
 
 /**
- * 수신함(Inbox) 페이지 - 분할 패널 레이아웃
+ * 수신함(Inbox) 페이지 - Figma 기준: 전체 너비 리스트 레이아웃
  *
- * 좌측: 알림 목록
- * 우측: 선택된 알림 상세
+ * Figma 노드: 4001:27495
+ * - 타이틀: "수신함" + 카운트 뱃지
+ * - 전체 너비 리스트, 각 아이템에 뱃지/날짜/제목/설명/액션버튼/더보기
+ * - 아이템 클릭 시 사이드패널 오버레이 (4001:27592)
  */
 
 // 알림 타입별 라벨 및 색상
@@ -20,37 +23,63 @@ const notificationTypeConfig: Record<NotificationType, { label: string; bgColor:
   POSITION_ENTRY: { label: "포지션 진입", bgColor: "bg-element-positive-lighter", textColor: "text-element-positive-default" },
   POSITION_EXIT: { label: "포지션 종료", bgColor: "bg-gray-100", textColor: "text-label-normal" },
   RISK_WARNING: { label: "리스크 경고", bgColor: "bg-element-danger-lighter", textColor: "text-element-danger-default" },
+  CHART_ALERT: { label: "차트 알림", bgColor: "bg-gray-100", textColor: "text-label-normal" },
+  TRADE_ALERT: { label: "매매 알림", bgColor: "bg-gray-100", textColor: "text-label-normal" },
 }
 
+// 알림 타입별 액션 버튼
+const notificationActionConfig: Record<NotificationType, { label: string; href?: string } | null> = {
+  POSITION_ENTRY: { label: "매매일지 작성" },
+  POSITION_EXIT: { label: "매매일지 작성" },
+  RISK_WARNING: null,
+  CHART_ALERT: { label: "차트 바로가기", href: "/chart" },
+  TRADE_ALERT: { label: "매매일지 작성" },
+}
+
+// 데모 모드용 샘플 알림 데이터
+const _demoDate = (daysAgo: number, h: number, m: number) => {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  d.setHours(h, m, 0, 0)
+  return d.toISOString()
+}
+
+const demoNotifications: NotificationResponse[] = [
+  { id: 1, type: "POSITION_ENTRY" as NotificationType, title: "BTC/USDT 롱 포지션 진입", message: "바이낸스에서 BTC/USDT 롱 포지션이 $97,250에 진입되었습니다. 목표가: $99,500, 손절가: $96,000", read: false, createdAt: _demoDate(0, 14, 30) },
+  { id: 2, type: "RISK_WARNING" as NotificationType, title: "연속 손실 경고", message: "오늘 3회 연속 손실이 발생했습니다. 매매 원칙에 따라 금일 추가 거래를 중단하는 것을 권장합니다.", read: false, createdAt: _demoDate(0, 11, 15) },
+  { id: 3, type: "POSITION_EXIT" as NotificationType, title: "ETH/USDT 숏 포지션 종료", message: "바이낸스에서 ETH/USDT 숏 포지션이 $2,680에 종료되었습니다. 수익: +$340 (+2.1%)", read: true, createdAt: _demoDate(1, 16, 45) },
+  { id: 4, type: "POSITION_ENTRY" as NotificationType, title: "SOL/USDT 롱 포지션 진입", message: "비트겟에서 SOL/USDT 롱 포지션이 $185에 진입되었습니다.", read: true, createdAt: _demoDate(2, 9, 30) },
+  { id: 5, type: "RISK_WARNING" as NotificationType, title: "레버리지 과다 경고", message: "현재 평균 레버리지가 15x로 높은 수준입니다. 리스크 관리를 위해 레버리지를 줄이는 것을 권장합니다.", read: true, createdAt: _demoDate(3, 10, 0) },
+  { id: 6, type: "CHART_ALERT" as NotificationType, title: "BTC/USDT 지지선 도달", message: "BTC/USDT가 주요 지지선 $96,500에 도달했습니다. 반등 가능성을 확인하세요.", read: false, createdAt: _demoDate(0, 10, 0) },
+  { id: 7, type: "TRADE_ALERT" as NotificationType, title: "ETH/USDT 매매 신호 감지", message: "AI 분석 결과 ETH/USDT에서 강한 매수 신호가 감지되었습니다. 설정한 트리거 조건에 부합합니다.", read: true, createdAt: _demoDate(1, 8, 30) },
+]
+
 export default function InboxPage() {
-  const [filter] = useState<"all" | "unread">("all")
+  const isDemoMode = useAuthStore((s) => s.isDemoMode)
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<NotificationResponse | null>(null)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
-
-  const selectedNotification = notifications.find((n) => n.id === selectedId) || null
+  const [selectedNotification, setSelectedNotification] = useState<NotificationResponse | null>(null)
 
   // 알림 목록 불러오기
   const fetchNotifications = async () => {
     setIsLoading(true)
     setError(null)
 
-    const data = await (filter === "all"
-      ? homeApi.getNotifications()
-      : homeApi.getUnreadNotifications()
-    ).catch((err) => {
+    if (isDemoMode) {
+      setNotifications(demoNotifications)
+      setIsLoading(false)
+      return
+    }
+
+    const data = await homeApi.getNotifications().catch((err) => {
       console.warn("Notifications API unavailable:", err.message)
       return null
     })
 
     if (data) {
       setNotifications(data)
-      // 첫 번째 알림 자동 선택
-      if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0].id)
-      }
     } else {
       setNotifications([])
       setError("API 서버에 연결할 수 없습니다.")
@@ -61,8 +90,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     fetchNotifications()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter])
+  }, [])
 
   // 읽음 처리
   const handleMarkAsRead = async (id: number) => {
@@ -75,16 +103,22 @@ export default function InboxPage() {
     )
   }
 
-  // 알림 선택 시 자동 읽음 처리
-  const handleSelectNotification = (notification: NotificationResponse) => {
-    setSelectedId(notification.id)
+  // 알림 클릭 → 사이드패널 오픈
+  const handleNotificationClick = (notification: NotificationResponse) => {
+    setSelectedNotification(notification)
     if (!notification.read) {
       handleMarkAsRead(notification.id)
     }
   }
 
+  // 사이드패널 닫기
+  const handleCloseSidePanel = () => {
+    setSelectedNotification(null)
+  }
+
   // 알림 삭제 확인 모달 열기
-  const handleDeleteClick = (notification: NotificationResponse) => {
+  const handleDeleteClick = (e: React.MouseEvent, notification: NotificationResponse) => {
+    e.stopPropagation()
     setDeleteTarget(notification)
   }
 
@@ -97,24 +131,27 @@ export default function InboxPage() {
     })
     if (result !== null) {
       setNotifications((prev) => prev.filter((n) => n.id !== deleteTarget.id))
-      if (selectedId === deleteTarget.id) {
-        setSelectedId(null)
+      if (selectedNotification?.id === deleteTarget.id) {
+        setSelectedNotification(null)
       }
     }
     setDeleteTarget(null)
   }
 
-  // 날짜 포맷팅 (Figma: 절대 날짜 "2025. 11. 27. 11:39")
+  // 날짜 포맷: "2026.01.30 오후 01:45"
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const y = date.getFullYear()
-    const m = (date.getMonth() + 1).toString().padStart(2, '0')
-    const d = date.getDate().toString().padStart(2, '0')
-    const h = date.getHours().toString().padStart(2, '0')
-    const min = date.getMinutes().toString().padStart(2, '0')
-    return `${y}. ${m}. ${d}. ${h}:${min}`
+    const m = (date.getMonth() + 1).toString().padStart(2, "0")
+    const d = date.getDate().toString().padStart(2, "0")
+    const hours = date.getHours()
+    const ampm = hours >= 12 ? "오후" : "오전"
+    const h12 = (hours % 12 || 12).toString().padStart(2, "0")
+    const min = date.getMinutes().toString().padStart(2, "0")
+    return `${y}.${m}.${d} ${ampm} ${h12}:${min}`
   }
 
+  // 상세 패널 날짜 포맷
   const formatFullDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("ko-KR", {
@@ -126,134 +163,144 @@ export default function InboxPage() {
     })
   }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="수신함"
-      />
+  const unreadCount = notifications.filter((n) => !n.read).length
 
-      {/* Split Panel Layout */}
-      <div className="bg-white rounded-xl border-[0.6px] border-gray-300 overflow-hidden flex min-h-[600px]">
-        {/* Left: Notification List */}
-        <div className="w-full shrink-0 border-r border-line-normal flex flex-col md:w-[380px]">
-          {/* List */}
-          <div className="flex-1 overflow-y-auto">
-            {isLoading ? (
-              <div className="p-8 text-center">
-                <p className="text-body-2-regular text-label-assistive">불러오는 중...</p>
-              </div>
-            ) : error ? (
-              <div className="p-8 text-center">
-                <p className="text-body-2-regular text-element-danger-default">{error}</p>
-                <Button variant="secondary" size="sm" className="mt-4" onClick={fetchNotifications}>
-                  다시 시도
-                </Button>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <Bell className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-body-2-regular text-label-assistive">
-                  {filter === "unread" ? "읽지 않은 알림이 없습니다." : "알림이 없습니다."}
-                </p>
-              </div>
-            ) : (
-              <ul>
-                {notifications.map((notification) => {
-                  const typeConfig = notificationTypeConfig[notification.type]
-                  const isSelected = selectedId === notification.id
-                  return (
-                    <li key={notification.id}>
-                      <button
-                        onClick={() => handleSelectNotification(notification)}
+  return (
+    <div className="flex flex-col gap-6 relative">
+      {/* 타이틀: "수신함" + 카운트 뱃지 */}
+      <div className="flex items-center gap-2">
+        <h1 className="text-title-1-bold text-label-normal">수신함</h1>
+        {unreadCount > 0 && (
+          <span className="inline-flex items-center justify-center min-w-[26px] h-5 px-2 rounded-full bg-gray-900 text-body-2-medium text-white">
+            {unreadCount}
+          </span>
+        )}
+      </div>
+
+      {/* 알림 리스트 - 전체 너비 */}
+      <div>
+        {isLoading ? (
+          <div className="py-16 text-center">
+            <p className="text-body-2-regular text-label-assistive">불러오는 중...</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 text-center">
+            <p className="text-body-2-regular text-element-danger-default">{error}</p>
+            <Button variant="secondary" size="sm" className="mt-4" onClick={fetchNotifications}>
+              다시 시도
+            </Button>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="py-16 text-center">
+            <Bell className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-body-2-regular text-label-assistive">알림이 없습니다.</p>
+          </div>
+        ) : (
+          <div>
+            {notifications.map((notification) => {
+              const typeConfig = notificationTypeConfig[notification.type]
+              const actionConfig = notificationActionConfig[notification.type]
+              return (
+                <button
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                  className="w-full text-left border-b border-line-normal py-4 hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex flex-col gap-3">
+                    {/* Row 1: 뱃지 + 날짜/더보기 */}
+                    <div className="flex items-center justify-between">
+                      <span
                         className={cn(
-                          "w-full text-left px-4 py-3 border-b border-line-normal transition-colors",
-                          isSelected ? "bg-gray-50" : "hover:bg-gray-50/50",
-                          !notification.read && "bg-blue-50/30"
+                          "text-caption-medium px-2 py-0.5 rounded",
+                          typeConfig.bgColor,
+                          typeConfig.textColor
                         )}
                       >
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className={cn(
-                            "text-caption-medium px-1.5 py-0.5 rounded",
-                            typeConfig.bgColor, typeConfig.textColor
-                          )}>
-                            {typeConfig.label}
-                          </span>
-                          <span className="flex-1" />
-                          {!notification.read && (
-                            <span className="w-1.5 h-1.5 bg-gray-800 rounded-full flex-shrink-0" />
-                          )}
-                          <span className="text-caption-regular text-label-assistive">
-                            {formatDate(notification.createdAt)}
-                          </span>
-                        </div>
-                        <p className={cn(
-                          "text-body-2-medium text-label-normal",
-                          !notification.read && "font-bold"
-                        )}>
+                        {typeConfig.label}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {!notification.read && (
+                          <span className="w-1.5 h-1.5 bg-gray-900 rounded-full" />
+                        )}
+                        <span className="text-caption-regular text-label-assistive">
+                          {formatDate(notification.createdAt)}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteClick(e, notification)}
+                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                        >
+                          <MoreVertical className="w-5 h-5 text-label-assistive" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Row 2: 제목 + 설명 + 액션 버튼 */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <p className="text-body-2-medium text-label-normal">
                           {notification.title}
                         </p>
-                        <p className="text-caption-regular text-label-neutral mt-0.5 line-clamp-2">
+                        <p className="text-body-2-regular text-label-neutral">
                           {notification.message}
                         </p>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+                      </div>
+                      {actionConfig && (
+                        <span className="flex-shrink-0 text-body-2-medium text-label-normal px-2 py-1 border border-line-normal rounded">
+                          {actionConfig.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Right: Detail Panel */}
-        <div className="flex-1 flex flex-col">
-          {selectedNotification ? (
-            <div className="flex-1 flex flex-col">
-              {/* Detail Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-line-normal">
-                <div className="flex items-center gap-2">
-                  <span className={cn(
+      {/* 사이드패널 오버레이 (Figma: 4001:27592) */}
+      {selectedNotification && (
+        <>
+          {/* 백드롭 */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={handleCloseSidePanel}
+          />
+          {/* 사이드패널 */}
+          <div className="fixed top-0 right-0 h-full w-[400px] bg-white border-l border-line-normal shadow-emphasize z-50 flex flex-col">
+            {/* 패널 헤더 */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-line-normal">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
                     "text-caption-medium px-2 py-0.5 rounded",
                     notificationTypeConfig[selectedNotification.type].bgColor,
                     notificationTypeConfig[selectedNotification.type].textColor
-                  )}>
-                    {notificationTypeConfig[selectedNotification.type].label}
-                  </span>
-                  <span className="text-caption-regular text-label-assistive">
-                    {formatFullDate(selectedNotification.createdAt)}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleDeleteClick(selectedNotification)}
-                  className="p-1.5 hover:bg-gray-50 rounded transition-colors"
+                  )}
                 >
-                  <MoreVertical className="w-5 h-5 text-label-assistive" />
-                </button>
+                  {notificationTypeConfig[selectedNotification.type].label}
+                </span>
+                <span className="text-caption-regular text-label-assistive">
+                  {formatFullDate(selectedNotification.createdAt)}
+                </span>
               </div>
-
-              {/* Detail Content */}
-              <div className="flex-1 px-6 py-6">
-                <h2 className="text-title-2-bold text-label-normal mb-3">
-                  {selectedNotification.title}
-                </h2>
-                <p className="text-body-1-regular text-label-neutral leading-relaxed">
-                  {selectedNotification.message}
-                </p>
-              </div>
-
-              {/* Figma에 하단 액션바 없음 */}
+              <button
+                onClick={(e) => handleDeleteClick(e, selectedNotification)}
+                className="p-1.5 hover:bg-gray-50 rounded transition-colors"
+              >
+                <MoreVertical className="w-5 h-5 text-label-assistive" />
+              </button>
             </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <Bell className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                <p className="text-body-1-regular text-label-assistive">
-                  알림을 선택하세요
-                </p>
-              </div>
+
+            {/* 패널 본문 */}
+            <div className="flex-1 px-6 py-6 overflow-y-auto">
+              <p className="text-body-1-regular text-label-neutral leading-relaxed">
+                {selectedNotification.message}
+              </p>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {/* 삭제 확인 모달 */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

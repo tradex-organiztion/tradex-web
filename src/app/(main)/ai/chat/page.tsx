@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Plus, Mic, Send } from 'lucide-react'
+import { Plus, Mic, ArrowUp, X, FileText, ArrowDown, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAIChatStore, generateMessageId } from '@/stores'
-import type { AIMessage } from '@/stores'
+import type { AIMessage, AIAttachment } from '@/stores'
 import { aiApi, chatSessionApi } from '@/lib/api/ai'
 
 export default function TradexAIChatPage() {
@@ -15,8 +15,10 @@ export default function TradexAIChatPage() {
   const conversationId = searchParams.get('id')
   const initialQuery = searchParams.get('q') || ''
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const initialQueryProcessed = useRef(false)
   const sessionsLoaded = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     conversations,
@@ -40,6 +42,10 @@ export default function TradexAIChatPage() {
 
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(!!initialQuery)
+  const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([])
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
 
   // Set active conversation in store
   useEffect(() => {
@@ -131,17 +137,20 @@ export default function TradexAIChatPage() {
 
   const handleSend = useCallback(async (text?: string) => {
     const messageText = text || input
-    if (!messageText.trim() || isLoading) return
+    if (!messageText.trim() && attachedFiles.length === 0) return
+    if (isLoading) return
 
     const userMsg: AIMessage = {
       id: generateMessageId(),
       role: 'user',
       content: messageText,
       timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      attachments: attachedFiles.length > 0 ? [...attachedFiles] : undefined,
     }
 
     addMessage(activeConvId, userMsg)
     setInput('')
+    setAttachedFiles([])
     setIsLoading(true)
 
     const assistantMsgId = generateMessageId()
@@ -169,12 +178,31 @@ export default function TradexAIChatPage() {
         setIsLoading(false)
       },
     }).catch(() => setIsLoading(false))
-  }, [input, isLoading, activeConvId, addMessage, updateMessageContent])
+  }, [input, isLoading, activeConvId, attachedFiles, addMessage, updateMessageContent])
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
+
+  // Track scroll position for scroll-to-bottom button
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100
+      setShowScrollButton(!isNearBottom && messages.length > 3)
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [messages.length])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -183,22 +211,65 @@ export default function TradexAIChatPage() {
     }
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    const newAttachments: AIAttachment[] = Array.from(files).map((file) => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    }))
+    setAttachedFiles((prev) => [...prev, ...newAttachments])
+    e.target.value = ''
+  }
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // Close action menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setIsActionMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const hasInput = input.trim() || attachedFiles.length > 0
+
   return (
     <div className="flex flex-col h-[calc(100vh-48px)]">
-      {/* Messages Area - Figma: centered, padding 32px 36px, gap 16px */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto relative" ref={messagesContainerRef}>
         <div className="flex flex-col items-center px-9 py-8">
           <div className="w-full max-w-[700px] flex flex-col gap-4">
             {messages.map((message) => (
               <div key={message.id}>
                 {message.role === 'user' ? (
-                  /* User Message - Figma: right-aligned, avatar 32x32 */
+                  /* User Message - right-aligned */
                   <div className="flex justify-end gap-4">
                     <div className="flex flex-col items-end gap-2 flex-1">
                       <div className="max-w-[80%] rounded-2xl bg-gray-100 px-5 py-3">
-                        <p className="text-body-1-regular text-label-normal">
-                          {message.content}
-                        </p>
+                        {/* File attachments */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {message.attachments.map((file, i) => (
+                              <div key={i} className="inline-flex items-center gap-2 bg-white border border-line-normal rounded-full px-3 py-1.5">
+                                <FileText className="w-4 h-4 text-label-assistive" />
+                                <span className="text-body-2-medium text-label-normal">{file.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {message.content && (
+                          <p className="text-body-1-regular text-label-normal">
+                            {message.content}
+                          </p>
+                        )}
                       </div>
                       <p className="text-caption-regular text-label-assistive">
                         {message.timestamp}
@@ -212,10 +283,10 @@ export default function TradexAIChatPage() {
                     </div>
                   </div>
                 ) : (
-                  /* AI Message - Figma: left-aligned, avatar 32x32, bg-gray-50, asymmetric rounded */
+                  /* AI Message - left-aligned */
                   <div className="flex gap-4">
                     <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                         <path d="M5 17L10 12L14 16L19 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M15 11H19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -255,10 +326,11 @@ export default function TradexAIChatPage() {
               </div>
             ))}
 
+            {/* Loading indicator */}
             {isLoading && messages[messages.length - 1]?.content === '' && (
               <div className="flex gap-4">
                 <div className="h-8 w-8 shrink-0 rounded-full bg-gray-900 flex items-center justify-center">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M5 17L10 12L14 16L19 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M15 11H19V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -274,46 +346,114 @@ export default function TradexAIChatPage() {
             <div ref={messagesEndRef} />
           </div>
         </div>
+
+        {/* Scroll to bottom button - Figma C-6 */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white border border-line-normal shadow-emphasize flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+          >
+            <ArrowDown className="w-5 h-5 text-label-normal" />
+          </button>
+        )}
       </div>
 
-      {/* Input Area - Figma: centered, same prompt input as main page */}
+      {/* Input Area */}
       <div className="flex items-center justify-center px-9 py-8">
-        <div className="flex items-center w-full max-w-[700px] h-[52px] bg-white border border-gray-300 rounded-full px-3 gap-4 shadow-emphasize">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
-          >
-            <Plus className="w-5 h-5 text-gray-900" />
-          </Button>
+        <div className="w-full max-w-[700px] relative" ref={actionMenuRef}>
+          <div className={cn(
+            "bg-white border border-gray-300 shadow-emphasize",
+            attachedFiles.length > 0 ? "rounded-2xl" : "rounded-full"
+          )}>
+            {/* Attached files row */}
+            {attachedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-4 pt-3">
+                {attachedFiles.map((file, i) => (
+                  <div key={i} className="inline-flex items-center gap-2 bg-gray-50 border border-line-normal rounded-full px-3 py-1.5">
+                    <FileText className="w-4 h-4 text-label-assistive" />
+                    <span className="text-body-2-medium text-label-normal">{file.name}</span>
+                    <button onClick={() => removeFile(i)} className="hover:opacity-70">
+                      <X className="w-4 h-4 text-label-assistive" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Tradex AI에게 무엇이든 물어보세요!"
-            className="flex-1 text-body-1-regular text-label-normal placeholder:text-label-disabled focus:outline-none bg-transparent"
-          />
+            {/* Input row */}
+            <div className="flex items-center h-[52px] px-3 gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
+                onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
+              >
+                <Plus className="w-5 h-5 text-gray-900" />
+              </Button>
 
-          {input.trim() ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0 rounded-full bg-gray-900 hover:bg-gray-800"
-              onClick={() => handleSend()}
-            >
-              <Send className="w-4 h-4 text-white" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
-            >
-              <Mic className="w-5 h-5 text-gray-900" />
-            </Button>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Tradex AI에게 무엇이든 물어보세요!"
+                className="flex-1 text-body-1-regular text-label-normal placeholder:text-label-disabled focus:outline-none bg-transparent"
+              />
+
+              {isLoading ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 rounded-full bg-gray-900 hover:bg-gray-800"
+                  onClick={() => setIsLoading(false)}
+                >
+                  <Square className="w-3.5 h-3.5 text-white fill-white" />
+                </Button>
+              ) : hasInput ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 rounded-full bg-gray-900 hover:bg-gray-800"
+                  onClick={() => handleSend()}
+                >
+                  <ArrowUp className="w-4 h-4 text-white" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100"
+                >
+                  <Mic className="w-5 h-5 text-gray-900" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Action Menu Dropdown */}
+          {isActionMenuOpen && (
+            <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border border-line-normal rounded-xl shadow-emphasize py-2 z-10">
+              <button
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-body-2-regular text-label-neutral hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  fileInputRef.current?.click()
+                  setIsActionMenuOpen(false)
+                }}
+              >
+                <FileText className="w-4 h-4" />
+                <span>사진 및 파일 업로드</span>
+              </button>
+            </div>
           )}
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileSelect}
+          />
         </div>
       </div>
     </div>

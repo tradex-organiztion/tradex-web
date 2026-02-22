@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronsRight, Plus, ChevronDown, ChevronUp, X, Search } from 'lucide-react'
+import { ChevronsRight, Plus, ChevronDown, ChevronUp, X, Search, Upload, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { positionsApi, ordersApi } from '@/lib/api/futures'
 import { journalApi } from '@/lib/api/trading'
 import type { UpdateJournalRequest } from '@/lib/api/trading'
 import { useAuthStore } from '@/stores'
+import Image from 'next/image'
 
 interface JournalFormProps {
   journalId?: number | null
@@ -17,6 +18,7 @@ interface JournalFormProps {
 
 export interface JournalFormData {
   date: string
+  exchange: string
   pair: string
   leverage: number
   position: 'Long' | 'Short'
@@ -42,6 +44,7 @@ export interface JournalFormData {
   entryReason: string
   scenario: string
   review: string
+  principlesChecked: boolean[]
 }
 
 type TabType = 'pre-scenario' | 'post-review'
@@ -49,22 +52,35 @@ type InputMode = 'auto' | 'manual'
 
 // 사용 가능한 지표 목록
 const availableIndicators = [
-  'RSI', 'MACD', 'Bollinger Bands', 'EMA', 'SMA', 'Stochastic',
+  'RSI', 'MACD', '볼린저 밴드', 'EMA', 'SMA', 'Stochastic',
   'ATR', 'Volume Profile', 'Fibonacci', 'Ichimoku', 'VWAP', 'OBV',
 ]
 
 // 사용 가능한 타임프레임
 const availableTimeframes = [
-  '1분', '3분', '5분', '15분', '30분', '1시간', '2시간', '4시간', '1일', '1주',
+  '1분봉', '3분봉', '5분봉', '15분봉', '30분봉', '1시간봉', '2시간봉', '4시간봉', '1일봉', '1주봉',
 ]
 
 // 사용 가능한 기술적 분석
 const availableTechnicalAnalysis = [
-  '지지선/저항선', '추세선', '패턴 분석', '캔들 패턴', '다이버전스',
-  '피보나치 되돌림', '엘리어트 파동', '하모닉 패턴',
+  '15분봉', '30분봉', '1시간봉', '4시간봉', '지지선/저항선', '추세선', '패턴 분석', '캔들 패턴',
 ]
 
-// 자동입력용 거래 목록 (거래소에서 가져온 데이터 시뮬레이션)
+// 추천 태그
+const recommendedIndicators = ['볼린저 밴드', 'RSI', 'MACD']
+const recommendedTimeframes = ['15분봉']
+const recommendedTechnicalAnalysis = ['15분봉', '15분봉']
+
+// 매매원칙 목록
+const TRADING_PRINCIPLES = [
+  '하루에 3회 이상 연속 손실이 발생하면 그날은 더 이상 거래하지 않습니다.',
+  '손절 기준은 진입가 대비 2% 이하로 설정하고, 어떤 경우에도 이를 변경하거나 무시하지 않습니다.',
+  '오후 9시 이후에는 신규 포지션을 진입하지 않습니다.',
+  '포지션 진입 전 반드시 매매 일지에 진입 근거와 목표가, 손절가를 미리 작성합니다.',
+  '전체 자산의 10% 이상을 단일 포지션에 투자하지 않습니다.',
+]
+
+// 자동입력용 거래 목록
 const _now = new Date()
 const _fmt = (d: Date, h: number, m: number) => {
   const yyyy = d.getFullYear()
@@ -81,16 +97,18 @@ const autoImportTrades = [
   { id: 'auto-3', pair: 'SOL/USDT', position: 'Long' as const, leverage: 5, entryPrice: '185.20', exitPrice: '190.50', pnl: '+530', time: _fmt(_yesterday, 9, 15) },
 ]
 
-// 태그 선택 컴포넌트
+// 태그 선택 컴포넌트 - Figma 디자인 반영
 function TagSelector({
   label,
   selectedItems,
+  recommendedItems,
   availableItems,
   onAdd,
   onRemove,
 }: {
   label: string
   selectedItems: string[]
+  recommendedItems?: string[]
   availableItems: string[]
   onAdd: (item: string) => void
   onRemove: (item: string) => void
@@ -104,76 +122,232 @@ function TagSelector({
 
   return (
     <div className="space-y-2">
-      <label className="text-body-1-medium text-label-normal block">{label}</label>
+      <label className="text-body-1-bold text-label-normal block">{label}</label>
 
-      {/* Selected Tags */}
-      {selectedItems.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {selectedItems.map((item) => (
+      {/* Recommended Tags */}
+      {recommendedItems && recommendedItems.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-body-2-medium text-label-assistive">추천</span>
+          {recommendedItems.map((item, i) => (
             <span
-              key={item}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 rounded-lg text-body-2-medium text-label-normal"
+              key={`rec-${i}`}
+              className="px-2.5 py-1 bg-gray-100 rounded-lg text-body-2-medium text-label-normal"
             >
               {item}
-              <button
-                onClick={() => onRemove(item)}
-                className="p-0.5 hover:bg-gray-200 rounded-full transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
             </span>
           ))}
         </div>
       )}
 
-      {/* Add Button / Dropdown */}
-      <div className="relative">
+      {/* Selected Tags (removable) */}
+      {selectedItems.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {selectedItems.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal"
+            >
+              {item}
+              <button
+                onClick={() => onRemove(item)}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <X className="w-3.5 h-3.5 text-label-assistive" />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            추가
+          </button>
+        </div>
+      )}
+
+      {/* Add Button (full width when no items selected) */}
+      {selectedItems.length === 0 && (
+        <div className="relative">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full flex items-center justify-center gap-1 px-3 py-2.5 border border-line-normal rounded-lg text-body-1-medium text-label-normal hover:bg-gray-50 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            추가
+          </button>
+        </div>
+      )}
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="relative">
+          <div className="fixed inset-0 z-10" onClick={() => { setIsOpen(false); setSearchQuery('') }} />
+          <div className="absolute top-0 left-0 right-0 bg-white border border-line-normal rounded-lg shadow-emphasize z-20 max-h-[240px] overflow-hidden">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-line-normal">
+              <Search className="w-4 h-4 text-label-assistive" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="검색..."
+                className="flex-1 text-body-2-regular text-label-normal placeholder:text-label-disabled focus:outline-none"
+                autoFocus
+              />
+            </div>
+            <div className="overflow-y-auto max-h-[180px]">
+              {filteredItems.length === 0 ? (
+                <p className="px-3 py-2 text-body-2-regular text-label-assistive">항목이 없습니다</p>
+              ) : (
+                filteredItems.map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => {
+                      onAdd(item)
+                      setSearchQuery('')
+                    }}
+                    className="w-full text-left px-3 py-2 text-body-2-regular text-label-normal hover:bg-gray-50 transition-colors"
+                  >
+                    {item}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 주문 데이터 표시 컴포넌트
+function OrderCard({
+  pair,
+  position,
+  quantity,
+  entryPrice,
+  exitPrice,
+  pnl,
+  pnlPercent,
+  result,
+  isDetailOpen,
+  onToggleDetail,
+  detailData,
+}: {
+  pair: string
+  position: string
+  quantity: string
+  entryPrice: string
+  exitPrice: string
+  pnl: string
+  pnlPercent: string
+  result: string
+  isDetailOpen: boolean
+  onToggleDetail: () => void
+  detailData?: {
+    entryTime: string
+    exitTime: string
+    entryVolume: string
+    exitVolume: string
+    entryFee: string
+    exitFee: string
+    fundingFee: string
+  }
+}) {
+  const isPositive = pnl && !pnl.startsWith('-')
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-3">
+        <div className="w-6 h-6 rounded-full bg-[#F7931A] flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-[10px] font-bold">₿</span>
+        </div>
+        <span className="text-body-1-bold text-label-normal">{pair}</span>
+        <span className={cn(
+          "px-2 py-0.5 rounded text-caption-medium",
+          position === 'Long'
+            ? "bg-element-positive-lighter text-element-positive-default"
+            : "bg-element-danger-lighter text-element-danger-default"
+        )}>
+          {position}
+        </span>
+      </div>
+
+      <div className="border-l-2 border-line-normal pl-3">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+          <div className="flex">
+            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">수량</span>
+            <span className="text-body-2-medium text-label-normal">{quantity}</span>
+          </div>
+          <div className="flex">
+            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입가</span>
+            <span className="text-body-2-medium text-label-normal">{entryPrice}</span>
+          </div>
+          <div className="flex">
+            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산가</span>
+            <span className="text-body-2-medium text-label-normal">{exitPrice}</span>
+          </div>
+          <div className="flex">
+            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">손익</span>
+            <span className={cn(
+              "text-body-2-bold",
+              isPositive ? "text-element-positive-default" : "text-element-danger-default"
+            )}>
+              {pnl}({pnlPercent}%)
+            </span>
+          </div>
+          <div className="flex">
+            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">결과</span>
+            <span className={cn(
+              "px-2 py-0.5 rounded text-caption-medium",
+              result === 'Win'
+                ? "bg-element-positive-lighter text-element-positive-default"
+                : "bg-element-danger-lighter text-element-danger-default"
+            )}>
+              {result}
+            </span>
+          </div>
+        </div>
+
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-center gap-1 px-3 py-2 border border-line-normal rounded-lg text-body-1-medium text-label-normal hover:bg-gray-50 transition-colors"
+          onClick={onToggleDetail}
+          className="flex items-center gap-1 mt-2 text-body-2-regular text-label-assistive hover:text-label-neutral transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          추가
+          주문 상세 내역
+          {isDetailOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => { setIsOpen(false); setSearchQuery('') }} />
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-line-normal rounded-lg shadow-emphasize z-20 max-h-[240px] overflow-hidden">
-              {/* Search */}
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-line-normal">
-                <Search className="w-4 h-4 text-label-assistive" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="검색..."
-                  className="flex-1 text-body-2-regular text-label-normal placeholder:text-label-disabled focus:outline-none"
-                  autoFocus
-                />
-              </div>
-
-              {/* Options */}
-              <div className="overflow-y-auto max-h-[180px]">
-                {filteredItems.length === 0 ? (
-                  <p className="px-3 py-2 text-body-2-regular text-label-assistive">항목이 없습니다</p>
-                ) : (
-                  filteredItems.map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => {
-                        onAdd(item)
-                        setSearchQuery('')
-                      }}
-                      className="w-full text-left px-3 py-2 text-body-2-regular text-label-normal hover:bg-gray-50 transition-colors"
-                    >
-                      {item}
-                    </button>
-                  ))
-                )}
-              </div>
+        {isDetailOpen && detailData && (
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 mt-2">
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">거래 시간</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.entryTime}</span>
             </div>
-          </>
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산 시간</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.exitTime}</span>
+            </div>
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입 거래대금</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.entryVolume}</span>
+            </div>
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산 거래대금</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.exitVolume}</span>
+            </div>
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입 수수료</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.entryFee}</span>
+            </div>
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산 수수료</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.exitFee}</span>
+            </div>
+            <div className="flex">
+              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">펀딩 수수료</span>
+              <span className="text-body-2-medium text-label-normal">{detailData.fundingFee}</span>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -186,18 +360,25 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [inputMode, setInputMode] = useState<InputMode>(initialData ? 'auto' : 'manual')
   const [showAutoImport, setShowAutoImport] = useState(false)
-  const [showOrderAdd, setShowOrderAdd] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  // Order form state
-  const [orderPrice, setOrderPrice] = useState('')
-  const [orderQuantity, setOrderQuantity] = useState('')
-  const [orderTime, setOrderTime] = useState('')
-  const [orderType, setOrderType] = useState<'BUY' | 'SELL'>('BUY')
+  // Manual input: additional orders
+  const [additionalOrders, setAdditionalOrders] = useState<Array<{
+    pair: string
+    position: 'Long' | 'Short'
+    quantity: string
+    entryPrice: string
+    exitPrice: string
+    pnl: string
+    result: string
+  }>>([])
 
   const [formData, setFormData] = useState<Partial<JournalFormData>>({
     date: _fmt(_now, _now.getHours(), _now.getMinutes()),
+    exchange: '바이낸스',
     pair: 'BTC/USDT',
     leverage: 20,
     position: 'Long',
@@ -223,14 +404,13 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     entryReason: '',
     scenario: '',
     review: '',
+    principlesChecked: TRADING_PRINCIPLES.map(() => false),
     ...initialData,
   })
 
-  const isPositive = formData.pnl ? !formData.pnl.startsWith('-') : true
   const hasTradeData = formData.pair && formData.entryPrice
   const isEditMode = !!journalId
 
-  // 자동입력 선택
   const handleAutoImport = (trade: typeof autoImportTrades[0]) => {
     setFormData(prev => ({
       ...prev,
@@ -246,7 +426,6 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     setShowAutoImport(false)
   }
 
-  /** 새 매매일지 생성: positionsApi.create() → 서버가 저널 자동 생성 */
   const handleCreateNew = async () => {
     if (isDemoMode) {
       onSave?.()
@@ -280,7 +459,6 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     setIsSaving(false)
   }
 
-  /** 기존 매매일지 수정: journalApi.update() */
   const handleUpdateJournal = async () => {
     if (isDemoMode || !journalId) {
       onSave?.()
@@ -322,39 +500,33 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     }
   }
 
-  // 주문 추가 핸들러
-  const handleAddOrder = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAIAnalysis = async () => {
+    setIsAnalyzing(true)
+    // Simulate AI analysis
+    setTimeout(() => {
+      setAiAnalysisResult('최근 10회 거래 중 4회에서 손절 기준을 지키지 않고 보유 시간이 길어지는 패턴이 나타났습니다.\n손절 후 최소 1시간 대기 원칙을 설정해보세요.')
+      setIsAnalyzing(false)
+    }, 1500)
+  }
 
-    if (isDemoMode || !journalId) {
-      setShowOrderAdd(false)
-      return
-    }
+  const handleAddOrder = () => {
+    setAdditionalOrders(prev => [...prev, {
+      pair: '',
+      position: 'Long',
+      quantity: '',
+      entryPrice: '',
+      exitPrice: '',
+      pnl: '',
+      result: 'Win',
+    }])
+  }
 
-    // journalId를 positionId로 사용 (서버에서 매핑)
-    const price = parseFloat(orderPrice.replace(/,/g, '')) || 0
-    const quantity = parseFloat(orderQuantity.replace(/,/g, '')) || 0
-
-    if (!price || !quantity) return
-
-    const result = await ordersApi.create(journalId, {
-      side: orderType,
-      type: 'MARKET',
-      price,
-      quantity,
-      executedAt: orderTime || undefined,
-    }).catch((err) => {
-      console.warn('Order create error:', err.message)
-      return null
+  const togglePrincipleCheck = (index: number) => {
+    setFormData(prev => {
+      const checked = [...(prev.principlesChecked || TRADING_PRINCIPLES.map(() => false))]
+      checked[index] = !checked[index]
+      return { ...prev, principlesChecked: checked }
     })
-
-    if (result) {
-      setShowOrderAdd(false)
-      setOrderPrice('')
-      setOrderQuantity('')
-      setOrderTime('')
-      onSave?.()
-    }
   }
 
   return (
@@ -374,190 +546,15 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
             <h2 className="text-title-1-bold text-label-normal">
               {isEditMode ? '매매일지 수정' : '매매일지 작성'}
             </h2>
-            <p className="text-body-2-regular text-label-assistive">{formData.date}</p>
+            <p className="text-body-2-regular text-label-assistive">
+              {formData.date} | {formData.exchange || '바이낸스'}
+            </p>
           </div>
 
-          {/* Input Mode Toggle (only for new entries) */}
-          {!isEditMode && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setInputMode('auto')}
-                className={cn(
-                  "flex-1 py-2 px-3 rounded-lg text-body-2-medium transition-colors border",
-                  inputMode === 'auto'
-                    ? "border-gray-800 bg-gray-900 text-white"
-                    : "border-line-normal text-label-normal hover:bg-gray-50"
-                )}
-              >
-                자동입력
-              </button>
-              <button
-                onClick={() => setInputMode('manual')}
-                className={cn(
-                  "flex-1 py-2 px-3 rounded-lg text-body-2-medium transition-colors border",
-                  inputMode === 'manual'
-                    ? "border-gray-800 bg-gray-900 text-white"
-                    : "border-line-normal text-label-normal hover:bg-gray-50"
-                )}
-              >
-                수동입력
-              </button>
-            </div>
-          )}
-
-          {/* Auto Import Dropdown */}
-          {!isEditMode && inputMode === 'auto' && (
-            <div className="relative">
-              <button
-                onClick={() => setShowAutoImport(!showAutoImport)}
-                className="w-full flex items-center justify-between px-4 py-3 border border-line-normal rounded-lg text-body-1-regular text-label-normal hover:bg-gray-50 transition-colors"
-              >
-                <span>거래소에서 가져오기</span>
-                <ChevronDown className={cn("w-4 h-4 transition-transform", showAutoImport && "rotate-180")} />
-              </button>
-
-              {showAutoImport && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowAutoImport(false)} />
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-line-normal rounded-lg shadow-emphasize z-20 max-h-[300px] overflow-y-auto">
-                    {autoImportTrades.map((trade) => (
-                      <button
-                        key={trade.id}
-                        onClick={() => handleAutoImport(trade)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-line-normal last:border-b-0"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-body-2-bold text-label-normal">{trade.pair}</span>
-                            <span className={cn(
-                              "px-1.5 py-0.5 rounded text-caption-medium",
-                              trade.position === 'Long'
-                                ? "bg-element-positive-lighter text-element-positive-default"
-                                : "bg-element-danger-lighter text-element-danger-default"
-                            )}>
-                              {trade.position}
-                            </span>
-                            <span className="text-caption-regular text-label-assistive">x{trade.leverage}</span>
-                          </div>
-                          <span className={cn(
-                            "text-body-2-bold",
-                            trade.pnl.startsWith('+') ? "text-element-positive-default" : "text-element-danger-default"
-                          )}>
-                            {trade.pnl}
-                          </span>
-                        </div>
-                        <p className="text-caption-regular text-label-assistive">{trade.time}</p>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Manual Input Form */}
-          {!isEditMode && inputMode === 'manual' && !hasTradeData && (
+          {/* Trade Summary - Auto mode */}
+          {hasTradeData && inputMode === 'auto' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">거래쌍</label>
-                  <input
-                    type="text"
-                    placeholder="BTC/USDT"
-                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    value={formData.pair || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, pair: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">레버리지</label>
-                  <input
-                    type="number"
-                    placeholder="20"
-                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    value={formData.leverage || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, leverage: Number(e.target.value) }))}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-body-1-medium text-label-normal block">포지션</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setFormData(prev => ({ ...prev, position: 'Long' }))}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg text-body-2-medium transition-colors border",
-                      formData.position === 'Long'
-                        ? "border-element-positive-default bg-element-positive-lighter text-element-positive-default"
-                        : "border-line-normal text-label-normal hover:bg-gray-50"
-                    )}
-                  >
-                    Long
-                  </button>
-                  <button
-                    onClick={() => setFormData(prev => ({ ...prev, position: 'Short' }))}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg text-body-2-medium transition-colors border",
-                      formData.position === 'Short'
-                        ? "border-element-danger-default bg-element-danger-lighter text-element-danger-default"
-                        : "border-line-normal text-label-normal hover:bg-gray-50"
-                    )}
-                  >
-                    Short
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">진입가</label>
-                  <input
-                    type="text"
-                    placeholder="0"
-                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    value={formData.entryPrice || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, entryPrice: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">청산가</label>
-                  <input
-                    type="text"
-                    placeholder="0"
-                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    value={formData.exitPrice || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, exitPrice: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">수량</label>
-                  <input
-                    type="text"
-                    placeholder="0"
-                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    value={formData.quantity || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">손익</label>
-                  <input
-                    type="text"
-                    placeholder="0"
-                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    value={formData.pnl || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, pnl: e.target.value }))}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Trade Summary Card */}
-          {hasTradeData && (
-            <div className="space-y-4">
-              {/* Header */}
+              {/* Main Trade Header */}
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 rounded-full bg-[#F7931A] flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-[10px] font-bold">₿</span>
@@ -576,7 +573,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                 </span>
               </div>
 
-              {/* Data Grid */}
+              {/* Main Trade Data */}
               <div className="border-l-2 border-line-normal pl-3">
                 <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                   <div className="flex">
@@ -599,7 +596,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                     <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">손익</span>
                     <span className={cn(
                       "text-body-2-bold",
-                      isPositive ? "text-element-positive-default" : "text-element-danger-default"
+                      formData.pnl && !formData.pnl.startsWith('-') ? "text-element-positive-default" : "text-element-danger-default"
                     )}>
                       {formData.pnl}({formData.pnlPercent}%)
                     </span>
@@ -658,92 +655,251 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                     </div>
                   </div>
                 )}
-
-                {/* 주문 추가 버튼 */}
-                <button
-                  onClick={() => setShowOrderAdd(true)}
-                  className="flex items-center gap-1 mt-3 text-body-2-medium text-label-normal hover:text-label-neutral transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  주문 추가
-                </button>
               </div>
+
+              {/* Second Order (sub order) */}
+              <OrderCard
+                pair={formData.pair || 'BTC/USDT'}
+                position={formData.position || 'Long'}
+                quantity={formData.quantity || '0.05'}
+                entryPrice={formData.entryPrice || '98,200'}
+                exitPrice={formData.exitPrice || '99,400'}
+                pnl={formData.pnl || '+1,250'}
+                pnlPercent={formData.pnlPercent || '24.5'}
+                result={formData.result || 'Win'}
+                isDetailOpen={false}
+                onToggleDetail={() => {}}
+                detailData={{
+                  entryTime: formData.entryTime || '',
+                  exitTime: formData.exitTime || '',
+                  entryVolume: formData.entryVolume || '',
+                  exitVolume: formData.exitVolume || '',
+                  entryFee: formData.entryFee || '',
+                  exitFee: formData.exitFee || '',
+                  fundingFee: formData.fundingFee || '',
+                }}
+              />
             </div>
           )}
 
-          {/* 주문 추가 모달 */}
-          {showOrderAdd && (
-            <div className="border border-line-normal rounded-lg p-4 space-y-3 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <h3 className="text-body-1-bold text-label-normal">주문 추가</h3>
-                <button onClick={() => setShowOrderAdd(false)} className="p-1 hover:bg-gray-200 rounded transition-colors">
-                  <X className="w-4 h-4 text-label-assistive" />
+          {/* Manual Input Form */}
+          {inputMode === 'manual' && (
+            <div className="space-y-4">
+              {/* Trading pair & Leverage */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-body-2-medium text-label-neutral">거래 페어</label>
+                  <input
+                    type="text"
+                    placeholder="입력(예. BTC/USDT)"
+                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
+                    value={formData.pair || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, pair: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-body-2-medium text-label-neutral">레버리지</label>
+                  <input
+                    type="text"
+                    placeholder="입력"
+                    className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
+                    value={formData.leverage || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, leverage: Number(e.target.value) }))}
+                  />
+                </div>
+              </div>
+
+              {/* Position direction */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-body-2-medium text-label-neutral">포지션 방향</label>
+                </div>
+                <div />
+              </div>
+              <div className="flex gap-2 -mt-2">
+                <button
+                  onClick={() => setFormData(prev => ({ ...prev, position: 'Long' }))}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-body-2-medium transition-colors border",
+                    formData.position === 'Long'
+                      ? "border-gray-800 bg-gray-900 text-white"
+                      : "border-line-normal text-label-normal hover:bg-gray-50"
+                  )}
+                >
+                  Long
+                </button>
+                <button
+                  onClick={() => setFormData(prev => ({ ...prev, position: 'Short' }))}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-body-2-medium transition-colors border",
+                    formData.position === 'Short'
+                      ? "border-gray-800 bg-gray-900 text-white"
+                      : "border-line-normal text-label-normal hover:bg-gray-50"
+                  )}
+                >
+                  Short
                 </button>
               </div>
-              <form onSubmit={handleAddOrder} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-body-2-medium text-label-neutral">유형</label>
-                    <select
-                      className="w-full px-3 py-2 border border-line-normal rounded-lg text-body-2-regular focus:outline-none focus:border-line-focused bg-white"
-                      value={orderType}
-                      onChange={(e) => setOrderType(e.target.value as 'BUY' | 'SELL')}
-                    >
-                      <option value="BUY">추가 진입</option>
-                      <option value="SELL">부분 청산</option>
-                    </select>
+
+              {/* Trade details grid */}
+              <div className="border-l-2 border-line-normal pl-3 space-y-2">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                  <div className="flex items-center">
+                    <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">수량</span>
+                    <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                      value={formData.quantity || ''} onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))} />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-body-2-medium text-label-neutral">가격</label>
-                    <input
-                      type="text"
-                      placeholder="0"
-                      value={orderPrice}
-                      onChange={(e) => setOrderPrice(e.target.value)}
-                      className="w-full px-3 py-2 border border-line-normal rounded-lg text-body-2-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    />
+                  <div className="flex items-center">
+                    <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">보유 시간</span>
+                    <input type="text" placeholder="예. 2시간 43분" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                      value={formData.holdTime || ''} onChange={(e) => setFormData(prev => ({ ...prev, holdTime: e.target.value }))} />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-body-2-medium text-label-neutral">수량</label>
-                    <input
-                      type="text"
-                      placeholder="0"
-                      value={orderQuantity}
-                      onChange={(e) => setOrderQuantity(e.target.value)}
-                      className="w-full px-3 py-2 border border-line-normal rounded-lg text-body-2-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    />
+                  <div className="flex items-center">
+                    <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입가</span>
+                    <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                      value={formData.entryPrice || ''} onChange={(e) => setFormData(prev => ({ ...prev, entryPrice: e.target.value }))} />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-body-2-medium text-label-neutral">시간</label>
-                    <input
-                      type="text"
-                      placeholder="YYYY.MM.DD HH:MM"
-                      value={orderTime}
-                      onChange={(e) => setOrderTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-line-normal rounded-lg text-body-2-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
-                    />
+                  <div className="flex items-center">
+                    <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산가</span>
+                    <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                      value={formData.exitPrice || ''} onChange={(e) => setFormData(prev => ({ ...prev, exitPrice: e.target.value }))} />
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">손익</span>
+                    <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                      value={formData.pnl || ''} onChange={(e) => setFormData(prev => ({ ...prev, pnl: e.target.value }))} />
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">결과</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setFormData(prev => ({ ...prev, result: 'Win' }))}
+                        className={cn("px-3 py-1 rounded text-caption-medium border transition-colors",
+                          formData.result === 'Win' ? "border-gray-800 bg-gray-900 text-white" : "border-line-normal text-label-normal"
+                        )}>Win</button>
+                      <button onClick={() => setFormData(prev => ({ ...prev, result: 'Lose' }))}
+                        className={cn("px-3 py-1 rounded text-caption-medium border transition-colors",
+                          formData.result === 'Lose' ? "border-gray-800 bg-gray-900 text-white" : "border-line-normal text-label-normal"
+                        )}>Lose</button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Expandable order details */}
                 <button
-                  type="submit"
-                  className="w-full py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  onClick={() => setIsDetailOpen(!isDetailOpen)}
+                  className="flex items-center gap-1 mt-2 text-body-2-regular text-label-assistive hover:text-label-neutral transition-colors"
                 >
-                  추가
+                  주문 상세 내역
+                  {isDetailOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
-              </form>
+
+                {isDetailOpen && (
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입 시간</span>
+                      <input type="text" placeholder="예. 2025.12.11 14:30" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.entryTime || ''} onChange={(e) => setFormData(prev => ({ ...prev, entryTime: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산 시간</span>
+                      <input type="text" placeholder="예. 2025.12.11 14:30" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.exitTime || ''} onChange={(e) => setFormData(prev => ({ ...prev, exitTime: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입 거래대금</span>
+                      <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.entryVolume || ''} onChange={(e) => setFormData(prev => ({ ...prev, entryVolume: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산 거래대금</span>
+                      <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.exitVolume || ''} onChange={(e) => setFormData(prev => ({ ...prev, exitVolume: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입 수수료</span>
+                      <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.entryFee || ''} onChange={(e) => setFormData(prev => ({ ...prev, entryFee: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산 수수료</span>
+                      <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.exitFee || ''} onChange={(e) => setFormData(prev => ({ ...prev, exitFee: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">펀딩 수수료</span>
+                      <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1"
+                        value={formData.fundingFee || ''} onChange={(e) => setFormData(prev => ({ ...prev, fundingFee: e.target.value }))} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional orders */}
+              {additionalOrders.map((_, idx) => (
+                <div key={idx} className="space-y-3 pt-4 border-t border-line-normal">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-body-2-medium text-label-neutral">거래 페어</label>
+                      <input type="text" placeholder="입력(예. BTC/USDT)"
+                        className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-body-2-medium text-label-neutral">포지션 방향</label>
+                      <div className="flex gap-2">
+                        <button className="px-4 py-2.5 rounded-lg text-body-2-medium border border-gray-800 bg-gray-900 text-white">Long</button>
+                        <button className="px-4 py-2.5 rounded-lg text-body-2-medium border border-line-normal text-label-normal">Short</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-line-normal pl-3">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                      <div className="flex items-center">
+                        <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">수량</span>
+                        <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1" />
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">진입가</span>
+                        <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1" />
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">청산가</span>
+                        <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1" />
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">손익</span>
+                        <input type="text" placeholder="입력" className="flex-1 text-body-2-regular placeholder:text-label-disabled focus:outline-none border-b border-line-normal py-1" />
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">결과</span>
+                        <div className="flex gap-2">
+                          <button className="px-3 py-1 rounded text-caption-medium border border-line-normal text-label-normal">Win</button>
+                          <button className="px-3 py-1 rounded text-caption-medium border border-line-normal text-label-normal">Lose</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* + 오더 추가 button */}
+              <button
+                onClick={handleAddOrder}
+                className="w-full flex items-center justify-center gap-1 px-3 py-3 border border-line-normal rounded-lg text-body-1-medium text-label-normal hover:bg-gray-50 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                오더 추가
+              </button>
             </div>
           )}
 
           {/* Tabs */}
-          <div className="flex">
+          <div className="flex border-b border-line-normal">
             <button
               className={cn(
                 "flex-1 h-14 px-2 transition-colors",
                 activeTab === 'pre-scenario'
                   ? "text-title-2-bold text-label-normal border-b-2 border-gray-800"
-                  : "text-title-2-regular text-label-disabled border-b border-line-normal"
+                  : "text-title-2-regular text-label-disabled"
               )}
               onClick={() => setActiveTab('pre-scenario')}
             >
@@ -754,7 +910,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                 "flex-1 h-14 px-2 transition-colors",
                 activeTab === 'post-review'
                   ? "text-title-2-bold text-label-normal border-b-2 border-gray-800"
-                  : "text-title-2-regular text-label-disabled border-b border-line-normal"
+                  : "text-title-2-regular text-label-disabled"
               )}
               onClick={() => setActiveTab('post-review')}
             >
@@ -762,23 +918,24 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
             </button>
           </div>
 
+          {/* AI Helper Notice */}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+              <span className="text-[8px] font-bold bg-gradient-to-br from-symbol-sub to-symbol-main bg-clip-text text-transparent">T</span>
+            </div>
+            <span className="text-body-2-regular text-label-neutral">
+              <span className="text-body-2-bold text-label-normal">Tradex AI Assistant</span>가 학습하여 이후 전략 분석에 활용해요.
+            </span>
+          </div>
+
           {/* Pre-scenario Tab Content */}
           {activeTab === 'pre-scenario' && (
-            <div className="space-y-4">
-              {/* AI Helper Notice */}
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                  <span className="text-[8px] font-bold bg-gradient-to-br from-symbol-sub to-symbol-main bg-clip-text text-transparent">T</span>
-                </div>
-                <span className="text-body-1-medium text-label-normal">
-                  Tradex AI Assistant가 학습하여 이후 전략 분석에 활용해요.
-                </span>
-              </div>
-
-              {/* 지표 - Tag Selector */}
+            <div className="space-y-6">
+              {/* 지표 */}
               <TagSelector
                 label="지표"
                 selectedItems={formData.indicators || []}
+                recommendedItems={recommendedIndicators}
                 availableItems={availableIndicators}
                 onAdd={(item) => setFormData(prev => ({
                   ...prev,
@@ -790,10 +947,11 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                 }))}
               />
 
-              {/* 타임 프레임 - Tag Selector */}
+              {/* 타임 프레임 */}
               <TagSelector
                 label="타임 프레임"
                 selectedItems={formData.timeframes || []}
+                recommendedItems={recommendedTimeframes}
                 availableItems={availableTimeframes}
                 onAdd={(item) => setFormData(prev => ({
                   ...prev,
@@ -805,10 +963,11 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                 }))}
               />
 
-              {/* 기술적 분석 - Tag Selector */}
+              {/* 기술적 분석 */}
               <TagSelector
                 label="기술적 분석"
                 selectedItems={formData.technicalAnalysis || []}
+                recommendedItems={recommendedTechnicalAnalysis}
                 availableItems={availableTechnicalAnalysis}
                 onAdd={(item) => setFormData(prev => ({
                   ...prev,
@@ -823,20 +982,20 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
               {/* TP/SL */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">목표 익절가(TP)</label>
+                  <label className="text-body-1-bold text-label-normal block">목표 익절가(TP)</label>
                   <input
                     type="text"
-                    placeholder="0"
+                    placeholder="목표 익절가를 입력해 주세요."
                     className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular text-label-normal placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
                     value={formData.targetTP || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, targetTP: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-body-1-medium text-label-normal block">목표 손절가(SL)</label>
+                  <label className="text-body-1-bold text-label-normal block">목표 손절가(SL)</label>
                   <input
                     type="text"
-                    placeholder="0"
+                    placeholder="목표 손절가를 입력해 주세요."
                     className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular text-label-normal placeholder:text-label-disabled focus:outline-none focus:border-line-focused"
                     value={formData.targetSL || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, targetSL: e.target.value }))}
@@ -846,7 +1005,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
 
               {/* 진입 근거 */}
               <div className="space-y-2">
-                <label className="text-body-1-medium text-label-normal block">진입 근거</label>
+                <label className="text-body-1-bold text-label-normal block">진입 근거</label>
                 <textarea
                   placeholder="진입 근거에 대해 기록해 보세요. (예. 90k 근처의 지지선과 4시간봉 기준 볼린저 밴드 하단 선이 겹쳐서 롱 포지션 진입)"
                   className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused resize-none h-28"
@@ -857,7 +1016,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
 
               {/* 목표 시나리오 */}
               <div className="space-y-2">
-                <label className="text-body-1-medium text-label-normal block">목표 시나리오</label>
+                <label className="text-body-1-bold text-label-normal block">목표 시나리오</label>
                 <textarea
                   placeholder="목표/계획에 대해 자유롭게 기록해 보세요."
                   className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused resize-none h-28"
@@ -868,16 +1027,84 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
             </div>
           )}
 
-          {/* Post-review Tab Content */}
+          {/* Post-review Tab Content - Figma E-6/E-7 */}
           {activeTab === 'post-review' && (
-            <div className="space-y-2">
-              <label className="text-body-1-medium text-label-normal block">매매 결과에 대한 피드백</label>
-              <textarea
-                placeholder="매매 종료 후 감정 상태와 원칙 준수 여부를 솔직하게 기록해 보세요. (잘한 점 / 아쉬운 점 / 개선점 등)"
-                className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused resize-none h-40"
-                value={formData.review || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, review: e.target.value }))}
-              />
+            <div className="space-y-6">
+              {/* 차트 스크린샷 */}
+              <div className="space-y-2">
+                <label className="text-body-1-bold text-label-normal block">차트 스크린샷</label>
+                <button className="w-[80px] h-[80px] border border-dashed border-line-normal rounded-lg flex flex-col items-center justify-center gap-1 hover:bg-gray-50 transition-colors">
+                  <Upload className="w-5 h-5 text-label-assistive" />
+                  <span className="text-caption-regular text-label-assistive">추가</span>
+                </button>
+              </div>
+
+              {/* 복기 내용 */}
+              <div className="space-y-2">
+                <label className="text-body-1-bold text-label-normal block">복기 내용</label>
+                <textarea
+                  placeholder="이번 매매에서 잘한 점이나 아쉬운 점, 개선할 점을 자유롭게 작성해 주세요."
+                  className="w-full px-4 py-3 border border-line-normal rounded-lg text-body-1-regular placeholder:text-label-disabled focus:outline-none focus:border-line-focused resize-none h-32"
+                  value={formData.review || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, review: e.target.value }))}
+                />
+              </div>
+
+              {/* 매매원칙 준수 여부 */}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-body-1-bold text-label-normal block">매매원칙 준수 여부</label>
+                  <p className="text-body-2-regular text-label-assistive">이번 매매에서 아래 원칙을 얼마나 지켰는지 체크해보세요.</p>
+                </div>
+                <div className="space-y-3">
+                  {TRADING_PRINCIPLES.map((principle, idx) => (
+                    <label key={idx} className="flex items-start gap-3 cursor-pointer">
+                      <div
+                        onClick={() => togglePrincipleCheck(idx)}
+                        className={cn(
+                          "w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors",
+                          formData.principlesChecked?.[idx]
+                            ? "bg-gray-900"
+                            : "border border-line-normal bg-white"
+                        )}
+                      >
+                        {formData.principlesChecked?.[idx] && (
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-body-2-regular text-label-normal leading-relaxed">{principle}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tradex AI 분석 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <label className="text-body-1-bold text-label-normal block">Tradex AI 분석</label>
+                    <p className="text-body-2-regular text-label-assistive">매매 복기 내용을 작성하고 AI 분석을 요청하면 Tradex AI가 매매 패턴을 분석하고 개선 제안을 제공합니다.</p>
+                  </div>
+                  <button
+                    onClick={handleAIAnalysis}
+                    disabled={isAnalyzing}
+                    className="shrink-0 ml-4 flex items-center gap-1.5 px-4 py-2 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn("w-4 h-4", isAnalyzing && "animate-spin")} />
+                    AI 분석하기
+                  </button>
+                </div>
+
+                {/* AI Analysis Result */}
+                {aiAnalysisResult && (
+                  <div className="border border-element-positive-default rounded-lg p-4 bg-element-positive-lighter/30">
+                    <span className="inline-block px-2 py-0.5 bg-element-positive-default text-white text-caption-medium rounded mb-2">Tradex AI 분석</span>
+                    <p className="text-body-2-regular text-label-normal whitespace-pre-line">{aiAnalysisResult}</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -888,13 +1115,19 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
         </div>
       </div>
 
-      {/* Bottom Save Button */}
-      <div className="px-5 py-4 border-t border-line-normal">
+      {/* Bottom Buttons - Figma: 취소 + 저장 */}
+      <div className="px-5 py-4 border-t border-line-normal flex gap-3">
+        <button
+          onClick={onClose}
+          className="flex-1 py-3 rounded-lg text-body-1-bold border border-line-normal text-label-normal hover:bg-gray-50 transition-colors"
+        >
+          취소
+        </button>
         <button
           onClick={handleSave}
           disabled={isSaving}
           className={cn(
-            "w-full py-3 rounded-lg text-body-1-bold transition-colors",
+            "flex-1 py-3 rounded-lg text-body-1-bold transition-colors",
             isSaving
               ? "bg-element-primary-disabled text-label-disabled cursor-not-allowed"
               : "bg-element-primary-default hover:bg-element-primary-pressed text-label-inverse"

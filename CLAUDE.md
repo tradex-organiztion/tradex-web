@@ -4,6 +4,13 @@
 
 Tradex는 AI 기반 트레이딩 분석 및 매매일지 관리 서비스입니다.
 
+## 데모 계정
+
+| 항목 | 값 |
+|------|-----|
+| Email | `string@email.com` |
+| Password | `stringst` |
+
 ## 기술 스택
 
 - **프레임워크**: Next.js 16 (App Router)
@@ -19,6 +26,8 @@ Tradex는 AI 기반 트레이딩 분석 및 매매일지 관리 서비스입니�
 > **Figma (파일)**: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221
 > **Figma (Web 페이지 - UI 구현 기준)**: https://www.figma.com/design/6nheNQYbvBrIczlMxe54F6/Tradex_0221?node-id=4001-20898&m=dev
 > **리디자인 진행 추적**: `docs/REDESIGN_PROGRESS.md`
+> **Figma 페이지 맵**: `docs/FIGMA_PAGE_MAP.md` (전체 화면 노드 ID, 스크린샷 경로)
+> **Figma 비교 진행**: `docs/FIGMA_COMPARISON_PROGRESS.md` (비교 작업 진행 현황)
 >
 > **중요**: 웹 UI 구현 시 반드시 `node-id=4001-20898` (Web 페이지)를 기준으로 작업할 것.
 
@@ -68,6 +77,88 @@ Tradex는 AI 기반 트레이딩 분석 및 매매일지 관리 서비스입니�
 > **주의**: 코드 레벨 비교만으로는 실제 렌더링 결과를 보장할 수 없습니다.
 > CSS 상속, 반응형 레이아웃, 폰트 로딩 등으로 예상과 다르게 렌더링될 수 있으므로
 > 반드시 실제 브라우저 화면을 확인해야 합니다.
+
+#### Figma 전수 비교 작업 워크플로우 (필수)
+
+**Figma의 모든 화면을 브라우저 렌더링과 1:1 비교하는 작업입니다.**
+
+##### 사전 준비: Figma 스크린샷 일괄 다운로드
+
+비교 작업 시작 전, Figma 스크린샷을 미리 다운로드하여 `figma-screenshots/` 폴더에 저장합니다.
+매번 Figma API를 호출하지 않고, 저장된 스크린샷을 기준으로 비교합니다.
+
+```
+1. docs/FIGMA_PAGE_MAP.md에서 작업할 카테고리의 노드 ID 목록 확인
+2. download_figma_images로 해당 노드 스크린샷 일괄 다운로드
+3. figma-screenshots/light/ 또는 figma-screenshots/dark/에 저장
+4. 이후 비교 작업에서는 저장된 스크린샷만 참조 (API 재호출 불필요)
+```
+
+##### 비교 작업 순서
+
+```
+1. docs/FIGMA_COMPARISON_PROGRESS.md에서 현재 진행 상황 확인
+2. 미착수(⬜) 화면 중 순서대로 선택
+3. Figma 스크린샷 확인 (figma-screenshots/light/xxx.png)
+4. Chrome DevTools MCP로 해당 라우트 이동 → 브라우저 스크린샷 촬영
+5. Figma vs 브라우저 스크린샷을 Read 도구로 나란히 비교
+6. 차이점 식별 → 코드 수정 → 재스크린샷으로 검증
+7. 완료 시 FIGMA_COMPARISON_PROGRESS.md 상태 업데이트 (⬜ → ✅)
+8. MCP로 해결 불가한 CSS는 FIGMA_CSS_REQUESTS.md에 기록 (⬜ → ⚠️)
+```
+
+##### 세션 중단/재개
+
+```
+- 작업 중단 시: FIGMA_COMPARISON_PROGRESS.md에 현재 상태 저장
+- 새 세션 시작 시: FIGMA_COMPARISON_PROGRESS.md 확인 → 중단 지점부터 재개
+- "Figma 비교 작업 이어서 해줘"라고 하면 자동으로 진행 파일 확인 후 재개
+```
+
+##### 참조 문서
+
+| 문서 | 용도 |
+|------|------|
+| `docs/FIGMA_PAGE_MAP.md` | 전체 화면 목록, 노드 ID, 스크린샷 경로 매핑 |
+| `docs/FIGMA_COMPARISON_PROGRESS.md` | 비교 작업 진행 현황 추적 |
+| `docs/FIGMA_CSS_REQUESTS.md` | MCP로 해결 불가한 CSS 항목 기록 |
+
+#### Figma MCP 데이터 한계 및 대응 규칙 (필수)
+
+**Figma MCP(`get_figma_data`)는 CSS 속성값을 부정확하게 반환할 수 있습니다.**
+
+| 속성 | MCP 데이터 신뢰도 | 설명 |
+|------|-----------------|------|
+| 레이아웃 (flex, gap, padding, 정렬) | ✅ 신뢰 가능 | 그대로 사용 |
+| 텍스트 (폰트 크기, weight, 색상) | ✅ 신뢰 가능 | 그대로 사용 |
+| 단순 배경색, 단색 보더 | ✅ 신뢰 가능 | 그대로 사용 |
+| 그라디언트 (opacity, 각도) | ❌ 부정확 | 사용자에게 CSS 확인 요청 |
+| 복잡한 보더 스타일 (solid vs gradient) | ❌ 부정확 | 사용자에게 CSS 확인 요청 |
+| 그림자/블러 세부값 | ⚠️ 확인 필요 | 시각적 비교 후 판단 |
+
+**대응 규칙:**
+
+1. **MCP 데이터로 해결 가능한 항목**: 그대로 구현
+2. **MCP 데이터로 해결 불가능한 항목 (그라디언트, 복잡한 보더, 특수 효과 등)**:
+   - 추측으로 수정하지 않고, `docs/FIGMA_CSS_REQUESTS.md`에 문서화
+   - 해당 요소의 Figma 노드 ID, 스크린샷 경로, 어떤 CSS 값이 필요한지 기록
+3. **작업 단위(페이지/그룹) 완료 후**: 문서화된 항목을 한 번에 사용자에게 공유하여 Figma Dev Mode CSS 확인 요청
+4. **절대 하지 말 것**: MCP 데이터를 맞다고 가정하고 추측으로 반복 수정 (해킹 금지)
+
+**`docs/FIGMA_CSS_REQUESTS.md` 기록 형식:**
+
+```markdown
+## [페이지/컴포넌트명]
+
+### 요소명
+- **Figma 노드 ID**: `4001:21859`
+- **스크린샷**: `tmp/figma-xxx.png` vs `tmp/browser-xxx.png`
+- **필요한 CSS**: background, border (그라디언트 opacity/각도 불명확)
+- **현재 문제**: MCP는 rgba(...,1)을 반환하지만 시각적으로 투명도가 있어 보임
+```
+
+> **교훈**: MCP가 `rgba(0, 196, 131, 1)`을 반환해도 실제 Figma CSS는 `rgba(0, 196, 131, 0.10)`일 수 있다.
+> 시각적으로 다르면 MCP 데이터를 의심하고, 문서화 후 사용자에게 일괄 확인 요청할 것.
 
 #### 예시: 잘못된 접근 vs 올바른 접근
 
@@ -321,6 +412,8 @@ src/
 | **미결 사항** | `docs/DECISIONS.md` | 확정 필요한 의사결정 사항 |
 | **CI/CD** | `docs/CICD.md` | 배포 파이프라인, Docker, GitHub Actions |
 | 회고 | `docs/RETROSPECTIVE.md` | 주차별 회고 및 개선사항 |
+| **Figma 페이지 맵** | `docs/FIGMA_PAGE_MAP.md` | Figma 전체 화면 노드 ID, 스크린샷 경로 매핑 |
+| **Figma 비교 진행** | `docs/FIGMA_COMPARISON_PROGRESS.md` | Figma vs 브라우저 비교 작업 진행 현황 |
 | 스펙 문서 | `docs/specs/` | 기능별 기획/스펙 문서 |
 
 ### 스펙 문서 목록

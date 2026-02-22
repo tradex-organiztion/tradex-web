@@ -1,11 +1,18 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export interface AIAttachment {
+  name: string
+  size: number
+  type: string
+}
+
 export interface AIMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  attachments?: AIAttachment[]
   stats?: {
     winRate: string
     profit: string

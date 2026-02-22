@@ -7,26 +7,16 @@ interface TradexAIInsightCardProps {
   className?: string;
 }
 
-/**
- * TradexAIInsightCard - Figma Tradex_0221 기준
- * - 배경: linear-gradient(135deg, #00C483 8%, #85D118 100%)
- * - 테두리: gradient linear-gradient(90deg, #00C483, #85D118) 0.6px
- * - 그림자: 0px 2px 10px 2px rgba(0,0,0,0.02)
- * - border-radius: 12px
- * - padding: 20px 24px
- * - 타이틀: Body 1/Bold, #121212
- * - 설명: Body 2/Regular, #767676
- * - 버튼: bg #121212, text white, rounded-lg, Body 1/Medium, padding 8px 12px
- */
 export function TradexAIInsightCard({ className }: TradexAIInsightCardProps) {
   return (
     <div
       className={cn(
-        "flex-1 min-w-[200px] rounded-xl px-6 py-5 flex flex-col justify-between overflow-hidden",
+        "flex-1 min-w-[200px] flex flex-col gap-2.5 rounded-xl py-5 px-6",
         className
       )}
       style={{
-        background: "linear-gradient(135deg, rgba(0, 196, 131, 1) 8%, rgba(133, 209, 24, 1) 100%)",
+        border: "0.6px solid #00C483",
+        background: "linear-gradient(106deg, rgba(0, 196, 131, 0.10) 8.04%, rgba(133, 209, 24, 0.10) 98.05%)",
         boxShadow: "0px 2px 10px 2px rgba(0, 0, 0, 0.02)",
       }}
     >

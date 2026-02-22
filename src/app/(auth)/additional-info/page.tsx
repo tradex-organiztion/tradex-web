@@ -8,7 +8,6 @@ import { AuthLayout, AuthCard } from "@/components/layout"
 import {
   Button,
   TextField,
-  IconXCircle,
   Select,
   SelectContent,
   SelectItem,
@@ -80,13 +79,10 @@ interface FormErrors {
   apiKey?: string
 }
 
-type PageStep = "form" | "failed"
-
 export default function AdditionalInfoPage() {
   const router = useRouter()
   const { setProfileCompleted, setUser } = useAuthStore()
 
-  const [step, setStep] = useState<PageStep>("form")
   const [formData, setFormData] = useState<FormData>({
     exchangeName: "",
     apiKey: "",
@@ -160,7 +156,6 @@ export default function AdditionalInfoPage() {
         }
       }
       setApiError(errorMsg)
-      setStep("failed")
     } finally {
       setIsLoading(false)
     }
@@ -177,50 +172,6 @@ export default function AdditionalInfoPage() {
   }
 
   const isFormValid = formData.exchangeName && formData.apiKey.trim()
-
-  if (step === "failed") {
-    return (
-      <AuthLayout>
-        <AuthCard title="회원가입" className="w-[424px]">
-          <div className="flex flex-col items-center py-8">
-            <div className="text-[#FF0015] mb-4">
-              <IconXCircle size={48} />
-            </div>
-            <p className="text-title-2-bold text-label-normal text-center mb-2">
-              거래소 연동에 실패했습니다
-            </p>
-            <p className="text-body-1-regular text-label-neutral text-center">
-              {apiError || "API 키 정보를 확인하고 다시 시도해주세요."}
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              className="flex-1"
-              onClick={() => {
-                setStep("form")
-                setApiError(null)
-              }}
-            >
-              다시 시도
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              size="lg"
-              className="flex-1"
-              onClick={() => router.push("/home")}
-            >
-              나중에 하기
-            </Button>
-          </div>
-        </AuthCard>
-      </AuthLayout>
-    )
-  }
 
   return (
     <AuthLayout>
@@ -292,7 +243,7 @@ export default function AdditionalInfoPage() {
                 placeholder="거래소 API 키를 입력해주세요."
                 value={formData.apiKey}
                 onChange={(e) => handleChange("apiKey", e.target.value)}
-                message={apiError || errors.apiKey}
+                message={apiError ? "유효한 API 키가 아닙니다." : errors.apiKey}
                 messageType={(apiError || errors.apiKey) ? "error" : undefined}
                 disabled={isLoading}
               />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { PortfolioTabNav } from '@/components/portfolio'
+import { ExchangeFilter } from '@/components/common/ExchangeFilter'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { futuresApi } from '@/lib/api'
 import type {
@@ -124,45 +125,95 @@ function CoinIcon({ coin, size = 24 }: { coin: string; size?: number }) {
   )
 }
 
-function PnLBarChart({ data }: { data: { day: string; value: number }[] }) {
+/** Smooth bezier curve through points */
+function smoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return ''
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[Math.min(i + 2, pts.length - 1)]
+    const tension = 0.3
+    const cp1x = p1.x + (p2.x - p0.x) * tension
+    const cp1y = p1.y + (p2.y - p0.y) * tension
+    const cp2x = p2.x - (p3.x - p1.x) * tension
+    const cp2y = p2.y - (p3.y - p1.y) * tension
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+  }
+  return d
+}
+
+function PnLAreaChart({ data }: { data: { day: string; value: number }[] }) {
   if (data.length === 0) return null
-  const maxAbs = Math.max(...data.map(d => Math.abs(d.value)))
+
+  // Use cumulative values for the area chart
+  const values = data.map(d => d.value)
+  let cumulative = 0
+  const cumulativeValues = values.map(v => { cumulative += v; return cumulative })
+
   const chartW = 700
-  const chartH = 180
-  const barW = chartW / data.length - 8
-  const midY = chartH / 2
+  const chartH = 200
+  const padding = { left: 45, right: 10, top: 15, bottom: 25 }
+  const innerW = chartW - padding.left - padding.right
+  const innerH = chartH - padding.top - padding.bottom
+
+  const maxVal = Math.max(...cumulativeValues)
+  const minVal = Math.min(...cumulativeValues, 0)
+  const range = maxVal - minVal || 1
+
+  const points = cumulativeValues.map((v, i) => ({
+    x: padding.left + (i / (data.length - 1)) * innerW,
+    y: padding.top + innerH - ((v - minVal) / range) * innerH,
+  }))
+
+  const linePath = smoothPath(points)
+  const areaPath = `${linePath} L${points[points.length - 1].x},${padding.top + innerH} L${points[0].x},${padding.top + innerH} Z`
+
+  // Y-axis grid lines (4 lines)
+  const ySteps = 4
+  const yGridLines = Array.from({ length: ySteps + 1 }, (_, i) => {
+    const val = minVal + (range / ySteps) * (ySteps - i)
+    const y = padding.top + (i / ySteps) * innerH
+    return { val, y }
+  })
+
+  // X-axis labels (show every few)
+  const labelInterval = Math.max(1, Math.floor(data.length / 7))
 
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${chartW} ${chartH + 30}`} className="w-full h-52">
-        {/* Zero line */}
-        <line x1="0" y1={midY} x2={chartW} y2={midY} stroke="#E5E5E5" strokeWidth="1" />
-        {/* Bars */}
+    <div>
+      <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full" preserveAspectRatio="none" style={{ height: '208px' }}>
+        <defs>
+          <linearGradient id="pnlAreaFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#323232" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#323232" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Y-axis grid lines */}
+        {yGridLines.map((g, i) => (
+          <g key={i}>
+            <line x1={padding.left} y1={g.y} x2={chartW - padding.right} y2={g.y} stroke="#E5E5E5" strokeWidth="0.5" />
+            <text x={padding.left - 8} y={g.y + 4} textAnchor="end" fontSize="10" fill="#8F8F8F">
+              {g.val >= 0 ? '+' : ''}{Math.round(g.val).toLocaleString()}
+            </text>
+          </g>
+        ))}
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#pnlAreaFill)" />
+
+        {/* Line */}
+        <path d={linePath} fill="none" stroke="#323232" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* X-axis labels */}
         {data.map((d, i) => {
-          const barH = maxAbs === 0 ? 0 : (Math.abs(d.value) / maxAbs) * (midY - 10)
-          const x = i * (chartW / data.length) + 4
-          const y = d.value >= 0 ? midY - barH : midY
+          if (i % labelInterval !== 0 && i !== data.length - 1) return null
           return (
-            <g key={i}>
-              <rect
-                x={x}
-                y={y}
-                width={barW}
-                height={barH}
-                rx={3}
-                fill={d.value >= 0 ? '#13C34E' : '#FF0015'}
-                opacity={0.85}
-              />
-              <text
-                x={x + barW / 2}
-                y={chartH + 16}
-                textAnchor="middle"
-                className="fill-label-assistive"
-                fontSize="10"
-              >
-                {d.day}
-              </text>
-            </g>
+            <text key={i} x={points[i].x} y={chartH - 5} textAnchor="middle" fontSize="10" fill="#8F8F8F">
+              {d.day}
+            </text>
           )
         })}
       </svg>
@@ -230,10 +281,10 @@ export default function PnLPage() {
 
   // Derived data for UI
   const summaryCards = [
-    { label: '총 손익', value: `${summary.totalPnl >= 0 ? '+' : ''}$${Math.abs(summary.totalPnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: '/icons/icon-dollar.svg' },
-    { label: '거래 규모', value: `$${summary.totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: '/icons/icon-bar-chart.svg' },
-    { label: '승률', value: `${summary.winRate}%`, icon: '/icons/icon-target.svg' },
-    { label: '승/패 횟수', value: `+${summary.winCount}/-${summary.lossCount}회`, icon: '/icons/icon-trophy.svg' },
+    { label: '총 손익', value: `${summary.totalPnl >= 0 ? '+' : ''}$${Math.abs(summary.totalPnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: '/icons/portfolio/icon-total-pnl.svg' },
+    { label: '거래 규모', value: `$${summary.totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: '/icons/portfolio/icon-trade-volume.svg' },
+    { label: '승률', value: `${summary.winRate}%`, icon: '/icons/portfolio/icon-win-rate.svg' },
+    { label: '승/패 횟수', value: `+${summary.winCount}/-${summary.lossCount}회`, icon: '/icons/portfolio/icon-win-loss-count.svg' },
   ]
 
   const topPairs = ranking.rankings.map((r) => ({
@@ -262,10 +313,10 @@ export default function PnLPage() {
   }))
 
   const detailCards = [
-    { label: '총 종료 주문 수', value: `${closedSummary.totalClosedCount}회`, icon: '/icons/icon-check-file.svg' },
-    { label: '종료 주문 승률', value: `${closedSummary.winRate}%`, icon: '/icons/icon-target.svg' },
-    { label: '롱 포지션 손익', value: `${closedSummary.longPnl >= 0 ? '+' : ''}${closedSummary.longPnl.toLocaleString()}(${closedSummary.longCount}회)`, icon: '/icons/icon-signal.svg' },
-    { label: '숏 포지션 손익', value: `${closedSummary.shortPnl >= 0 ? '+' : ''}${closedSummary.shortPnl.toLocaleString()}(${closedSummary.shortCount}회)`, icon: '/icons/icon-signal.svg' },
+    { label: '총 종료 주문 수', value: `${closedSummary.totalClosedCount}회`, icon: '/icons/portfolio/icon-closed-orders.svg' },
+    { label: '종료 주문 승률', value: `${closedSummary.winRate}%`, icon: '/icons/portfolio/icon-closed-win-rate.svg' },
+    { label: '롱 포지션 손익', value: `${closedSummary.longPnl >= 0 ? '+' : ''}${closedSummary.longPnl.toLocaleString()}(${closedSummary.longCount}회)`, icon: '/icons/portfolio/icon-long-pnl.svg' },
+    { label: '숏 포지션 손익', value: `${closedSummary.shortPnl >= 0 ? '+' : ''}${closedSummary.shortPnl.toLocaleString()}(${closedSummary.shortCount}회)`, icon: '/icons/portfolio/icon-short-pnl.svg' },
   ]
 
   const pnlChartData = summary.pnlChart.map((d) => ({
@@ -283,8 +334,11 @@ export default function PnLPage() {
         </p>
       </div>
 
-      {/* Tab Switcher */}
-      <PortfolioTabNav />
+      {/* Tab Switcher + 거래소 필터 */}
+      <div className="flex items-center justify-between">
+        <PortfolioTabNav />
+        <ExchangeFilter />
+      </div>
 
       {/* 손익 Card */}
       <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-8">
@@ -313,8 +367,8 @@ export default function PnLPage() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {summaryCards.map((card) => (
             <div key={card.label} className="flex items-center gap-4 bg-gray-50 rounded-lg px-4 py-3">
-              <div className="w-14 h-14 flex items-center justify-center bg-gray-200/80 rounded-lg flex-shrink-0">
-                <Image src={card.icon} alt={card.label} width={24} height={24} />
+              <div className="w-14 h-14 flex-shrink-0">
+                <Image src={card.icon} alt={card.label} width={56} height={56} />
               </div>
               <div className="space-y-1">
                 <p className="text-body-2-medium text-label-neutral">{card.label}</p>
@@ -327,8 +381,8 @@ export default function PnLPage() {
           ))}
         </div>
 
-        {/* P&L Bar Chart */}
-        <PnLBarChart data={pnlChartData} />
+        {/* P&L Area Chart */}
+        <PnLAreaChart data={pnlChartData} />
       </div>
 
       {/* 손익 랭킹 Card */}
@@ -370,8 +424,8 @@ export default function PnLPage() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {detailCards.map((card) => (
             <div key={card.label} className="flex items-center gap-4 bg-gray-50 rounded-lg px-4 py-3">
-              <div className="w-14 h-14 flex items-center justify-center bg-gray-200/80 rounded-lg flex-shrink-0">
-                <Image src={card.icon} alt={card.label} width={24} height={24} />
+              <div className="w-14 h-14 flex-shrink-0">
+                <Image src={card.icon} alt={card.label} width={56} height={56} />
               </div>
               <div className="space-y-1">
                 <p className="text-body-2-medium text-label-neutral">{card.label}</p>

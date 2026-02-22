@@ -252,8 +252,8 @@ export default function JournalPage() {
 
         {/* View Mode Toggle + Add Button */}
         <div className="flex items-center justify-between mb-4">
-          {/* Pill-style segmented toggle */}
-          <div className="flex items-center rounded-full p-0.5">
+          {/* Pill-style segmented toggle - Figma: wrapper padding 2px, border-radius 9999px */}
+          <div className="flex items-center rounded-full p-[2px]">
             <button
               className={cn(
                 "flex items-center gap-1 px-3 py-2 rounded-full text-body-2-medium transition-colors",
@@ -268,7 +268,7 @@ export default function JournalPage() {
             </button>
             <button
               className={cn(
-                "flex items-center gap-1 px-3 py-2 rounded-lg text-body-2-medium transition-colors",
+                "flex items-center gap-1 px-3 py-2 rounded-full text-body-2-medium transition-colors",
                 viewMode === 'list'
                   ? "bg-gray-200 text-label-normal"
                   : "text-gray-400 hover:text-label-neutral"

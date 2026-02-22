@@ -8,7 +8,6 @@ import {
   TextField,
   IconVisibility,
   IconVisibilityOff,
-  IconCheckCircle,
 } from "@/components/ui"
 import { authApi } from "@/lib/api/auth"
 
@@ -131,8 +130,11 @@ function ResetPasswordContent() {
       <AuthLayout>
         <AuthCard className="w-[424px]">
           <div className="flex flex-col items-center gap-6 py-8">
-            <div className="text-success-500">
-              <IconCheckCircle size={48} />
+            <div>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="16" fill="#323232"/>
+                <path d="M10 16.5L14 20.5L22 12.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
             <div className="text-center">
               <p className="text-body-1-regular text-label-normal">
@@ -149,7 +151,7 @@ function ResetPasswordContent() {
               className="w-full"
               onClick={handleGoToLogin}
             >
-              로그인하기
+              로그인
             </Button>
           </div>
         </AuthCard>

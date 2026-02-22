@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronsRight, MoreVertical } from 'lucide-react'
+import { ChevronsRight, MoreVertical, MousePointer2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Principle {
@@ -33,21 +33,21 @@ const samplePrinciples: Principle[] = [
     id: '2',
     text: '손절 기준은 진입가 대비 2% 이하로 설정하고, 어떤 경우에도 이를 변경하거나 무시하지 않습니다.',
     source: 'ai',
-    aiDescription: '손절 라인을 자주 변경하여 손실이 확대되는 경향이 있습니다.',
+    aiDescription: '손절을 지키지 않은 경우 평균 손실이 7.3%까지 확대되었습니다.',
     timestamp: _fmtTs(0, 11, 20, '오전'),
   },
   {
     id: '3',
     text: '오후 9시 이후에는 신규 포지션을 진입하지 않습니다.',
     source: 'ai',
-    aiDescription: '야간 시간대 매매에서 손실률이 높게 나타났습니다.',
+    aiDescription: '야간 거래 시 승률이 37%로 낮고, 변동성이 큰 시간대에서 비계획적 매매가 많이 발생했습니다.',
     timestamp: _fmtTs(1, 3, 15, '오후'),
   },
   {
     id: '4',
     text: '포지션 진입 전 반드시 매매 일지에 진입 근거와 목표가, 손절가를 미리 작성합니다.',
     source: 'ai',
-    aiDescription: '사전 시나리오 없이 진입한 매매의 손실률이 높습니다.',
+    aiDescription: '사전 계획 없이 진입한 경우 평균 수익률이 -1.8%였으나, 계획을 세운 경우 +4.2%를 기록했습니다.',
     timestamp: _fmtTs(1, 9, 0, '오전'),
   },
   {
@@ -89,6 +89,7 @@ export function PrinciplesSidePanel({ onClose }: PrinciplesSidePanelProps) {
         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded transition-colors">
           <ChevronsRight className="w-5 h-5 text-label-neutral" />
         </button>
+        <MousePointer2 className="w-4 h-4 text-label-assistive" />
       </div>
 
       {/* Content */}

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { PortfolioTabNav } from '@/components/portfolio'
+import { ExchangeFilter } from '@/components/common/ExchangeFilter'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { portfolioApi } from '@/lib/api'
 import type {
@@ -173,51 +174,97 @@ function getCalendarDays(year: number, month: number, dailyPnlMap: Record<number
 // Line Chart Component
 // ============================================================
 
-function LineChart({ data, color, unit, showArea }: {
+/** Smooth bezier curve through points */
+function smoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return ''
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[Math.min(i + 2, pts.length - 1)]
+    const tension = 0.3
+    const cp1x = p1.x + (p2.x - p0.x) * tension
+    const cp1y = p1.y + (p2.y - p0.y) * tension
+    const cp2x = p2.x - (p3.x - p1.x) * tension
+    const cp2y = p2.y - (p3.y - p1.y) * tension
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+  }
+  return d
+}
+
+function LineChart({ data, color, unit, showArea, gradientId, lineColor, areaColor }: {
   data: { day: string; value: number }[]
   color: string
   unit?: string
   showArea?: boolean
+  gradientId?: string
+  lineColor?: string
+  areaColor?: string
 }) {
   if (data.length === 0) return null
-  const w = 320
-  const h = 130
-  const px = 30
-  const py = 10
-  const chartW = w - px * 2
-  const chartH = h - py * 2
+  const w = 700
+  const h = 180
+  const pLeft = 45
+  const pRight = 10
+  const pTop = 15
+  const pBottom = 25
+  const chartW = w - pLeft - pRight
+  const chartH = h - pTop - pBottom
 
-  const minVal = Math.min(...data.map(d => d.value)) * 0.9
-  const maxVal = Math.max(...data.map(d => d.value)) * 1.05
+  const rawMin = Math.min(...data.map(d => d.value))
+  const rawMax = Math.max(...data.map(d => d.value))
+  const minVal = rawMin * 0.9
+  const maxVal = rawMax * 1.05
+  const range = maxVal - minVal || 1
 
   const points = data.map((d, i) => {
-    const x = px + (i / (data.length - 1)) * chartW
-    const y = py + chartH - ((d.value - minVal) / (maxVal - minVal)) * chartH
+    const x = pLeft + (i / Math.max(data.length - 1, 1)) * chartW
+    const y = pTop + chartH - ((d.value - minVal) / range) * chartH
     return { x, y, ...d }
   })
 
-  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${py + chartH} L ${points[0].x} ${py + chartH} Z`
+  const linePath = smoothPath(points)
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${pTop + chartH} L ${points[0].x} ${pTop + chartH} Z`
+
+  const gId = gradientId || `areaGrad-${color.replace('#', '')}`
 
   const gridLines = 4
   const yLabels = Array.from({ length: gridLines + 1 }, (_, i) => {
     const val = minVal + ((maxVal - minVal) / gridLines) * i
-    return { y: py + chartH - (i / gridLines) * chartH, label: unit === '%' ? `${val.toFixed(1)}%` : `$${(val / 1000).toFixed(0)}k` }
+    return { y: pTop + chartH - (i / gridLines) * chartH, label: unit === '%' ? `${val.toFixed(1)}%` : `$${(val / 1000).toFixed(0)}k` }
   })
 
+  // Find max point for dot marker
+  const maxPoint = points.reduce((max, p) => p.y < max.y ? p : max, points[0])
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full">
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" preserveAspectRatio="none" style={{ height: '100%' }}>
+      <defs>
+        <linearGradient id={gId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={areaColor || color} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={areaColor || color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
       {yLabels.map((l, i) => (
         <g key={i}>
-          <line x1={px} y1={l.y} x2={w - 10} y2={l.y} stroke="#F1F1F1" strokeWidth="1" />
-          <text x={px - 4} y={l.y + 3} textAnchor="end" fontSize="8" className="fill-label-assistive">{l.label}</text>
+          <line x1={pLeft} y1={l.y} x2={w - pRight} y2={l.y} stroke="#F1F1F1" strokeWidth="0.5" />
+          <text x={pLeft - 6} y={l.y + 3} textAnchor="end" fontSize="10" className="fill-label-assistive">{l.label}</text>
         </g>
       ))}
-      {showArea && <path d={areaPath} fill={color} opacity="0.1" />}
-      <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
-      {points.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={2.5} fill={color} />
-      ))}
+      {showArea && <path d={areaPath} fill={`url(#${gId})`} />}
+      <path d={linePath} fill="none" stroke={lineColor || color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Peak dot marker */}
+      <circle cx={maxPoint.x} cy={maxPoint.y} r={3.5} fill="white" stroke={lineColor || color} strokeWidth="2" />
+      {/* X-axis labels */}
+      {data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 5)) === 0 || i === data.length - 1).map((d) => {
+        const idx = data.indexOf(d)
+        return (
+          <text key={idx} x={points[idx].x} y={h - 5} textAnchor="middle" fontSize="10" className="fill-label-assistive">
+            {d.day}
+          </text>
+        )
+      })}
     </svg>
   )
 }
@@ -376,10 +423,11 @@ export default function AssetsPage() {
     value: d.cumulativeProfitRate,
   }))
 
-  const totalAssetChartData = assetHistory.dailyAssets.map((d) => ({
-    day: d.date,
-    value: d.totalAsset,
-  }))
+  const totalAssetChartData = assetHistory.dailyAssets.map((d) => {
+    // X축에 일자 번호만 표시 (01/15 → 15)
+    const dayNum = d.date.includes('/') ? d.date.split('/')[1].replace(/^0/, '') : d.date
+    return { day: dayNum, value: d.totalAsset }
+  })
 
   // Donut chart segments
   const cumulativePercents = totalAllocation === 0 ? [] : allocationData.reduce<number[]>((acc, asset) => {
@@ -388,7 +436,8 @@ export default function AssetsPage() {
     return acc
   }, [])
 
-  const segments = totalAllocation === 0 ? [] : allocationData.map((asset, i) => {
+  // Ring (annulus) segments instead of pie
+  const ringSegments = totalAllocation === 0 ? [] : allocationData.map((asset, i) => {
     const percent = (asset.value / totalAllocation) * 100
     const startPercent = i === 0 ? 0 : cumulativePercents[i - 1]
     const startAngle = startPercent * 3.6
@@ -398,16 +447,20 @@ export default function AssetsPage() {
     const endRad = ((endAngle - 90) * Math.PI) / 180
     const largeArc = percent > 50 ? 1 : 0
 
-    const cx = 130, cy = 130, r = 100
-    const x1 = cx + r * Math.cos(startRad)
-    const y1 = cy + r * Math.sin(startRad)
-    const x2 = cx + r * Math.cos(endRad)
-    const y2 = cy + r * Math.sin(endRad)
+    const cx = 130, cy = 130, outerR = 110, innerR = 75
+    const ox1 = cx + outerR * Math.cos(startRad)
+    const oy1 = cy + outerR * Math.sin(startRad)
+    const ox2 = cx + outerR * Math.cos(endRad)
+    const oy2 = cy + outerR * Math.sin(endRad)
+    const ix1 = cx + innerR * Math.cos(endRad)
+    const iy1 = cy + innerR * Math.sin(endRad)
+    const ix2 = cx + innerR * Math.cos(startRad)
+    const iy2 = cy + innerR * Math.sin(startRad)
 
     return (
       <path
         key={asset.symbol}
-        d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+        d={`M ${ox1} ${oy1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${ox2} ${oy2} L ${ix1} ${iy1} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix2} ${iy2} Z`}
         fill={asset.color}
       />
     )
@@ -423,8 +476,11 @@ export default function AssetsPage() {
         </p>
       </div>
 
-      {/* Tab Switcher */}
-      <PortfolioTabNav />
+      {/* Tab Switcher + 거래소 필터 */}
+      <div className="flex items-center justify-between">
+        <PortfolioTabNav />
+        <ExchangeFilter />
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -481,7 +537,7 @@ export default function AssetsPage() {
               <span className="text-body-1-bold text-label-normal">금액 기준</span>
             </div>
             <div className="h-40">
-              <LineChart data={amountChartData} color="#13C34E" showArea />
+              <LineChart data={amountChartData} color="#131416" showArea gradientId="amountGrad" />
             </div>
           </div>
 
@@ -492,7 +548,7 @@ export default function AssetsPage() {
               <span className="text-body-1-bold text-label-normal">퍼센트 기준</span>
             </div>
             <div className="h-40">
-              <LineChart data={percentChartData} color="#0070FF" unit="%" showArea />
+              <LineChart data={percentChartData} color="#131416" unit="%" showArea gradientId="percentGrad" />
             </div>
           </div>
         </div>
@@ -502,7 +558,7 @@ export default function AssetsPage() {
       <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-5">
         <h2 className="text-title-2-bold text-label-normal">총 자산 현황</h2>
         <div className="h-48">
-          <LineChart data={totalAssetChartData} color="#131416" showArea />
+          <LineChart data={totalAssetChartData} color="#131416" showArea gradientId="totalAssetGrad" />
         </div>
       </div>
 
@@ -510,13 +566,13 @@ export default function AssetsPage() {
       <div className="grid grid-cols-[1fr_auto] gap-3">
         {/* 일일손익 */}
         <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col gap-5">
-          <h2 className="text-title-2-bold text-label-normal">일일 손익 (KRW)</h2>
+          <h2 className="text-title-2-bold text-label-normal">일일손익</h2>
 
-          {/* Summary Stat Boxes */}
+          {/* Summary Stat Boxes - Figma: bg #F8F8F8, padding 12px 16px, gap 16px, rounded-lg */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-4 bg-gray-50 rounded-lg px-4 py-3">
-              <div className="w-14 h-14 flex items-center justify-center bg-gray-200/80 rounded-lg flex-shrink-0">
-                <Image src="/icons/icon-signal.svg" alt="pnl" width={24} height={24} />
+              <div className="w-14 h-14 flex-shrink-0">
+                <Image src="/icons/portfolio/icon-monthly-pnl.svg" alt="월간 손익" width={56} height={56} />
               </div>
               <div className="space-y-1">
                 <p className="text-body-2-medium text-label-neutral">월간 손익</p>
@@ -526,8 +582,8 @@ export default function AssetsPage() {
               </div>
             </div>
             <div className="flex items-center gap-4 bg-gray-50 rounded-lg px-4 py-3">
-              <div className="w-14 h-14 flex items-center justify-center bg-gray-200/80 rounded-lg flex-shrink-0">
-                <Image src="/icons/icon-signal.svg" alt="rate" width={24} height={24} />
+              <div className="w-14 h-14 flex-shrink-0">
+                <Image src="/icons/portfolio/icon-return-rate.svg" alt="투자 대비 수익률" width={56} height={56} />
               </div>
               <div className="space-y-1">
                 <p className="text-body-2-medium text-label-neutral">투자 대비 수익률</p>
@@ -538,8 +594,8 @@ export default function AssetsPage() {
             </div>
           </div>
 
-          {/* Calendar Month Navigator */}
-          <div className="flex items-center justify-center gap-4">
+          {/* Calendar Month Navigator - Figma: left-aligned */}
+          <div className="flex items-center gap-4">
             <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-50 rounded transition-colors">
               <ChevronLeft className="w-5 h-5 text-label-normal" />
             </button>
@@ -603,15 +659,14 @@ export default function AssetsPage() {
 
         {/* 자산분포 */}
         <div className="bg-white rounded-xl border-[0.6px] border-gray-300 py-5 px-6 flex flex-col items-center gap-4 w-full md:w-[340px] shrink-0">
-          <h2 className="text-title-2-bold text-label-normal self-start">자산 분포 (KRW)</h2>
+          <h2 className="text-title-2-bold text-label-normal self-start">자산분포</h2>
 
-          {/* Donut Chart */}
-          <div className="relative">
-            <svg viewBox="0 0 260 260" className="w-[200px] h-[200px]">
-              {segments}
-              <circle cx="130" cy="130" r="60" fill="white" />
-              <text x="130" y="122" textAnchor="middle" className="fill-label-assistive" fontSize="14" fontWeight="400">순자산</text>
-              <text x="130" y="145" textAnchor="middle" className="fill-label-normal" fontSize="20" fontWeight="600">
+          {/* Donut Chart - Figma: large donut filling most of card width */}
+          <div className="relative flex items-center justify-center w-full py-4">
+            <svg viewBox="0 0 260 260" className="w-[260px] h-[260px]">
+              {ringSegments}
+              <text x="130" y="122" textAnchor="middle" className="fill-label-assistive" fontSize="12" fontWeight="400">순자산</text>
+              <text x="130" y="148" textAnchor="middle" className="fill-label-normal" fontSize="18" fontWeight="600">
                 ${distribution.totalNetAsset.toLocaleString()}
               </text>
             </svg>

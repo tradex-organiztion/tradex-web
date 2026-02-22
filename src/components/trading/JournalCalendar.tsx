@@ -162,12 +162,12 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
 
       {/* Calendar Table */}
       <div className="flex flex-col flex-1">
-        {/* Weekday Headers */}
-        <div className="grid grid-cols-7 bg-gray-100 rounded-t-lg">
+        {/* Weekday Headers - Figma: padding 2px 8px, justify-content center, flex 1 0 0 */}
+        <div className="grid grid-cols-7 border-b border-gray-300">
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="py-2 px-2 flex justify-center items-center"
+              className="py-[2px] px-[8px] flex justify-center items-center"
             >
               <span className="text-body-2-regular text-label-neutral">{day}</span>
             </div>
@@ -210,7 +210,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
                       "text-body-2-medium w-6 text-center",
                       calendarDay.isCurrentMonth ? "text-label-neutral" : "text-gray-400"
                     )}>
-                      {formatDayLabel(calendarDay)}
+                      {calendarDay.day}
                     </span>
                   )}
                 </div>
@@ -223,10 +223,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
                       return (
                         <div
                           key={trade.id}
-                          className={cn(
-                            "rounded-[4px] px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity",
-                            isPositive ? "bg-gray-100" : "bg-red-100"
-                          )}
+                          className="px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation()
                             onTradeClick?.(trade)

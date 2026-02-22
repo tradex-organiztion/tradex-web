@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { AuthLayout, AuthCard } from "@/components/layout"
-import { Button, TextField, Tabs, TabsList, TabsTrigger, TabsContent, IconCheckCircle } from "@/components/ui"
+import { Button, TextField, Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui"
 import { authApi } from "@/lib/api/auth"
 
 /**
@@ -26,6 +26,7 @@ function FindAccountContent() {
   const [foundEmail, setFoundEmail] = useState("")
 
   // Find ID form state
+  const [idName, setIdName] = useState("")
   const [idPhone, setIdPhone] = useState("")
   const [idVerificationCode, setIdVerificationCode] = useState("")
   const [isIdCodeSent, setIsIdCodeSent] = useState(false)
@@ -71,6 +72,7 @@ function FindAccountContent() {
   // Reset form when tab changes
   useEffect(() => {
     setStep("form")
+    setIdName("")
     setIdPhone("")
     setIdVerificationCode("")
     setIsIdCodeSent(false)
@@ -259,13 +261,16 @@ function FindAccountContent() {
           {/* Result Content */}
           <div className="flex flex-col items-center gap-6 w-[360px] mx-auto">
             <div className="flex flex-col items-center py-4">
-              <div className="text-[#13C34E] mb-4">
-                <IconCheckCircle size={32} />
+              <div className="mb-4">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="16" cy="16" r="16" fill="#323232"/>
+                  <path d="M10 16.5L14 20.5L22 12.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <p className="text-body-1-regular text-[#131416] text-center mb-2">
+              <p className="text-body-1-regular text-label-neutral text-center mb-2">
                 아래 이메일 주소로 가입되어 있어요.
               </p>
-              <p className="text-title-2-bold text-[#131416]">
+              <p className="text-title-2-bold text-label-normal">
                 {foundEmail}
               </p>
             </div>
@@ -277,7 +282,7 @@ function FindAccountContent() {
               className="w-full"
               onClick={handleGoToLogin}
             >
-              로그인하기
+              로그인
             </Button>
           </div>
         </AuthCard>
@@ -301,10 +306,13 @@ function FindAccountContent() {
           {/* Result Content */}
           <div className="flex flex-col items-center gap-6 w-[360px] mx-auto">
             <div className="flex flex-col items-center py-4">
-              <div className="text-[#13C34E] mb-4">
-                <IconCheckCircle size={32} />
+              <div className="mb-4">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="16" cy="16" r="16" fill="#323232"/>
+                  <path d="M10 16.5L14 20.5L22 12.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <p className="text-body-1-regular text-[#131416]">
+              <p className="text-body-1-regular text-label-neutral">
                 메일이 전송되었습니다.
               </p>
             </div>
@@ -316,7 +324,7 @@ function FindAccountContent() {
               className="w-full"
               onClick={handleGoToLogin}
             >
-              로그인하기
+              로그인
             </Button>
           </div>
         </AuthCard>
@@ -340,6 +348,18 @@ function FindAccountContent() {
             <form onSubmit={handleFindIdSubmit} className="flex flex-col gap-6 w-[360px] mx-auto">
               {/* Form Fields */}
               <div className="flex flex-col gap-4">
+                {/* 이름 - Figma A-4 */}
+                <TextField
+                  label="이름"
+                  placeholder="이름을 입력해주세요."
+                  value={idName}
+                  onChange={(e) => {
+                    setIdName(e.target.value)
+                    setIdError(null)
+                  }}
+                  disabled={idLoading || isIdVerified}
+                />
+
                 {/* Phone Verification */}
                 <div className="flex flex-col gap-3">
                   {/* Phone Input Row */}
@@ -347,13 +367,12 @@ function FindAccountContent() {
                     <div className="flex-1">
                       <TextField
                         label="휴대폰 번호"
-                        placeholder="01012345678"
+                        placeholder="휴대폰 번호를 입력해주세요."
                         value={idPhone}
                         onChange={(e) => {
                           const value = e.target.value.replace(/[^0-9]/g, '')
                           setIdPhone(value)
                           setIdError(null)
-                          // 번호 변경 시 인증 상태 초기화
                           if (isIdCodeSent) {
                             setIsIdCodeSent(false)
                             setIsIdVerified(false)
@@ -364,7 +383,7 @@ function FindAccountContent() {
                         disabled={idLoading || isIdVerified}
                         rightElement={
                           isIdCodeSent && idTimer > 0 && !isIdVerified ? (
-                            <span className="text-caption-medium text-[#58616A]">
+                            <span className="text-caption-medium text-label-assistive">
                               {formatTimer(idTimer)}
                             </span>
                           ) : null
@@ -384,38 +403,36 @@ function FindAccountContent() {
                     </Button>
                   </div>
 
-                  {/* Verification Code Row */}
-                  {isIdCodeSent && (
-                    <div className="flex gap-2 items-end">
-                      <div className="flex-1">
-                        <TextField
-                          placeholder="인증 번호를 입력해주세요."
-                          value={idVerificationCode}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
-                            setIdVerificationCode(value)
-                            setIdError(null)
-                          }}
-                          disabled={idLoading || isIdVerified}
-                          messageType={isIdVerified ? "success" : undefined}
-                          message={isIdVerified ? "인증이 완료되었습니다." : undefined}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="h-[50px] w-[80px] shrink-0"
-                        onClick={handleIdVerifyCode}
-                        disabled={!idVerificationCode.trim() || idLoading || isIdVerified}
-                      >
-                        {idLoading && isIdCodeSent && !isIdVerified ? "확인 중..." : "확인"}
-                      </Button>
+                  {/* Verification Code Row - Figma: 항상 표시 */}
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <TextField
+                        placeholder="인증 번호를 입력해주세요."
+                        value={idVerificationCode}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
+                          setIdVerificationCode(value)
+                          setIdError(null)
+                        }}
+                        disabled={!isIdCodeSent || idLoading || isIdVerified}
+                        messageType={isIdVerified ? "success" : undefined}
+                        message={isIdVerified ? "인증이 완료되었습니다." : undefined}
+                      />
                     </div>
-                  )}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-[50px] w-[80px] shrink-0"
+                      onClick={handleIdVerifyCode}
+                      disabled={!isIdCodeSent || !idVerificationCode.trim() || idLoading || isIdVerified}
+                    >
+                      {idLoading && isIdCodeSent && !isIdVerified ? "확인 중..." : "확인"}
+                    </Button>
+                  </div>
 
                   {/* Error message */}
                   {idError && (
-                    <p className="text-body-2-regular text-error-500">{idError}</p>
+                    <p className="text-body-2-regular text-[#FF0015]">{idError}</p>
                   )}
                 </div>
               </div>
