@@ -485,29 +485,29 @@ export default function RiskPatternPage() {
       <div className="flex flex-col gap-8">
         {/* Page Header */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-title-1-bold text-label-normal">리스크 패턴</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-title-1-bold text-label-normal">리스크 패턴</h1>
+            <div className="flex items-center gap-4">
+              <ExchangeFilter />
+              <div className="flex items-center gap-2">
+                <DatePickerCalendar
+                  value={startDate}
+                  onChange={setStartDate}
+                />
+                <span className="text-body-1-regular text-label-normal">~</span>
+                <DatePickerCalendar
+                  value={endDate}
+                  onChange={setEndDate}
+                />
+              </div>
+              <button className="px-4 py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors">
+                조회
+              </button>
+            </div>
+          </div>
           <p className="text-body-1-regular text-label-neutral">
             반복되는 실수와 습관을 파악하여 손실을 최소화하세요.
           </p>
-        </div>
-
-        {/* 거래소 필터 + Date Range Filter */}
-        <div className="flex items-center justify-between">
-          <ExchangeFilter />
-          <div className="flex items-center gap-2">
-            <DatePickerCalendar
-              value={startDate}
-              onChange={setStartDate}
-            />
-            <span className="text-body-1-regular text-label-normal">~</span>
-            <DatePickerCalendar
-              value={endDate}
-              onChange={setEndDate}
-            />
-            <button className="px-4 py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors">
-              조회
-            </button>
-          </div>
         </div>
 
         {/* Cards Section - Figma CSS: padding 20px 24px, border-left only, bg white, gap 12px */}

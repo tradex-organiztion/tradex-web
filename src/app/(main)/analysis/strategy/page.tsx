@@ -181,19 +181,12 @@ export default function StrategyAnalysisPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* 페이지 타이틀 */}
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-title-1-bold text-label-normal">전략 분석</h1>
-          <p className="text-body-1-regular text-label-neutral">
-            나의 트레이딩 전략과 승률을 분석하고 최고의 성과를 만들어 보세요.
-          </p>
-        </div>
-
-        {/* 거래소 필터 + 날짜 필터 (같은 행) */}
+      {/* 페이지 헤더 */}
+      <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <ExchangeFilter />
+          <h1 className="text-title-1-bold text-label-normal">전략 분석</h1>
           <div className="flex items-center gap-4">
+            <ExchangeFilter />
             <div className="flex items-center gap-2">
               <DatePickerCalendar
                 value={startDate}
@@ -210,6 +203,9 @@ export default function StrategyAnalysisPage() {
             </button>
           </div>
         </div>
+        <p className="text-body-1-regular text-label-neutral">
+          나의 트레이딩 전략과 승률을 분석하고 최고의 성과를 만들어 보세요.
+        </p>
       </div>
 
       {/* Best/Worst 전략 카드 */}

@@ -69,7 +69,7 @@ const sampleEntries: JournalEntry[] = [
 ]
 
 /** JournalResponse → JournalEntry 변환 */
-function toJournalEntry(j: JournalResponse): JournalEntry {
+function toJournalEntry(j: JournalResponse, index: number): JournalEntry {
   const date = j.entryTime
     ? new Date(j.entryTime).toLocaleString('ko-KR', {
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -78,7 +78,7 @@ function toJournalEntry(j: JournalResponse): JournalEntry {
     : ''
 
   return {
-    id: String(j.id),
+    id: j.id != null ? String(j.id) : `entry-${index}`,
     date,
     pair: j.symbol?.includes('/') ? j.symbol : `${j.symbol?.replace('USDT', '')}/USDT`,
     leverage: j.leverage ?? 1,

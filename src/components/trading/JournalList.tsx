@@ -118,9 +118,9 @@ export function JournalList({ entries = sampleEntries, onEntryClick }: JournalLi
 
       {/* Table Body */}
       <div className="divide-y divide-line-normal">
-        {entries.map((entry) => (
+        {entries.map((entry, index) => (
           <div
-            key={entry.id}
+            key={entry.id ?? `entry-${index}`}
             className="grid grid-cols-7 gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors items-center"
             onClick={() => onEntryClick?.(entry)}
           >
