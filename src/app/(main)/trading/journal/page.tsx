@@ -78,15 +78,15 @@ function toJournalEntry(j: JournalResponse, index: number): JournalEntry {
     : ''
 
   return {
-    id: j.id != null ? String(j.id) : `entry-${index}`,
+    id: j.journalId != null ? String(j.journalId) : `entry-${index}`,
     date,
     pair: j.symbol?.includes('/') ? j.symbol : `${j.symbol?.replace('USDT', '')}/USDT`,
     leverage: j.leverage ?? 1,
     position: j.side === 'LONG' ? 'Long' : 'Short',
-    profit: j.pnl ?? 0,
-    profitPercent: j.pnlPercent ?? 0,
-    hasPreScenario: !!(j.preScenario || j.entryReason),
-    hasPostReview: !!j.review,
+    profit: j.realizedPnl ?? 0,
+    profitPercent: j.roi ?? 0,
+    hasPreScenario: !!j.entryScenario,
+    hasPostReview: !!j.exitReview,
   }
 }
 

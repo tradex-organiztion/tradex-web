@@ -80,12 +80,23 @@ export default function TradexAIChatPage() {
     chatSessionApi.getHistory(numericId).then((history) => {
       if (cancelled || !history?.messages) return
       for (const msg of history.messages) {
-        addMessage(activeConvId, {
-          id: generateMessageId(),
-          role: msg.role === 'USER' ? 'user' : 'assistant',
-          content: msg.content,
-          timestamp: new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        })
+        const ts = new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        if (msg.question) {
+          addMessage(activeConvId, {
+            id: generateMessageId(),
+            role: 'user',
+            content: msg.question,
+            timestamp: ts,
+          })
+        }
+        if (msg.response) {
+          addMessage(activeConvId, {
+            id: generateMessageId(),
+            role: 'assistant',
+            content: msg.response,
+            timestamp: ts,
+          })
+        }
       }
     }).catch((err) => {
       console.warn('Failed to load chat history:', err.message)

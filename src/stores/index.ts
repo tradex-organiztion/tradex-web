@@ -5,7 +5,6 @@ export { useUIStore } from './useUIStore'
 
 export { useTradingStore } from './useTradingStore'
 export type {
-  TradingPrinciple,
   TradeEntry,
   PositionType,
   TradeStatus,

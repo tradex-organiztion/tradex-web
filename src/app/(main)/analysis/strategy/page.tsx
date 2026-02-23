@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Check, SlidersHorizontal } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { DatePickerCalendar } from '@/components/common'
 import { ExchangeFilter } from '@/components/common/ExchangeFilter'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { strategyApi, type StrategyAnalysisResponse, type StrategyItem } from '@/lib/api/analysis'
 
 // 체크박스 컴포넌트 - Figma 기준 16x16, border-radius 4px
 function Checkbox({
@@ -38,7 +40,7 @@ function Checkbox({
   )
 }
 
-// Best/Worst 전략 카드 컴포넌트 - Figma 디자인 기준 (테이블 형식)
+// Best/Worst 전략 카드 컴포넌트
 function StrategyCard({
   type,
   title,
@@ -81,7 +83,7 @@ function StrategyCard({
         </span>
       </div>
 
-      {/* 정보 테이블 - Figma: 행별 label/value */}
+      {/* 정보 테이블 */}
       <div className="mb-4 border border-line-normal rounded-lg overflow-hidden">
         {fields.map((field, i) => (
           <div
@@ -122,7 +124,7 @@ function StrategyCard({
   )
 }
 
-// 메트릭 카드 컴포넌트 - Figma: 아이콘(56x56) + 라벨 + 값
+// 메트릭 카드 컴포넌트
 function MetricCard({
   icon,
   label,
@@ -150,7 +152,32 @@ function MetricCard({
   )
 }
 
+/** null-safe number formatting */
+const fmt = (v: number | null | undefined, digits = 1) => (v ?? 0).toFixed(digits)
+
+// StrategyItem → StrategyCard에 필요한 fields 변환
+function strategyToFields(strategy: StrategyItem): { label: string; value: string }[] {
+  return [
+    { label: '지표', value: (strategy.indicators ?? []).join(', ') || '-' },
+    { label: '분석', value: (strategy.technicalAnalyses ?? []).join(', ') || '-' },
+    { label: '시간', value: (strategy.timeframes ?? []).join(', ') || '-' },
+  ]
+}
+
+// 시장 조건 한국어 변환
+function marketConditionLabel(mc: string | null | undefined): string {
+  if (!mc) return '-'
+  const map: Record<string, string> = {
+    UPTREND: '상승장',
+    DOWNTREND: '하락장',
+    SIDEWAYS: '횡보장',
+  }
+  return map[mc] || mc
+}
+
 export default function StrategyAnalysisPage() {
+  const { isDemoMode } = useAuthStore()
+
   // 필터 상태
   const [filters, setFilters] = useState({
     indicators: ['볼린저 밴드'],
@@ -162,6 +189,7 @@ export default function StrategyAnalysisPage() {
   })
 
   const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const [selectedExchange, setSelectedExchange] = useState<string[]>(['binance'])
 
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
@@ -169,6 +197,10 @@ export default function StrategyAnalysisPage() {
     return d.toISOString().slice(0, 10)
   })
   const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
+
+  // API 데이터 상태
+  const [apiData, setApiData] = useState<StrategyAnalysisResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     setFilters((prev) => ({
@@ -179,6 +211,62 @@ export default function StrategyAnalysisPage() {
     }))
   }
 
+  const fetchStrategyData = useCallback(async () => {
+    if (isDemoMode) {
+      setApiData(null)
+      return
+    }
+
+    setIsLoading(true)
+
+    const exchangeMap: Record<string, string> = {
+      binance: 'BINANCE',
+      bybit: 'BYBIT',
+      bitget: 'BITGET',
+    }
+
+    const data = await strategyApi.getAnalysis({
+      exchangeName: exchangeMap[selectedExchange[0]] || 'BINANCE',
+      startDate,
+      endDate,
+    }).catch((err) => {
+      console.warn('Strategy analysis API error:', err.message)
+      return null
+    })
+
+    if (data) {
+      setApiData(data)
+    }
+
+    setIsLoading(false)
+  }, [isDemoMode, selectedExchange, startDate, endDate])
+
+  useEffect(() => {
+    fetchStrategyData()
+  }, [fetchStrategyData])
+
+  const handleSearch = () => {
+    fetchStrategyData()
+  }
+
+  // Best/Worst 전략 결정
+  const bestStrategy = apiData?.strategies?.[0]
+  const worstStrategy = apiData?.strategies && apiData.strategies.length > 1
+    ? apiData.strategies[apiData.strategies.length - 1]
+    : null
+
+  // 집계 메트릭
+  const totalTrades = apiData?.totalTrades ?? 143
+  const overallWinRate = apiData?.strategies?.length
+    ? (apiData.strategies.reduce((sum, s) => sum + (s.winCount ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1) * 100)
+    : 65.5
+  const overallAvgProfit = apiData?.strategies?.length
+    ? (apiData.strategies.reduce((sum, s) => sum + (s.avgProfit ?? 0) * (s.totalTrades ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1))
+    : 2.8
+  const overallAvgRr = apiData?.strategies?.length
+    ? (apiData.strategies.reduce((sum, s) => sum + (s.avgRrRatio ?? 0) * (s.totalTrades ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1))
+    : 2.3
+
   return (
     <div className="flex flex-col gap-8">
       {/* 페이지 헤더 */}
@@ -186,7 +274,10 @@ export default function StrategyAnalysisPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-title-1-bold text-label-normal">전략 분석</h1>
           <div className="flex items-center gap-4">
-            <ExchangeFilter />
+            <ExchangeFilter
+              selected={selectedExchange}
+              onChange={setSelectedExchange}
+            />
             <div className="flex items-center gap-2">
               <DatePickerCalendar
                 value={startDate}
@@ -198,8 +289,12 @@ export default function StrategyAnalysisPage() {
                 onChange={setEndDate}
               />
             </div>
-            <button className="px-4 py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors">
-              조회
+            <button
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="px-4 py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {isLoading ? '조회중...' : '조회'}
             </button>
           </div>
         </div>
@@ -212,36 +307,43 @@ export default function StrategyAnalysisPage() {
       <div className="flex gap-8">
         <StrategyCard
           type="best"
-          title="가장 승률이 높은 트레이딩 전략입니다"
-          fields={[
-            { label: '지표', value: '볼린저 밴드' },
-            { label: '스타일', value: '스윙' },
-            { label: '시간', value: '4시간봉' },
-          ]}
-          totalTrades={45}
-          winRate="72.5%"
-          avgProfit="+2.4%"
+          title={bestStrategy
+            ? `${bestStrategy.side ?? '-'} / ${marketConditionLabel(bestStrategy.marketCondition)} 전략`
+            : '가장 승률이 높은 트레이딩 전략입니다'}
+          fields={bestStrategy
+            ? strategyToFields(bestStrategy)
+            : [
+                { label: '지표', value: '볼린저 밴드' },
+                { label: '스타일', value: '스윙' },
+                { label: '시간', value: '4시간봉' },
+              ]}
+          totalTrades={bestStrategy?.totalTrades ?? 45}
+          winRate={bestStrategy ? `${fmt(bestStrategy.winRate)}%` : '72.5%'}
+          avgProfit={bestStrategy ? `${(bestStrategy.avgProfit ?? 0) >= 0 ? '+' : ''}${fmt(bestStrategy.avgProfit)}%` : '+2.4%'}
         />
         <StrategyCard
           type="worst"
-          title="가장 승률이 낮은 트레이딩 전략입니다"
-          fields={[
-            { label: '지표', value: 'RSI' },
-            { label: '스타일', value: '스캘핑' },
-            { label: '시간', value: '1분봉' },
-          ]}
-          totalTrades={120}
-          winRate="38.2%"
-          avgProfit="-1.2%"
+          title={worstStrategy
+            ? `${worstStrategy.side ?? '-'} / ${marketConditionLabel(worstStrategy.marketCondition)} 전략`
+            : '가장 승률이 낮은 트레이딩 전략입니다'}
+          fields={worstStrategy
+            ? strategyToFields(worstStrategy)
+            : [
+                { label: '지표', value: 'RSI' },
+                { label: '스타일', value: '스캘핑' },
+                { label: '시간', value: '1분봉' },
+              ]}
+          totalTrades={worstStrategy?.totalTrades ?? 120}
+          winRate={worstStrategy ? `${fmt(worstStrategy.winRate)}%` : '38.2%'}
+          avgProfit={worstStrategy ? `${(worstStrategy.avgProfit ?? 0) >= 0 ? '+' : ''}${fmt(worstStrategy.avgProfit)}%` : '-1.2%'}
         />
       </div>
 
-      {/* 커스텀 전략 분석 카드 - Figma: left border only 0.6px, padding 20px 24px, gap 32px */}
+      {/* 커스텀 전략 분석 카드 */}
       <div className="bg-white" style={{ borderLeft: '0.6px solid #D7D7D7' }}>
         <div className="py-5 px-6 flex flex-col gap-8">
-          {/* Section 1: 헤더 - Figma: gap 10px between title group and content */}
+          {/* Section 1: 헤더 */}
           <div className="flex flex-col gap-[10px]">
-            {/* 카드 헤더: 타이틀 + 필터 아이콘 버튼 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex flex-col gap-1">
@@ -260,17 +362,13 @@ export default function StrategyAnalysisPage() {
             </div>
           </div>
 
-          {/* 필터 모달 (Figma: 별도 모달/시트) */}
+          {/* 필터 모달 */}
           {showFilterPanel && (
             <>
-              {/* 오버레이 */}
               <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowFilterPanel(false)} />
-              {/* 모달 */}
               <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-2xl shadow-heavy w-[480px] max-h-[80vh] overflow-y-auto">
                 <div className="p-8 flex flex-col gap-6">
-                  {/* 제목 */}
                   <h3 className="text-title-1-bold text-label-normal text-center">커스텀 전략 필터</h3>
-                  {/* 지표 */}
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">지표</span>
                     <div className="flex flex-wrap gap-3">
@@ -284,7 +382,6 @@ export default function StrategyAnalysisPage() {
                       ))}
                     </div>
                   </div>
-                  {/* 시간 (Figma: "시간" 라벨, 지표 다음 순서) */}
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">시간</span>
                     <div className="flex flex-wrap gap-3">
@@ -298,7 +395,6 @@ export default function StrategyAnalysisPage() {
                       ))}
                     </div>
                   </div>
-                  {/* 스타일 */}
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">스타일</span>
                     <div className="flex gap-3">
@@ -312,7 +408,6 @@ export default function StrategyAnalysisPage() {
                       ))}
                     </div>
                   </div>
-                  {/* 기술적 분석 */}
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">기술적 분석</span>
                     <div className="flex flex-wrap gap-3">
@@ -326,7 +421,6 @@ export default function StrategyAnalysisPage() {
                       ))}
                     </div>
                   </div>
-                  {/* 시장 */}
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">시장</span>
                     <div className="flex gap-3">
@@ -340,7 +434,6 @@ export default function StrategyAnalysisPage() {
                       ))}
                     </div>
                   </div>
-                  {/* 포지션 */}
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">포지션</span>
                     <div className="flex gap-3">
@@ -354,7 +447,6 @@ export default function StrategyAnalysisPage() {
                       ))}
                     </div>
                   </div>
-                  {/* 조회 버튼 */}
                   <button
                     onClick={() => setShowFilterPanel(false)}
                     className="w-full py-4 bg-gray-100 text-label-disabled text-body-1-medium rounded-lg hover:bg-gray-200 hover:text-label-neutral transition-colors"
@@ -366,9 +458,8 @@ export default function StrategyAnalysisPage() {
             </>
           )}
 
-          {/* Section 2: AI 인사이트 + 강점/취약 - Figma: gap 12px */}
+          {/* Section 2: AI 인사이트 + 강점/취약 */}
           <div className="flex flex-col gap-3">
-            {/* AI 인사이트 바 - Figma: padding 8px 12px, gap 12px, border-radius 0 4px 4px 0, left border 2px */}
             <div
               className="flex items-center gap-3 px-3 py-2"
               style={{
@@ -386,24 +477,33 @@ export default function StrategyAnalysisPage() {
                 AI 인사이트
               </span>
               <p className="text-body-1-regular text-label-normal">
-                <strong>1시간봉</strong>에서 성과가 <strong>1.3배 이상</strong> 높습니다. 해당 타임프레임에 집중해 보세요.
+                {bestStrategy
+                  ? <>
+                      <strong>{(bestStrategy.timeframes ?? []).join(', ') || bestStrategy.side}</strong>에서 성과가 우수합니다. 승률 <strong>{fmt(bestStrategy.winRate)}%</strong>를 기록했습니다.
+                    </>
+                  : <>
+                      <strong>1시간봉</strong>에서 성과가 <strong>1.3배 이상</strong> 높습니다. 해당 타임프레임에 집중해 보세요.
+                    </>
+                }
               </p>
             </div>
 
-            {/* 전략의 강점 / 취약 구간 - Figma: ROW layout, gap 20px between sections */}
             <div className="flex gap-5">
-              {/* 전략의 강점 - Figma: ROW (title left, bullets right), gap 32px */}
               <div className="flex-1 flex items-start gap-8">
                 <div className="flex items-center gap-2 shrink-0">
                   <Image src="/icons/strategy/icon-face-smile.svg" alt="" width={20} height={20} />
                   <span className="text-body-1-bold text-label-normal">전략의 강점</span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {[
+                  {(bestStrategy ? [
+                    `선택하신 조합은 ${fmt(bestStrategy.winRate)}%의 높은 승률을 보이고 있습니다.`,
+                    `평균 R/R 비율이 ${fmt(bestStrategy.avgRrRatio)}로 ${(bestStrategy.avgRrRatio ?? 0) >= 1.5 ? '리스크 대비 수익이 우수합니다.' : '보통 수준입니다.'}`,
+                    `총 ${bestStrategy.winCount ?? 0}회 승리를 기록했습니다.`,
+                  ] : [
                     '선택하신 조합은 65.5%의 높은 승률을 보이고 있습니다.',
                     '평균 R/R 비율이 2.3으로 리스크 대비 수익이 우수합니다.',
                     '최대 8회 연속 승리를 기록하여 일관성이 있습니다.',
-                  ].map((text, i) => (
+                  ]).map((text, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Image src="/icons/strategy/icon-system-success.svg" alt="" width={20} height={20} className="shrink-0" />
                       <span className="text-body-1-regular text-label-normal">{text}</span>
@@ -412,17 +512,19 @@ export default function StrategyAnalysisPage() {
                 </div>
               </div>
 
-              {/* 취약 구간 - Figma: ROW (title left, bullets right), gap 32px */}
               <div className="flex-1 flex items-start gap-8">
                 <div className="flex items-center gap-2 shrink-0">
                   <Image src="/icons/strategy/icon-face-sad.svg" alt="" width={20} height={20} />
                   <span className="text-body-1-bold text-label-normal">취약 구간</span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {[
+                  {(worstStrategy ? [
+                    `${marketConditionLabel(worstStrategy.marketCondition)}에서 승률이 ${fmt(worstStrategy.winRate)}%로 낮습니다.`,
+                    `${worstStrategy.lossCount ?? 0}회 손실이 발생했으니 자금 관리에 주의하세요.`,
+                  ] : [
                     '횡보장에서는 승률이 평균 대비 15% 낮습니다.',
                     '최대 4회 연속 손실이 발생할 수 있으니 지금 관리에 주의하세요.',
-                  ].map((text, i) => (
+                  ]).map((text, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Image src="/icons/strategy/icon-system-success.svg" alt="" width={20} height={20} className="shrink-0" />
                       <span className="text-body-1-regular text-label-normal">{text}</span>
@@ -433,40 +535,39 @@ export default function StrategyAnalysisPage() {
             </div>
           </div>
 
-          {/* Section 3: 메트릭 카드 + 차트 - Figma: gap 20px */}
+          {/* Section 3: 메트릭 카드 + 차트 */}
           <div className="flex flex-col gap-5">
-            {/* 메트릭 카드 - Figma: 3열 x 2행, gap 12px */}
             <div className="flex flex-col gap-3">
-              {/* 첫째 행 */}
               <div className="flex items-center gap-3">
                 <MetricCard
                   icon={<Image src="/icons/strategy/metric-total-trades.svg" alt="" width={24} height={24} />}
                   label="총 거래"
-                  value="143회"
+                  value={`${totalTrades}회`}
                   isFirst
                 />
                 <MetricCard
                   icon={<Image src="/icons/strategy/metric-win-rate.svg" alt="" width={24} height={24} />}
                   label="승률"
-                  value="65.5%"
+                  value={`${fmt(overallWinRate)}%`}
                 />
                 <MetricCard
                   icon={<Image src="/icons/strategy/metric-avg-profit.svg" alt="" width={24} height={24} />}
                   label="평균 수익"
-                  value="+2.8%"
+                  value={`${overallAvgProfit >= 0 ? '+' : ''}${fmt(overallAvgProfit)}%`}
                 />
               </div>
-              {/* 둘째 행 */}
               <div className="flex items-center gap-3">
                 <MetricCard
                   icon={<Image src="/icons/strategy/metric-avg-rr.svg" alt="" width={24} height={24} />}
                   label="평균 R/R"
-                  value="143회"
+                  value={fmt(overallAvgRr)}
                 />
                 <MetricCard
                   icon={<Image src="/icons/strategy/metric-cumulative.svg" alt="" width={24} height={24} />}
                   label="누적 수익"
-                  value="+$43,759(18.3%)"
+                  value={apiData
+                    ? `${fmt(overallAvgProfit * totalTrades, 0)}%`
+                    : '+$43,759(18.3%)'}
                 />
                 <MetricCard
                   icon={<Image src="/icons/strategy/metric-streak.svg" alt="" width={24} height={24} />}
@@ -476,16 +577,14 @@ export default function StrategyAnalysisPage() {
               </div>
             </div>
 
-            {/* 수익 곡선 + 승패 분포 - Figma: gap 12px, no border on cards */}
+            {/* 수익 곡선 + 승패 분포 */}
             <div className="flex gap-3">
-              {/* 수익 곡선 차트 - Figma: padding 12px 0, no border */}
               <div className="flex-1 bg-white rounded-lg py-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <Image src="/icons/strategy/chart-profit-curve.svg" alt="" width={20} height={20} />
                   <span className="text-body-1-bold text-label-normal">수익 곡선</span>
                 </div>
                 <div className="relative flex">
-                  {/* Y축 라벨 - Figma: 세로 "수익률(%)" 위→아래 */}
                   <div className="flex items-center justify-center shrink-0" style={{ writingMode: 'vertical-lr' }}>
                     <span className="text-caption-regular text-label-assistive">수익률(%)</span>
                   </div>
@@ -502,7 +601,6 @@ export default function StrategyAnalysisPage() {
                       </linearGradient>
                     </defs>
 
-                    {/* Y축 그리드 라인 */}
                     {[0, 1, 2, 3].map((i) => {
                       const y = 20 + (i / 3) * 140
                       return (
@@ -518,7 +616,6 @@ export default function StrategyAnalysisPage() {
                       )
                     })}
 
-                    {/* Y축 라벨 */}
                     {['120', '90', '60', '30'].map((label, i) => (
                       <text
                         key={i}
@@ -532,7 +629,6 @@ export default function StrategyAnalysisPage() {
                       </text>
                     ))}
 
-                    {/* 점선 세로선 */}
                     <line
                       x1={300}
                       y1={20}
@@ -543,13 +639,11 @@ export default function StrategyAnalysisPage() {
                       strokeDasharray="3 3"
                     />
 
-                    {/* 영역 채우기 - Figma: 변동이 있는 실제 수익 곡선 */}
                     <path
                       d="M40,130 C60,125 80,110 100,100 C120,90 130,85 140,80 C160,70 170,75 180,85 C190,95 200,90 220,78 C240,66 250,60 260,55 C280,48 290,50 300,60 C310,70 320,55 330,40 C340,30 350,32 360,35 C380,40 400,38 420,35 C440,32 460,30 480,32 L480,160 L40,160 Z"
                       fill="url(#strategyAreaGradient)"
                     />
 
-                    {/* 라인 - Figma: 오르내리는 변동 곡선 */}
                     <path
                       d="M40,130 C60,125 80,110 100,100 C120,90 130,85 140,80 C160,70 170,75 180,85 C190,95 200,90 220,78 C240,66 250,60 260,55 C280,48 290,50 300,60 C310,70 320,55 330,40 C340,30 350,32 360,35 C380,40 400,38 420,35 C440,32 460,30 480,32"
                       fill="none"
@@ -559,10 +653,8 @@ export default function StrategyAnalysisPage() {
                       strokeLinejoin="round"
                     />
 
-                    {/* 포인트 (점선과의 교차점) */}
                     <circle cx={300} cy={60} r={5} fill="#121212" stroke="#FFFFFF" strokeWidth="2" />
 
-                    {/* X축 라벨 */}
                     {Array.from({ length: 30 }, (_, i) => i + 1).map((d) => {
                       const x = 40 + ((d - 1) / 29) * 440
                       return (
@@ -582,7 +674,7 @@ export default function StrategyAnalysisPage() {
                 </div>
               </div>
 
-              {/* 승패 분포 - Figma: padding 12px 16px, fixed width, 승 237px fixed */}
+              {/* 승패 분포 */}
               <div className="w-[360px] shrink-0 bg-white rounded-lg px-4 py-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <Image src="/icons/strategy/chart-win-loss.svg" alt="" width={20} height={20} />
@@ -590,15 +682,16 @@ export default function StrategyAnalysisPage() {
                 </div>
                 <div className="flex-1 flex items-center justify-center">
                   <div className="flex w-full h-[148px]">
-                    {/* 승 - Figma: 237px fixed, border-radius 12px 0 0 12px */}
-                    <div className="w-[237px] shrink-0 bg-gray-900 rounded-l-xl flex flex-col items-center justify-center">
+                    <div
+                      className="shrink-0 bg-gray-900 rounded-l-xl flex flex-col items-center justify-center"
+                      style={{ width: `${Math.round(overallWinRate)}%`, minWidth: '60px' }}
+                    >
                       <span className="text-caption-medium text-gray-400">승</span>
-                      <span className="text-title-1-bold text-white">66%</span>
+                      <span className="text-title-1-bold text-white">{Math.round(overallWinRate)}%</span>
                     </div>
-                    {/* 패 - Figma: fill, border-radius 0 12px 12px 0, 중간 회색 */}
                     <div className="flex-1 bg-gray-200 rounded-r-xl flex flex-col items-center justify-center">
                       <span className="text-caption-medium text-gray-500">패</span>
-                      <span className="text-title-1-bold text-label-normal">34%</span>
+                      <span className="text-title-1-bold text-label-normal">{Math.round(100 - overallWinRate)}%</span>
                     </div>
                   </div>
                 </div>

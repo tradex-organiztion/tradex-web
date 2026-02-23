@@ -63,10 +63,10 @@ export interface SignupResponse {
  * POST /api/auth/complete-profile
  */
 export interface CompleteProfileRequest {
-  username?: string          // 선택 (2-100자)
-  exchangeName: 'BYBIT'     // 필수
-  apiKey: string             // 필수
-  apiSecret: string          // 필수
+  username?: string                              // 선택 (2-100자)
+  exchangeName: 'BYBIT' | 'BINANCE' | 'BITGET'  // 필수
+  apiKey: string                                 // 필수
+  apiSecret: string                              // 필수
 }
 
 /** UserResponse - /api/auth/me, /api/auth/complete-profile 공통 */
@@ -87,6 +87,8 @@ export interface RefreshTokenRequest {
 export interface RefreshTokenResponse {
   accessToken: string
   refreshToken: string
+  tokenType: string
+  user: User
 }
 
 // ============================================================

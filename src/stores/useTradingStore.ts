@@ -3,16 +3,6 @@ import { create } from 'zustand'
 export type PositionType = 'long' | 'short'
 export type TradeStatus = 'open' | 'closed'
 
-export interface TradingPrinciple {
-  id: string
-  title: string
-  description: string
-  category: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
 export interface TradeEntry {
   id: string
   symbol: string
@@ -26,7 +16,6 @@ export interface TradeEntry {
   entryDate: string
   exitDate?: string
   notes?: string
-  principleIds: string[]
   createdAt: string
   updatedAt: string
 }
@@ -42,10 +31,6 @@ interface TradingFilters {
 }
 
 interface TradingState {
-  // Principles
-  principles: TradingPrinciple[]
-  selectedPrinciple: TradingPrinciple | null
-
   // Journal entries
   entries: TradeEntry[]
   selectedEntry: TradeEntry | null
@@ -54,15 +39,7 @@ interface TradingState {
   filters: TradingFilters
 
   // Loading states
-  isLoadingPrinciples: boolean
   isLoadingEntries: boolean
-
-  // Actions - Principles
-  setPrinciples: (principles: TradingPrinciple[]) => void
-  addPrinciple: (principle: TradingPrinciple) => void
-  updatePrinciple: (id: string, updates: Partial<TradingPrinciple>) => void
-  deletePrinciple: (id: string) => void
-  setSelectedPrinciple: (principle: TradingPrinciple | null) => void
 
   // Actions - Entries
   setEntries: (entries: TradeEntry[]) => void
@@ -76,7 +53,6 @@ interface TradingState {
   resetFilters: () => void
 
   // Actions - Loading
-  setLoadingPrinciples: (loading: boolean) => void
   setLoadingEntries: (loading: boolean) => void
 }
 
@@ -89,37 +65,10 @@ const defaultFilters: TradingFilters = {
 
 export const useTradingStore = create<TradingState>((set) => ({
   // Initial state
-  principles: [],
-  selectedPrinciple: null,
   entries: [],
   selectedEntry: null,
   filters: defaultFilters,
-  isLoadingPrinciples: false,
   isLoadingEntries: false,
-
-  // Actions - Principles
-  setPrinciples: (principles) =>
-    set({ principles }),
-
-  addPrinciple: (principle) =>
-    set((state) => ({
-      principles: [...state.principles, principle],
-    })),
-
-  updatePrinciple: (id, updates) =>
-    set((state) => ({
-      principles: state.principles.map((p) =>
-        p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
-      ),
-    })),
-
-  deletePrinciple: (id) =>
-    set((state) => ({
-      principles: state.principles.filter((p) => p.id !== id),
-    })),
-
-  setSelectedPrinciple: (selectedPrinciple) =>
-    set({ selectedPrinciple }),
 
   // Actions - Entries
   setEntries: (entries) =>
@@ -155,9 +104,6 @@ export const useTradingStore = create<TradingState>((set) => ({
     set({ filters: defaultFilters }),
 
   // Actions - Loading
-  setLoadingPrinciples: (isLoadingPrinciples) =>
-    set({ isLoadingPrinciples }),
-
   setLoadingEntries: (isLoadingEntries) =>
     set({ isLoadingEntries }),
 }))

@@ -33,16 +33,15 @@ export type {
 } from './home'
 
 // Trading API
-export { principlesApi, journalApi } from './trading'
+export { journalApi, journalStatsApi } from './trading'
 export type {
-  CreatePrincipleRequest,
-  UpdatePrincipleRequest,
-  CreateEntryRequest,
-  UpdateEntryRequest,
   JournalFilters,
-  PaginatedResponse,
   JournalResponse,
   UpdateJournalRequest,
+  TradingStyle,
+  JournalStatsParams,
+  JournalStatsResponse,
+  JournalStatsOptionsResponse,
 } from './trading'
 
 // Portfolio API
@@ -100,5 +99,27 @@ export type {
   ExchangeApiKeyRequest,
 } from './exchange'
 
+// Analysis API
+export { riskApi, strategyApi } from './analysis'
+export type {
+  AnalysisPeriod,
+  AnalysisParams,
+  EntryRiskResponse,
+  ExitRiskResponse,
+  PositionManagementRiskResponse,
+  TimeRiskResponse,
+  EmotionalRiskResponse,
+  RiskAnalysisResponse,
+  StrategyItem,
+  StrategyAnalysisResponse,
+} from './analysis'
+
 // Chart API
-export { chartApi } from './chart'
+export { chartApi, chartDataApi } from './chart'
+export type {
+  ChartExchange,
+  SymbolInfoResponse,
+  BarData,
+  BarsResponse,
+  BarsParams,
+} from './chart'

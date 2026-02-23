@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Check } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { DatePickerCalendar } from '@/components/common'
 import { ExchangeFilter } from '@/components/common/ExchangeFilter'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { riskApi, type RiskAnalysisResponse } from '@/lib/api/analysis'
 
 // 리스크 카테고리 타입
 type RiskCategory = 'entry' | 'exit' | 'position' | 'timing' | 'emotion'
@@ -19,15 +21,152 @@ const RISK_TABS: { id: RiskCategory; label: string }[] = [
   { id: 'emotion', label: '감정 기반 리스크' },
 ]
 
-// 각 탭별 데이터 - Figma 디자인 기준
-const RISK_DATA: Record<RiskCategory, {
+// 탭별 UI 데이터 타입
+interface RiskTabData {
   title: string
   description: string
   aiInsight: string
   stats: { label: string; value: string; details?: { label: string; value: string }[] }[]
   best: { label: string; value: string }
   worst: { label: string; value: string }
-}> = {
+}
+
+// 안전한 숫자 포맷팅 (null/undefined 방어)
+const fmt = (v: number | null | undefined, digits = 0) => (v ?? 0).toFixed(digits)
+
+// API 응답을 UI 데이터로 변환
+function mapApiToTabData(data: RiskAnalysisResponse): Record<RiskCategory, RiskTabData> {
+  const { entryRisk, exitRisk, positionManagementRisk, timeRisk, emotionalRisk, totalTrades } = data
+
+  return {
+    entry: {
+      title: '진입 리스크',
+      description: '어떤 상황에서 잘못 들어가고 있는가?',
+      aiInsight: `지난 기간동안 매매의 ${fmt(entryRisk.unplannedEntryRate)}%가 '계획 외 진입'이며, 이 구간은 평균 승률이 ${fmt(entryRisk.unplannedEntryWinRate)}%입니다.`,
+      stats: [
+        {
+          label: '계획 외 진입',
+          value: `${fmt(entryRisk.unplannedEntryRate)}%`,
+          details: [
+            { label: '횟수', value: `${entryRisk.unplannedEntryCount ?? 0}/${totalTrades}회` },
+          ]
+        },
+        {
+          label: '손절 후 재진입',
+          value: `${entryRisk.emotionalReEntryCount ?? 0}회`,
+          details: [
+            { label: '횟수', value: `${entryRisk.emotionalReEntryCount ?? 0}회` },
+            { label: '비율', value: `${fmt(entryRisk.emotionalReEntryRate)}%` },
+          ]
+        },
+        {
+          label: '연속 진입(뇌동매매)',
+          value: `${entryRisk.impulsiveTradeCount ?? 0}회`,
+          details: [
+            { label: '횟수', value: `${entryRisk.impulsiveTradeCount ?? 0}회` },
+            { label: '비율', value: `${fmt(entryRisk.impulsiveTradeRate)}%` },
+          ]
+        },
+      ],
+      best: { label: '사전 분석 진입 승률', value: `${fmt(entryRisk.plannedEntryWinRate)}%` },
+      worst: { label: '계획 외 진입 승률', value: `${fmt(entryRisk.unplannedEntryWinRate)}%` },
+    },
+    exit: {
+      title: '청산 리스크',
+      description: '왜 수익을 극대화하지 못하고 손실을 키우는가?',
+      aiInsight: `${totalTrades}번의 거래 중 ${exitRisk.earlyTpCount ?? 0}번에서 목표가 도달 전 조기 익절이 발생했습니다.`,
+      stats: [
+        {
+          label: '손절가 미준수',
+          value: `${fmt(exitRisk.slViolationRate)}%`,
+          details: [
+            { label: '횟수', value: `${exitRisk.slViolationCount ?? 0}/${totalTrades}회` },
+          ]
+        },
+        {
+          label: '조기 익절',
+          value: `${fmt(exitRisk.earlyTpRate)}%`,
+          details: [
+            { label: '횟수', value: `${exitRisk.earlyTpCount ?? 0}/${totalTrades}회` },
+          ]
+        },
+        {
+          label: '평균 손절 지연',
+          value: `${fmt(exitRisk.avgSlDelay, 1)}%`,
+          details: [
+            { label: '횟수', value: `${totalTrades}회` },
+          ]
+        },
+      ],
+      best: { label: '계획대로 청산 시 평균수익', value: '-' },
+      worst: { label: '조기 청산 시 평균 수익', value: '-' },
+    },
+    position: {
+      title: '포지션 관리 리스크',
+      description: '내 포지션 운용 방식 자체가 리스크를 만들고 있는가?',
+      aiInsight: `평균 손익비가 ${fmt(positionManagementRisk.avgRrRatio, 2)}으로, ${(positionManagementRisk.avgRrRatio ?? 0) < 1 ? '장기적으로 손실 구조입니다.' : '양호한 수준입니다.'}`,
+      stats: [
+        {
+          label: '평균 손익비(R/R)',
+          value: `${fmt(positionManagementRisk.avgRrRatio, 1)}`,
+        },
+        {
+          label: '물타기 빈도(횟수)',
+          value: `${positionManagementRisk.averagingDownCount ?? 0}회`,
+          details: [
+            { label: '비율', value: `${fmt(positionManagementRisk.averagingDownRate)}%` },
+          ]
+        },
+      ],
+      best: { label: '적정 레버리지 승률', value: '-' },
+      worst: { label: '과도한 레버리지 승률', value: '-' },
+    },
+    timing: {
+      title: '시간∙상황 리스크',
+      description: '특정 시간대나 시장 상태에서 유독 약한가?',
+      aiInsight: `횡보장 승률 ${fmt(timeRisk.sidewaysWinRate)}%, 상승장 승률 ${fmt(timeRisk.uptrendWinRate)}%, 하락장 승률 ${fmt(timeRisk.downtrendWinRate)}%입니다.`,
+      stats: [
+        { label: '시간대별 승률', value: '' },
+        { label: '상황별 승률', value: '' },
+      ],
+      best: { label: '추세장 승률', value: `${fmt(timeRisk.uptrendWinRate)}%` },
+      worst: { label: '횡보장 승률', value: `${fmt(timeRisk.sidewaysWinRate)}%` },
+    },
+    emotion: {
+      title: '감정 기반 리스크',
+      description: '감정이 개입된 매매가 실제 손실을 만드는가?',
+      aiInsight: `감정 매매 비율이 ${fmt(emotionalRisk.emotionalTradeRate)}%입니다. 손절 후 바로 진입하는 패턴이 '감정 기반 매매'로 분류됩니다.`,
+      stats: [
+        {
+          label: '감정 매매',
+          value: `${fmt(emotionalRisk.emotionalTradeRate)}%`,
+          details: [
+            { label: '횟수', value: `${emotionalRisk.emotionalTradeCount ?? 0}회` },
+          ]
+        },
+        {
+          label: '과신 진입 (익절 후 즉시 진입)',
+          value: `${fmt(emotionalRisk.overconfidentEntryRate)}%`,
+          details: [
+            { label: '횟수', value: `${emotionalRisk.overconfidentEntryCount ?? 0}회` },
+          ]
+        },
+        {
+          label: '손절 후 즉시 역포지션',
+          value: `${fmt(emotionalRisk.immediateReverseRate)}%`,
+          details: [
+            { label: '횟수', value: `${emotionalRisk.immediateReverseCount ?? 0}회` },
+          ]
+        },
+      ],
+      best: { label: '차분한 상태 진입 승률', value: '-' },
+      worst: { label: '감정적 진입 승률', value: '-' },
+    },
+  }
+}
+
+// 데모 모드 mock 데이터
+const MOCK_RISK_DATA: Record<RiskCategory, RiskTabData> = {
   entry: {
     title: '진입 리스크',
     description: '어떤 상황에서 잘못 들어가고 있는가?',
@@ -62,7 +201,6 @@ const RISK_DATA: Record<RiskCategory, {
     worst: { label: '계획 외 진입 승률', value: '24%' },
   },
   exit: {
-    // Figma node-id=2095-5050
     title: '청산 리스크',
     description: '왜 수익을 극대화하지 못하고 손실을 키우는가?',
     aiInsight: '지난 20번의 거래 중 14번에서 목표가 도달 전 조기 익절이 발생했습니다.',
@@ -95,7 +233,6 @@ const RISK_DATA: Record<RiskCategory, {
     worst: { label: '조기 청산 시 평균 수익', value: '+1.4%' },
   },
   position: {
-    // Figma node-id=2095-5610
     title: '포지션 관리 리스크',
     description: '내 포지션 운용 방식 자체가 리스크를 만들고 있는가?',
     aiInsight: '레버리지 x15 이상 포지션이 전체 손실의 61%를 차지합니다. 평균 손익비가 0.72로, 장기적으로 손실 구조입니다.',
@@ -113,25 +250,17 @@ const RISK_DATA: Record<RiskCategory, {
     worst: { label: 'x20 이상 레버리지 승률', value: '31%' },
   },
   timing: {
-    // Figma node-id=2095-6084
     title: '시간∙상황 리스크',
     description: '특정 시간대나 시장 상태에서 유독 약한가?',
     aiInsight: '횡보장에서 손실의 50%를 기록하고 있습니다. 오전 진입의 평균 승률이 22%로 매우 낮습니다.',
     stats: [
-      {
-        label: '시간대별 승률',
-        value: '',
-      },
-      {
-        label: '상황별 승률',
-        value: '',
-      },
+      { label: '시간대별 승률', value: '' },
+      { label: '상황별 승률', value: '' },
     ],
     best: { label: '추세장 승률', value: '71%' },
     worst: { label: '횡보장 승률', value: '28%' },
   },
   emotion: {
-    // Figma node-id=2095-6557
     title: '감정 기반 리스크',
     description: '감정이 개입된 매매가 실제 손실을 만드는가?',
     aiInsight: "익절 후 첫 거래 승률이 평소의 절반 이하로 감소합니다. 손절 후 바로 진입하는 패턴이 '감정 기반 매매'로 분류됩니다.",
@@ -200,35 +329,13 @@ function AIInsightBox({ children }: { children: React.ReactNode }) {
   )
 }
 
-// 시간대별 승률 차트 - Figma 2095:6084 기준 (WeeklyProfitChart 패턴 참고)
-function HourlyWinRateChart() {
-  // 시간대별 승률 데이터 (0~23시)
-  const hourlyData = [
-    { hour: 0, value: 35 },
-    { hour: 1, value: 28 },
-    { hour: 2, value: 22 },
-    { hour: 3, value: 18 },
-    { hour: 4, value: 15 },
-    { hour: 5, value: 12 },
-    { hour: 6, value: 15 },
-    { hour: 7, value: 20 },
-    { hour: 8, value: 25 },
-    { hour: 9, value: 22 },
-    { hour: 10, value: 28 },
-    { hour: 11, value: 35 },
-    { hour: 12, value: 42 },
-    { hour: 13, value: 48 },
-    { hour: 14, value: 52 },
-    { hour: 15, value: 55 },
-    { hour: 16, value: 50 },
-    { hour: 17, value: 48 },
-    { hour: 18, value: 45 },
-    { hour: 19, value: 40 },
-    { hour: 20, value: 45 },
-    { hour: 21, value: 50 },
-    { hour: 22, value: 48 },
-    { hour: 23, value: 42 },
-  ]
+// 시간대별 승률 차트 - Figma 2095:6084 기준
+function HourlyWinRateChart({ hourlyWinRates }: { hourlyWinRates?: Record<string, number> }) {
+  // 시간대별 승률 데이터 (0~23시) - API 데이터 또는 기본값
+  const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    value: hourlyWinRates?.[String(i)] ?? 0,
+  }))
 
   // Chart dimensions
   const chartWidth = 480
@@ -237,10 +344,13 @@ function HourlyWinRateChart() {
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
 
+  const maxValue = Math.max(...hourlyData.map(d => d.value), 1)
+  const yMax = Math.ceil(maxValue / 10) * 10 || 50
+
   // Generate points
   const points = hourlyData.map((d, i) => {
     const x = padding.left + (i / (hourlyData.length - 1)) * innerWidth
-    const y = padding.top + innerHeight - ((d.value - 10) / 50) * innerHeight
+    const y = padding.top + innerHeight - (d.value / yMax) * innerHeight
     return { x, y, ...d }
   })
 
@@ -253,7 +363,7 @@ function HourlyWinRateChart() {
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + innerHeight} L ${padding.left} ${padding.top + innerHeight} Z`
 
   // Y-axis labels
-  const yLabels = [50, 25]
+  const yLabels = [yMax, Math.round(yMax / 2)]
 
   // X-axis labels - Figma: 모든 시간 표시 (0~23)
   const xLabels = Array.from({ length: 24 }, (_, i) => i)
@@ -354,13 +464,17 @@ function HourlyWinRateChart() {
   )
 }
 
-// 상황별 승률 차트 - Figma 2095:6084 기준 (WeeklyProfitChart 패턴 참고)
-function SituationWinRateChart() {
+// 상황별 승률 차트 - Figma 2095:6084 기준
+function SituationWinRateChart({ uptrendWinRate, downtrendWinRate, sidewaysWinRate }: {
+  uptrendWinRate: number
+  downtrendWinRate: number
+  sidewaysWinRate: number
+}) {
   // 상황별 승률 데이터
   const situationData = [
-    { label: '상승', value: 65 },
-    { label: '하락', value: 45 },
-    { label: '횡보', value: 28 },
+    { label: '상승', value: uptrendWinRate },
+    { label: '하락', value: downtrendWinRate },
+    { label: '횡보', value: sidewaysWinRate },
   ]
 
   // Chart dimensions
@@ -370,8 +484,11 @@ function SituationWinRateChart() {
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
 
+  const maxValue = Math.max(...situationData.map(d => d.value), 1)
+  const yMax = Math.ceil(maxValue / 10) * 10 || 50
+
   // Y-axis labels
-  const yLabels = [50, 25]
+  const yLabels = [yMax, Math.round(yMax / 2)]
 
   // Bar dimensions
   const barWidth = 50
@@ -426,7 +543,7 @@ function SituationWinRateChart() {
 
           {/* Bars */}
           {situationData.map((item, i) => {
-            const barHeight = (item.value / 70) * innerHeight
+            const barHeight = (item.value / yMax) * innerHeight
             const x = padding.left + barGap + i * (barWidth + barGap)
             const y = padding.top + innerHeight - barHeight
             return (
@@ -469,6 +586,8 @@ function SituationWinRateChart() {
 
 
 export default function RiskPatternPage() {
+  const { isDemoMode } = useAuthStore()
+
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
     d.setMonth(d.getMonth() - 1)
@@ -476,8 +595,57 @@ export default function RiskPatternPage() {
   })
   const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [activeTab, setActiveTab] = useState<RiskCategory>('entry')
+  const [selectedExchange, setSelectedExchange] = useState<string[]>(['binance'])
 
-  const currentData = RISK_DATA[activeTab]
+  // API 데이터 상태
+  const [riskData, setRiskData] = useState<Record<RiskCategory, RiskTabData>>(MOCK_RISK_DATA)
+  const [apiResponse, setApiResponse] = useState<RiskAnalysisResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchRiskData = useCallback(async () => {
+    if (isDemoMode) {
+      setRiskData(MOCK_RISK_DATA)
+      return
+    }
+
+    setIsLoading(true)
+
+    const exchangeMap: Record<string, string> = {
+      binance: 'BINANCE',
+      bybit: 'BYBIT',
+      bitget: 'BITGET',
+    }
+
+    const data = await riskApi.getAnalysis({
+      exchangeName: exchangeMap[selectedExchange[0]] || 'BINANCE',
+      startDate,
+      endDate,
+    }).catch((err) => {
+      console.warn('Risk analysis API error:', err.message)
+      return null
+    })
+
+    if (data) {
+      setApiResponse(data)
+      setRiskData(mapApiToTabData(data))
+    }
+    // API 실패 시 기존 mock 데이터 유지
+
+    setIsLoading(false)
+  }, [isDemoMode, selectedExchange, startDate, endDate])
+
+  useEffect(() => {
+    fetchRiskData()
+  }, [fetchRiskData])
+
+  const handleSearch = () => {
+    fetchRiskData()
+  }
+
+  const currentData = riskData[activeTab]
+
+  // 시간∙상황 리스크 차트용 데이터
+  const timeRisk = apiResponse?.timeRisk
 
   return (
     <div className="flex flex-col gap-12">
@@ -488,7 +656,10 @@ export default function RiskPatternPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-title-1-bold text-label-normal">리스크 패턴</h1>
             <div className="flex items-center gap-4">
-              <ExchangeFilter />
+              <ExchangeFilter
+                selected={selectedExchange}
+                onChange={setSelectedExchange}
+              />
               <div className="flex items-center gap-2">
                 <DatePickerCalendar
                   value={startDate}
@@ -500,8 +671,12 @@ export default function RiskPatternPage() {
                   onChange={setEndDate}
                 />
               </div>
-              <button className="px-4 py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors">
-                조회
+              <button
+                onClick={handleSearch}
+                disabled={isLoading}
+                className="px-4 py-2 bg-gray-900 text-white text-body-2-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+              >
+                {isLoading ? '조회중...' : '조회'}
               </button>
             </div>
           </div>
@@ -510,7 +685,7 @@ export default function RiskPatternPage() {
           </p>
         </div>
 
-        {/* Cards Section - Figma CSS: padding 20px 24px, border-left only, bg white, gap 12px */}
+        {/* Cards Section */}
         <div className="flex flex-col gap-5">
           {/* 상단 3개 요약 카드 - 가로 배치 */}
           <div className="flex gap-4">
@@ -525,8 +700,12 @@ export default function RiskPatternPage() {
               <div className="flex flex-col gap-0.5">
                 <span className="text-body-2-medium text-label-neutral">손절 후 즉각 재진입(복수매매) 손실 기여도</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-title-1-bold text-red-400">42%</span>
-                  <span className="text-caption-regular text-red-400">14회 발생</span>
+                  <span className="text-title-1-bold text-red-400">
+                    {apiResponse ? `${apiResponse.emotionalRisk.emotionalTradeRate.toFixed(0)}%` : '42%'}
+                  </span>
+                  <span className="text-caption-regular text-red-400">
+                    {apiResponse ? `${apiResponse.emotionalRisk.emotionalTradeCount}회 발생` : '14회 발생'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -542,8 +721,12 @@ export default function RiskPatternPage() {
               <div className="flex flex-col gap-0.5">
                 <span className="text-body-2-medium text-label-neutral">계획 외 진입 발생 비율</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-title-1-bold text-red-400">38%</span>
-                  <span className="text-caption-regular text-red-400">48건 발생</span>
+                  <span className="text-title-1-bold text-red-400">
+                    {apiResponse ? `${apiResponse.entryRisk.unplannedEntryRate.toFixed(0)}%` : '38%'}
+                  </span>
+                  <span className="text-caption-regular text-red-400">
+                    {apiResponse ? `${apiResponse.entryRisk.unplannedEntryCount}건 발생` : '48건 발생'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -559,7 +742,11 @@ export default function RiskPatternPage() {
               <div className="flex flex-col gap-0.5">
                 <span className="text-body-2-medium text-label-neutral">패턴별 누적 손실</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-title-1-bold text-red-400">42%(-₩18,750)</span>
+                  <span className="text-title-1-bold text-red-400">
+                    {apiResponse
+                      ? `${apiResponse.entryRisk.impulsiveTradeRate.toFixed(0)}%`
+                      : '42%(-₩18,750)'}
+                  </span>
                   <span className="text-caption-regular text-red-400">전체 손실 중</span>
                 </div>
               </div>
@@ -583,7 +770,7 @@ export default function RiskPatternPage() {
                 당신은 고변동 구간에서 지나치게 공격적입니다. 오전 매매를 줄이고 상승 추세를 공략하는 편이 승률이 <span className="font-bold">2배</span> 높습니다.
               </AIInsightBox>
 
-              {/* Recommendations - 가로 배치, gap 32px, Figma: lightbulb icon + separator lines */}
+              {/* Recommendations */}
               <div className="flex gap-8">
                 <div className="flex items-center gap-2 shrink-0">
                   <Image src="/icons/risk/icon-idea.svg" alt="" width={20} height={20} />
@@ -619,7 +806,7 @@ export default function RiskPatternPage() {
         <div className="flex flex-col gap-3">
           <h2 className="text-title-2-bold text-label-normal">상세 분석</h2>
 
-          {/* Tabs - gap 12px */}
+          {/* Tabs */}
           <div className="flex items-center gap-3">
             {RISK_TABS.map((tab) => (
               <button
@@ -638,12 +825,12 @@ export default function RiskPatternPage() {
           </div>
         </div>
 
-        {/* Tab Content - 세로 배치 */}
+        {/* Tab Content */}
         <div
           className="rounded-xl overflow-hidden"
           style={{ border: '0.6px solid #D7D7D7' }}
         >
-          {/* 상단: 타이틀 영역 (흰색 배경) - Figma: 제목 먼저, 설명 아래 */}
+          {/* 상단: 타이틀 영역 */}
           <div
             className="bg-white p-5"
             style={{ borderBottom: '0.6px solid #D7D7D7' }}
@@ -652,21 +839,25 @@ export default function RiskPatternPage() {
             <span className="text-body-1-regular text-label-neutral mt-1">{currentData.description}</span>
           </div>
 
-          {/* 하단: 콘텐츠 영역 (흰색 배경) */}
+          {/* 하단: 콘텐츠 영역 */}
           <div className="bg-white p-5 flex flex-col gap-3">
             {/* AI Insight */}
             <AIInsightBox>{currentData.aiInsight}</AIInsightBox>
 
-            {/* Stats Grid - 탭별로 다른 렌더링 */}
+            {/* Stats Grid */}
             <div className="flex gap-3">
               {activeTab === 'timing' ? (
-                // 시간∙상황 리스크: 차트 컴포넌트 표시
                 <>
-                  <HourlyWinRateChart />
-                  <SituationWinRateChart />
+                  <HourlyWinRateChart
+                    hourlyWinRates={timeRisk?.hourlyWinRates ?? (isDemoMode ? undefined : undefined)}
+                  />
+                  <SituationWinRateChart
+                    uptrendWinRate={timeRisk?.uptrendWinRate ?? 65}
+                    downtrendWinRate={timeRisk?.downtrendWinRate ?? 45}
+                    sidewaysWinRate={timeRisk?.sidewaysWinRate ?? 28}
+                  />
                 </>
               ) : (
-                // 다른 탭: 일반 stat 카드 표시
                 currentData.stats.map((stat, index) => (
                   <div
                     key={index}
@@ -681,7 +872,7 @@ export default function RiskPatternPage() {
                       )}
                     </div>
 
-                    {/* Divider & Details - Figma: icons before labels */}
+                    {/* Divider & Details */}
                     {stat.details && (
                       <>
                         <div style={{ height: '0.4px', backgroundColor: '#D7D7D7' }} />
@@ -708,7 +899,7 @@ export default function RiskPatternPage() {
               )}
             </div>
 
-            {/* Best / Worst Comparison - 2개 가로 배치, gap 12px */}
+            {/* Best / Worst Comparison */}
             <div className="flex gap-3">
               {/* Best */}
               <div

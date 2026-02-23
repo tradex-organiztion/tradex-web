@@ -63,9 +63,13 @@ export const aiApi = {
   chatStream: async (
     message: string,
     callbacks: ChatStreamCallbacks,
+    sessionId?: number,
     files?: File[]
   ): Promise<void> => {
     const params = new URLSearchParams({ question: message })
+    if (sessionId != null) {
+      params.set('sessionId', String(sessionId))
+    }
     const url = `/api/chat/message?${params.toString()}`
 
     // 파일이 있으면 multipart/form-data, 없으면 일반 POST
@@ -287,21 +291,21 @@ function generateMockResponse(message: string): AIChatResponse {
 // ============================================================
 
 export interface ChatSessionResponse {
-  id: number
+  sessionId: number
   title: string
   createdAt: string
   updatedAt: string
 }
 
 export interface ChatMessageResponse {
-  id: number
-  role: 'USER' | 'ASSISTANT'
-  content: string
+  question: string
+  response: string
   createdAt: string
 }
 
 export interface ChatHistoryResponse {
   sessionId: number
+  title: string
   messages: ChatMessageResponse[]
 }
 

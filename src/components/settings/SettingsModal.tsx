@@ -122,7 +122,7 @@ export function SettingsModal() {
   }
 
   const exchanges = exchangeKeys.length > 0
-    ? exchangeKeys.map((k) => ({ id: String(k.id), name: k.exchangeName, active: k.active }))
+    ? exchangeKeys.map((k) => ({ id: String(k.id), name: k.exchangeName, active: k.isActive }))
     : isDemoMode
       ? [
           { id: '1', name: '바이낸스', active: true },
@@ -727,12 +727,10 @@ function ExchangeAddModal({ open, onOpenChange, onAdded, isDemoMode }: {
     if (isDemoMode) {
       onAdded({
         id: Date.now(),
-        exchangeName: selectedExchange,
-        apiKey,
-        maskedSecret: '****' + secretKey.slice(-4),
-        active: true,
+        exchangeName: selectedExchange as 'BYBIT' | 'BINANCE' | 'BITGET',
+        maskedApiKey: apiKey.slice(0, 4) + '****' + apiKey.slice(-4),
+        isActive: true,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       })
       resetForm()
       return
@@ -743,7 +741,7 @@ function ExchangeAddModal({ open, onOpenChange, onAdded, isDemoMode }: {
 
     try {
       const result = await exchangeApi.create({
-        exchangeName: selectedExchange,
+        exchangeName: selectedExchange as 'BYBIT' | 'BINANCE' | 'BITGET',
         apiKey,
         apiSecret: secretKey,
       })

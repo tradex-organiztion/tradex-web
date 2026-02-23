@@ -114,6 +114,8 @@ export interface ClosedPositionsFilter {
   symbol?: string
   /** 포지션 방향 필터 */
   side?: PositionSide
+  /** 거래소 필터 */
+  exchange?: ExchangeName
 }
 
 /** GET /api/futures/closed-positions/summary */
@@ -138,15 +140,15 @@ export interface ClosedPositionsSummaryResponse {
 
 export const futuresApi = {
   /** 선물 거래 요약 (총 PnL, 승률, 거래량, PnL 차트) */
-  getSummary: (period: FuturesPeriod = '30d') =>
+  getSummary: (period: FuturesPeriod = '30d', exchange?: ExchangeName) =>
     get<FuturesSummaryResponse>('/api/futures/summary', {
-      params: { period },
+      params: { period, exchange },
     }),
 
   /** 종목별 수익 랭킹 */
-  getProfitRanking: (period: FuturesPeriod = '30d') =>
+  getProfitRanking: (period: FuturesPeriod = '30d', exchange?: ExchangeName) =>
     get<ProfitRankingResponse>('/api/futures/profit-ranking', {
-      params: { period },
+      params: { period, exchange },
     }),
 
   /** 청산 포지션 목록 (페이지네이션) */
@@ -163,36 +165,52 @@ export const futuresApi = {
     }),
 
   /** 청산 포지션 요약 (롱/숏 PnL, 승률) */
-  getClosedPositionsSummary: (period: FuturesPeriod = '30d') =>
+  getClosedPositionsSummary: (period: FuturesPeriod = '30d', exchange?: ExchangeName) =>
     get<ClosedPositionsSummaryResponse>('/api/futures/closed-positions/summary', {
-      params: { period },
+      params: { period, exchange },
     }),
 }
 
 // ============================================================
-// Position CRUD API
+// Position CRUD API (Swagger 기준)
 // ============================================================
 
+export type ExchangeName = 'BYBIT' | 'BINANCE' | 'BITGET'
+export type MarketCondition = 'UPTREND' | 'DOWNTREND' | 'SIDEWAYS'
+
 export interface PositionRequest {
+  exchangeName?: ExchangeName
   symbol: string
   side: PositionSide
-  leverage: number
-  entryPrice: number
-  size: number
-  entryTime?: string
+  avgEntryPrice: number
+  currentSize: number
+  entryTime: string              // ISO date-time (required)
+  leverage?: number
+  targetPrice?: number
+  stopLossPrice?: number
+  avgExitPrice?: number
+  exitTime?: string              // ISO date-time
 }
 
 export interface PositionResponse {
-  id: number
+  positionId: number
+  userId: number
+  exchangeName: ExchangeName
   symbol: string
   side: PositionSide
-  leverage: number
-  entryPrice: number
-  size: number
-  status: 'OPEN' | 'CLOSED'
-  pnl: number
   entryTime: string
+  avgEntryPrice: number
+  leverage: number
   exitTime?: string
+  avgExitPrice?: number
+  realizedPnl?: number
+  targetPrice?: number
+  stopLossPrice?: number
+  openFee?: number
+  closedFee?: number
+  marketCondition?: MarketCondition
+  status: 'OPEN' | 'CLOSED'
+  roi?: number
   createdAt: string
 }
 
@@ -202,7 +220,7 @@ export const positionsApi = {
     post<PositionResponse>('/api/futures/positions', data),
 
   /** 포지션 수정 */
-  update: (positionId: number, data: PositionRequest) =>
+  update: (positionId: number, data: Partial<PositionRequest>) =>
     patch<PositionResponse>(`/api/futures/positions/${positionId}`, data),
 
   /** 포지션 삭제 (연결된 오더, 매매일지도 삭제) */
@@ -211,26 +229,37 @@ export const positionsApi = {
 }
 
 // ============================================================
-// Order API
+// Order API (Swagger 기준)
 // ============================================================
+
+export type OrderType = 'MARKET' | 'LIMIT' | 'STOP_LOSS'
+export type PositionEffect = 'OPEN' | 'CLOSE'
+export type OrderStatus = 'NEW' | 'FILLED' | 'CANCELED'
 
 export interface OrderRequest {
   side: 'BUY' | 'SELL'
-  type: 'MARKET' | 'LIMIT'
-  price: number
-  quantity: number
-  executedAt?: string
+  orderType: OrderType             // required
+  orderTime: string                // ISO date-time (required)
+  positionEffect?: PositionEffect
+  filledQuantity?: number
+  filledPrice?: number
+  cumExecFee?: number
+  realizedPnl?: number
+  fillTime?: string                // ISO date-time
 }
 
 export interface OrderResponse {
-  id: number
-  positionId: number
+  orderId: number
   side: 'BUY' | 'SELL'
-  type: 'MARKET' | 'LIMIT'
-  price: number
-  quantity: number
-  fee: number
-  executedAt: string
+  orderType: OrderType
+  positionEffect?: PositionEffect
+  filledQuantity?: number
+  filledPrice?: number
+  cumExecFee?: number
+  realizedPnl?: number
+  status: OrderStatus
+  orderTime: string
+  fillTime?: string
   createdAt: string
 }
 
@@ -240,7 +269,7 @@ export const ordersApi = {
     post<OrderResponse>(`/api/positions/${positionId}/orders`, data),
 
   /** 오더 수정 */
-  update: (orderId: number, data: OrderRequest) =>
+  update: (orderId: number, data: Partial<OrderRequest>) =>
     patch<OrderResponse>(`/api/orders/${orderId}`, data),
 
   /** 오더 삭제 */
@@ -249,5 +278,7 @@ export const ordersApi = {
 
   /** 오더를 다른 포지션으로 이동 */
   move: (orderId: number, targetPositionId: number) =>
-    patch<OrderResponse>(`/api/orders/${orderId}/move`, { targetPositionId }),
+    patch<OrderResponse>(`/api/orders/${orderId}/move`, undefined, {
+      params: { targetPositionId },
+    }),
 }

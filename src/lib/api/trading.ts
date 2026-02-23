@@ -1,116 +1,130 @@
-import { get, post, put, patch, del } from './client'
-import type { TradingPrinciple } from '@/stores/useTradingStore'
+import { get, patch, del } from './client'
 import type { PageResponse } from './futures'
-
-// Principles API (백엔드 미구현 — mock 유지)
-export interface CreatePrincipleRequest {
-  title: string
-  description: string
-  category: string
-}
-
-export interface UpdatePrincipleRequest {
-  title?: string
-  description?: string
-  category?: string
-  isActive?: boolean
-}
-
-export const principlesApi = {
-  getAll: () =>
-    get<TradingPrinciple[]>('/trading/principles'),
-
-  getById: (id: string) =>
-    get<TradingPrinciple>(`/trading/principles/${id}`),
-
-  create: (data: CreatePrincipleRequest) =>
-    post<TradingPrinciple>('/trading/principles', data),
-
-  update: (id: string, data: UpdatePrincipleRequest) =>
-    put<TradingPrinciple>(`/trading/principles/${id}`, data),
-
-  delete: (id: string) =>
-    del<void>(`/trading/principles/${id}`),
-
-  // AI Recommendations
-  getAIRecommendations: () =>
-    get<TradingPrinciple[]>('/trading/principles/ai-recommendations'),
-}
+import type { OrderResponse } from './futures'
+import type { MarketCondition } from './futures'
 
 // ============================================================
-// Journal API
+// Journal API (Swagger 기준)
 // ============================================================
 
-/** 매매일지 응답 */
+/** 매매일지 응답 - Swagger JournalResponse */
 export interface JournalResponse {
-  id: number
+  journalId: number
   positionId: number
+  /** 계획 익절가 */
+  plannedTargetPrice?: number
+  /** 계획 손절가 */
+  plannedStopLoss?: number
+  /** 진입 시나리오 */
+  entryScenario?: string
+  /** 청산 복기 */
+  exitReview?: string
+  /** 지표 목록 */
+  indicators?: string[]
+  /** 타임프레임 목록 */
+  timeframes?: string[]
+  /** 기술적 분석 목록 */
+  technicalAnalyses?: string[]
+  /** 거래소명 */
+  exchangeName?: 'BYBIT' | 'BINANCE' | 'BITGET'
+  /** 심볼 */
   symbol: string
+  /** 포지션 방향 */
   side: 'LONG' | 'SHORT'
+  /** 시장 상태 */
+  marketCondition?: MarketCondition
+  /** 레버리지 */
   leverage: number
-  entryPrice: number
-  exitPrice?: number
-  size: number
-  pnl: number
-  pnlPercent?: number
-  status: 'OPEN' | 'CLOSED'
+  /** 포지션 상태 */
+  positionStatus: 'OPEN' | 'CLOSED'
+  /** 진입 시각 */
   entryTime: string
+  /** 청산 시각 */
   exitTime?: string
-  memo?: string
-  review?: string
-  preScenario?: string
-  entryReason?: string
-  indicators?: string[]
-  timeframes?: string[]
-  technicalAnalysis?: string[]
-  targetTP?: string
-  targetSL?: string
+  /** 평균 진입가 */
+  avgEntryPrice: number
+  /** 평균 청산가 */
+  avgExitPrice?: number
+  /** 실현 손익 */
+  realizedPnl?: number
+  /** 진입 수수료 */
+  openFee?: number
+  /** 청산 수수료 */
+  closedFee?: number
+  /** 목표가 */
+  targetPrice?: number
+  /** 손절가 */
+  stopLossPrice?: number
+  /** 수익률 */
+  roi?: number
+  /** 오더 목록 */
+  orders?: OrderResponse[]
+  /** 생성일 */
   createdAt: string
-  updatedAt: string
 }
 
+/** 매매일지 수정 요청 - Swagger JournalRequest */
 export interface UpdateJournalRequest {
-  memo?: string
-  review?: string
-  preScenario?: string
-  entryReason?: string
+  plannedTargetPrice?: number
+  plannedStopLoss?: number
+  entryScenario?: string
+  exitReview?: string
   indicators?: string[]
   timeframes?: string[]
-  technicalAnalysis?: string[]
-  targetTP?: string
-  targetSL?: string
+  technicalAnalyses?: string[]
+  marketCondition?: MarketCondition
 }
 
+/** 매매일지 목록 조회 필터 - Swagger 쿼리 파라미터 */
 export interface JournalFilters {
+  symbol?: string
+  side?: 'LONG' | 'SHORT'
+  positionStatus?: 'OPEN' | 'CLOSED'
+  startDate?: string              // yyyy-MM-dd
+  endDate?: string                // yyyy-MM-dd
   page?: number
   size?: number
   sort?: string[]
 }
 
-// 하위 호환용 (기존 코드에서 참조)
-export interface CreateEntryRequest {
-  symbol: string
-  position: 'long' | 'short'
-  entryPrice: number
-  quantity: number
-  entryDate: string
-  notes?: string
-  principleIds?: string[]
+// ============================================================
+// Journal Stats API
+// ============================================================
+
+export type TradingStyle = 'SCALPING' | 'SWING'
+
+export interface JournalStatsParams {
+  indicators?: string[]
+  timeframes?: string[]
+  technicalAnalyses?: string[]
+  tradingStyle?: TradingStyle
+  positionSide?: 'LONG' | 'SHORT'
+  marketCondition?: MarketCondition
 }
 
-export interface UpdateEntryRequest {
-  exitPrice?: number
-  exitDate?: string
-  notes?: string
-  principleIds?: string[]
+export interface JournalStatsResponse {
+  totalTrades: number
+  winCount: number
+  lossCount: number
+  winRate: number
+  avgPnl: number
+  avgRoi: number
 }
 
-export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+export interface JournalStatsOptionsResponse {
+  indicators: string[]
+  timeframes: string[]
+  technicalAnalyses: string[]
+}
+
+export const journalStatsApi = {
+  /** 매매일지 통계 조회 (필터별) */
+  getStats: (params?: JournalStatsParams) =>
+    get<JournalStatsResponse>('/api/journals/stats', { params }),
+
+  /** 통계 필터에 사용 가능한 옵션 값 목록 */
+  getStatsOptions: () =>
+    get<JournalStatsOptionsResponse>('/api/journals/stats/options'),
 }
 
 export const journalApi = {
@@ -127,7 +141,7 @@ export const journalApi = {
   getById: (id: number) =>
     get<JournalResponse>(`/api/journals/${id}`),
 
-  /** 매매일지 수정 (메모, 복기 등) */
+  /** 매매일지 수정 (시나리오, 복기, 지표 등) */
   update: (id: number, data: UpdateJournalRequest) =>
     patch<JournalResponse>(`/api/journals/${id}`, data),
 

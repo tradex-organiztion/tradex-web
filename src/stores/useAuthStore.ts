@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { authApi } from '@/lib/api/auth'
 
 /**
  * Auth Store - 인증 상태 관리
@@ -100,14 +101,20 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
         }),
 
-      logout: () =>
+      logout: () => {
+        if (!get().isDemoMode) {
+          authApi.logout().catch((err) => {
+            console.warn('Logout API error:', err.message)
+          })
+        }
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
           isDemoMode: false,
-        }),
+        })
+      },
 
       setLoading: (isLoading) =>
         set({ isLoading }),

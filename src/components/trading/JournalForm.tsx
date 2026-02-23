@@ -71,7 +71,7 @@ const recommendedIndicators = ['볼린저 밴드', 'RSI', 'MACD']
 const recommendedTimeframes = ['15분봉']
 const recommendedTechnicalAnalysis = ['15분봉', '15분봉']
 
-// 매매원칙 목록
+// 매매원칙 목록 (mock)
 const TRADING_PRINCIPLES = [
   '하루에 3회 이상 연속 손실이 발생하면 그날은 더 이상 거래하지 않습니다.',
   '손절 기준은 진입가 대비 2% 이하로 설정하고, 어떤 경우에도 이를 변경하거나 무시하지 않습니다.',
@@ -445,8 +445,9 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
       symbol,
       side,
       leverage,
-      entryPrice,
-      size,
+      avgEntryPrice: entryPrice,
+      currentSize: size,
+      entryTime: new Date().toISOString(),
     }).catch((err) => {
       console.warn('Position create error:', err.message)
       setSaveError('포지션 생성에 실패했습니다. 다시 시도해주세요.')
@@ -469,15 +470,13 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     setSaveError(null)
 
     const updateData: UpdateJournalRequest = {
-      memo: formData.scenario,
-      review: formData.review,
-      preScenario: formData.scenario,
-      entryReason: formData.entryReason,
+      entryScenario: formData.scenario,
+      exitReview: formData.review,
       indicators: formData.indicators,
       timeframes: formData.timeframes,
-      technicalAnalysis: formData.technicalAnalysis,
-      targetTP: formData.targetTP,
-      targetSL: formData.targetSL,
+      technicalAnalyses: formData.technicalAnalysis,
+      plannedTargetPrice: formData.targetTP ? parseFloat(formData.targetTP) : undefined,
+      plannedStopLoss: formData.targetSL ? parseFloat(formData.targetSL) : undefined,
     }
 
     const result = await journalApi.update(journalId, updateData).catch((err) => {

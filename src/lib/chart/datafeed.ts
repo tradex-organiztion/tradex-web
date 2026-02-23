@@ -15,14 +15,11 @@ import type {
 } from '@/charting_library'
 
 import {
-  fetchKlines,
-  getExchangeSymbols,
   subscribeKline,
   toBinanceInterval,
-  toBinanceSymbol,
-  toDisplaySymbol,
-  type BinanceSymbolInfo,
 } from './binanceClient'
+
+import { chartDataApi } from '@/lib/api/chart'
 
 const SUPPORTED_RESOLUTIONS: ResolutionString[] = [
   '1' as ResolutionString,
@@ -35,11 +32,6 @@ const SUPPORTED_RESOLUTIONS: ResolutionString[] = [
   '1W' as ResolutionString,
   '1M' as ResolutionString,
 ]
-
-/** Determine pricescale from price precision (decimal places) */
-function pricescaleFromPrecision(precision: number): number {
-  return Math.pow(10, Math.min(precision, 8))
-}
 
 export class TradexDatafeed implements IBasicDataFeed {
   private lastBars: Record<string, Bar> = {}
@@ -66,26 +58,16 @@ export class TradexDatafeed implements IBasicDataFeed {
   ): void {
     const query = userInput.toUpperCase()
 
-    getExchangeSymbols()
+    chartDataApi.searchSymbols(query)
       .then((symbols) => {
-        const results: SearchSymbolResultItem[] = symbols
-          .filter(
-            (s) =>
-              s.quoteAsset === 'USDT' &&
-              (s.baseAsset.includes(query) || s.symbol.includes(query))
-          )
-          .slice(0, 30)
-          .map((s) => {
-            const display = toDisplaySymbol(s.symbol, s.quoteAsset)
-            return {
-              symbol: display,
-              full_name: display,
-              description: `${s.baseAsset} / ${s.quoteAsset}`,
-              exchange: 'Binance',
-              ticker: display,
-              type: 'crypto',
-            }
-          })
+        const results: SearchSymbolResultItem[] = symbols.map((s) => ({
+          symbol: s.ticker,
+          full_name: s.ticker,
+          description: s.description,
+          exchange: s.exchange || 'Binance',
+          ticker: s.ticker,
+          type: s.type || 'crypto',
+        }))
         onResult(results)
       })
       .catch(() => {
@@ -98,36 +80,24 @@ export class TradexDatafeed implements IBasicDataFeed {
     onResolve: ResolveCallback,
     onError: DatafeedErrorCallback
   ): void {
-    const binanceSymbol = toBinanceSymbol(symbolName)
-
-    getExchangeSymbols()
-      .then((symbols) => {
-        const info: BinanceSymbolInfo | undefined = symbols.find(
-          (s) => s.symbol === binanceSymbol
-        )
-
-        if (!info) {
-          onError('Symbol not found')
-          return
-        }
-
-        const display = toDisplaySymbol(info.symbol, info.quoteAsset)
+    chartDataApi.getSymbolInfo(symbolName)
+      .then((info) => {
         const symbolInfo: LibrarySymbolInfo = {
-          name: display,
-          ticker: display,
-          description: `${info.baseAsset} / ${info.quoteAsset}`,
-          type: 'crypto',
-          session: '24x7',
-          exchange: 'Binance',
-          listed_exchange: 'Binance',
-          timezone: 'Etc/UTC',
+          name: info.name,
+          ticker: info.ticker,
+          description: info.description,
+          type: info.type || 'crypto',
+          session: info.session || '24x7',
+          exchange: info.exchange || 'Binance',
+          listed_exchange: info.exchange || 'Binance',
+          timezone: (info.timezone || 'Etc/UTC') as LibrarySymbolInfo['timezone'],
           format: 'price',
-          pricescale: pricescaleFromPrecision(info.pricePrecision),
-          minmov: 1,
-          has_intraday: true,
-          has_weekly_and_monthly: true,
-          supported_resolutions: SUPPORTED_RESOLUTIONS,
-          volume_precision: info.quantityPrecision,
+          pricescale: info.pricescale,
+          minmov: info.minmov || 1,
+          has_intraday: info.has_intraday ?? true,
+          has_weekly_and_monthly: info.has_weekly_and_monthly ?? true,
+          supported_resolutions: (info.supported_resolutions as ResolutionString[]) || SUPPORTED_RESOLUTIONS,
+          volume_precision: info.volume_precision ?? 2,
           data_status: 'streaming',
         } as LibrarySymbolInfo
 
@@ -145,24 +115,28 @@ export class TradexDatafeed implements IBasicDataFeed {
     onResult: HistoryCallback,
     onError: DatafeedErrorCallback
   ): void {
-    const { from, to, firstDataRequest } = periodParams
-    const interval = toBinanceInterval(resolution as string)
+    const { from, to, firstDataRequest, countBack } = periodParams
 
-    // Binance expects milliseconds
-    fetchKlines(symbolInfo.name, interval, from * 1000, to * 1000)
-      .then((klines) => {
-        if (klines.length === 0) {
+    chartDataApi.getBars({
+      symbol: symbolInfo.name,
+      resolution: resolution as string,
+      from,
+      to,
+      countBack,
+    })
+      .then((response) => {
+        if (response.noData || response.bars.length === 0) {
           onResult([], { noData: true })
           return
         }
 
-        const bars: Bar[] = klines.map((k) => ({
-          time: k.time,
-          open: k.open,
-          high: k.high,
-          low: k.low,
-          close: k.close,
-          volume: k.volume,
+        const bars: Bar[] = response.bars.map((b) => ({
+          time: b.time,
+          open: b.open,
+          high: b.high,
+          low: b.low,
+          close: b.close,
+          volume: b.volume,
         }))
 
         if (firstDataRequest && bars.length > 0) {
@@ -177,6 +151,7 @@ export class TradexDatafeed implements IBasicDataFeed {
       })
   }
 
+  // WebSocket은 Binance 직접 연결 유지 (백엔드에 WS 엔드포인트 없음)
   subscribeBars(
     symbolInfo: LibrarySymbolInfo,
     resolution: ResolutionString,

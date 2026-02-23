@@ -8,24 +8,25 @@ import { get, post, patch, del } from './client'
  */
 
 // ============================================================
-// Types
+// Types (Swagger 기준)
 // ============================================================
 
 export interface ExchangeApiKeyResponse {
   id: number
-  exchangeName: string
-  apiKey: string
-  /** 마스킹된 시크릿 */
-  maskedSecret: string
-  active: boolean
+  exchangeName: 'BYBIT' | 'BINANCE' | 'BITGET'
+  /** 마스킹된 API 키 */
+  maskedApiKey: string
+  /** 활성 상태 */
+  isActive: boolean
   createdAt: string
-  updatedAt: string
 }
 
 export interface ExchangeApiKeyRequest {
-  exchangeName: string
+  exchangeName: 'BYBIT' | 'BINANCE' | 'BITGET'
   apiKey: string
   apiSecret: string
+  /** Bitget 등 일부 거래소에서 필요 */
+  passphrase?: string
 }
 
 // ============================================================
