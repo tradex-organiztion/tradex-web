@@ -71,10 +71,7 @@ export function TVChartContainer({ symbol, className }: TVChartContainerProps) {
           'study_templates',
           'save_chart_properties_to_local_storage',
         ],
-        disabled_features: [
-          'header_symbol_search',
-          'header_compare',
-        ],
+        disabled_features: [],
         overrides: {
           'mainSeriesProperties.candleStyle.upColor': '#13C34E',
           'mainSeriesProperties.candleStyle.downColor': '#FF0015',
