@@ -42,7 +42,7 @@
 | [Week 5](#week-5-차트-분석) | 차트 분석 | 🔄 진행중 | 83% (5/6) |
 | [Week 6](#week-6-분석--수익-관리) | 분석 + 수익 관리 | 🔄 진행중 | 83% (5/6) |
 | [Week 7](#week-7-수신함--설정) | 수신함 + 설정 | ✅ 완료 | 100% (6/6) |
-| [Week 8](#week-8-구독--최적화--qa) | 구독 + 최적화 + QA | 🔄 진행중 | 57% (4/7) |
+| [Week 8](#week-8-구독--최적화--qa) | 구독 + 최적화 + QA | 🔄 진행중 | 71% (5/7) |
 
 ---
 
@@ -325,7 +325,7 @@
 
 **목표**: 결제 연동 및 최종 마무리
 **상태**: 🔄 진행중
-**진행률**: 4/7 (57%)
+**진행률**: 5/7 (71%)
 
 ### 태스크
 
@@ -336,7 +336,7 @@
 | 8.3 | 성능 최적화 | 🟢 Medium | ✅ | `app/(main)/layout.tsx`, `app/(main)/loading.tsx` | 동적 import (SettingsModal, TradexAIPanel), preconnect, loading.tsx |
 | 8.4 | 반응형 대응 점검 | 🟢 Medium | ✅ | `layout.tsx`, `Sidebar.tsx`, `Header.tsx` 등 | 모바일 사이드바 오버레이, 반응형 그리드/패널/모달, 태블릿 대응 |
 | 8.5 | 에러 핸들링 강화 | 🟡 High | ✅ | `app/global-error.tsx`, `app/(main)/error.tsx`, `app/not-found.tsx` | Next.js 에러 바운더리 + 404 페이지 구현 |
-| 8.6 | E2E 테스트 | 🟢 Medium | ⬜ | `tests/` | 주요 플로우 |
+| 8.6 | E2E 테스트 | 🟢 Medium | ✅ | `tests/` | Playwright 23개 테스트 (인증, 홈, 매매일지, 차트, 분석, 포트폴리오, 설정, 수신함) |
 | 8.7 | 버그 수정 및 최종 QA | 🔴 Critical | ✅ | `eslint.config.mjs` | ESLint 0 errors/0 warnings, 빌드 성공 확인 |
 
 ### 완료 조건
