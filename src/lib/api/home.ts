@@ -3,7 +3,7 @@ import { get, patch, del } from './client'
 /**
  * Home API
  *
- * 홈 화면 요약 정보 및 알림 관련 API
+ * 홈 화면 요약 정보 및 홈 알림 API
  */
 
 // ============================================================
@@ -43,15 +43,13 @@ export interface HomeSummaryResponse {
   pnlChart: DailyPnlChartData[]
 }
 
-/** 알림 타입 */
-export type NotificationType = 'POSITION_ENTRY' | 'POSITION_EXIT' | 'RISK_WARNING' | 'CHART_ALERT' | 'TRADE_ALERT'
+/** 홈 알림 타입 */
+export type HomeNotificationType = 'POSITION_ENTRY' | 'POSITION_EXIT' | 'RISK_WARNING' | 'CHART_ALERT' | 'TRADE_ALERT'
 
-/**
- * 알림 응답
- */
-export interface NotificationResponse {
+/** 홈 알림 응답 */
+export interface HomeNotificationResponse {
   id: number
-  type: NotificationType
+  type: HomeNotificationType
   title: string
   message: string
   positionId?: number | null
@@ -59,38 +57,24 @@ export interface NotificationResponse {
   read: boolean
 }
 
-/** 읽지 않은 알림 개수 - API는 number(long) 직접 반환 */
-
 // ============================================================
 // Home API
 // ============================================================
 
 export const homeApi = {
-  // ============================================================
-  // 홈 화면 요약
-  // ============================================================
-
   /**
    * 홈 화면에 표시할 사용자의 트레이딩 요약 정보를 조회합니다
-   * - 자산 현황
-   * - 월간 PnL
-   * - 승률
-   * - 7일간 PnL 차트
    */
   getSummary: () =>
     get<HomeSummaryResponse>('/api/home/summary'),
 
-  // ============================================================
-  // 알림
-  // ============================================================
-
   /** 모든 알림 목록 조회 (최신순) */
   getNotifications: () =>
-    get<NotificationResponse[]>('/api/home/notifications'),
+    get<HomeNotificationResponse[]>('/api/home/notifications'),
 
   /** 읽지 않은 알림만 조회 */
   getUnreadNotifications: () =>
-    get<NotificationResponse[]>('/api/home/notifications/unread'),
+    get<HomeNotificationResponse[]>('/api/home/notifications/unread'),
 
   /** 읽지 않은 알림 개수 조회 */
   getUnreadCount: () =>
@@ -98,7 +82,7 @@ export const homeApi = {
 
   /** 특정 알림 읽음 처리 */
   markAsRead: (id: number) =>
-    patch<NotificationResponse>(`/api/home/notifications/${id}/read`),
+    patch<HomeNotificationResponse>(`/api/home/notifications/${id}/read`),
 
   /** 알림 삭제 */
   deleteNotification: (id: number) =>

@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { useUIStore } from '@/stores'
+import { useUIStore, useAuthStore } from '@/stores'
+import { homeApi } from '@/lib/api/home'
 
 // 수신함 아이콘
 function IconInbox({ className }: { className?: string }) {
@@ -35,6 +37,27 @@ function IconAI({ className }: { className?: string }) {
 
 export function Header() {
   const { isAIPanelOpen, isMobile, setSidebarCollapsed, toggleAIPanel } = useUIStore()
+  const { isDemoMode } = useAuthStore()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setUnreadCount(3)
+      return
+    }
+
+    const fetchUnread = () => {
+      homeApi.getUnreadCount().then((count) => {
+        setUnreadCount(count)
+      }).catch((err) => {
+        console.warn('Unread count fetch error:', err.message)
+      })
+    }
+
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 30000)
+    return () => clearInterval(interval)
+  }, [isDemoMode])
 
   return (
     <header
@@ -62,9 +85,14 @@ export function Header() {
         onClick={() => {
           window.location.href = '/inbox'
         }}
-        className="flex h-7 items-center gap-0.5 rounded border border-gray-300 bg-white px-2 text-body-2-medium text-gray-900 transition-colors hover:bg-gray-50"
+        className="relative flex h-7 items-center gap-0.5 rounded border border-gray-300 bg-white px-2 text-body-2-medium text-gray-900 transition-colors hover:bg-gray-50"
       >
         <IconInbox className="size-4" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-400 px-1 text-[10px] font-bold text-white">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
       </button>
 
       <button

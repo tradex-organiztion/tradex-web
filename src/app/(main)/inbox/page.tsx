@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common"
 import { Button } from "@/components/ui"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { homeApi, NotificationResponse, NotificationType } from "@/lib/api"
+import { notificationApi, NotificationResponse, NotificationType } from "@/lib/api"
 import { useAuthStore } from "@/stores"
 
 /**
@@ -18,13 +18,11 @@ import { useAuthStore } from "@/stores"
  * - 아이템 클릭 시 사이드패널 오버레이 (4001:27592)
  */
 
-// 알림 타입별 라벨 및 색상
+// 알림 타입별 라벨 및 색상 (Swagger: POSITION_ENTRY, POSITION_EXIT, RISK_WARNING)
 const notificationTypeConfig: Record<NotificationType, { label: string; bgColor: string; textColor: string }> = {
   POSITION_ENTRY: { label: "포지션 진입", bgColor: "bg-element-positive-lighter", textColor: "text-element-positive-default" },
   POSITION_EXIT: { label: "포지션 종료", bgColor: "bg-gray-100", textColor: "text-label-normal" },
   RISK_WARNING: { label: "리스크 경고", bgColor: "bg-element-danger-lighter", textColor: "text-element-danger-default" },
-  CHART_ALERT: { label: "차트 알림", bgColor: "bg-gray-100", textColor: "text-label-normal" },
-  TRADE_ALERT: { label: "매매 알림", bgColor: "bg-gray-100", textColor: "text-label-normal" },
 }
 
 // 알림 타입별 액션 버튼
@@ -32,8 +30,6 @@ const notificationActionConfig: Record<NotificationType, { label: string; href?:
   POSITION_ENTRY: { label: "매매일지 작성" },
   POSITION_EXIT: { label: "매매일지 작성" },
   RISK_WARNING: null,
-  CHART_ALERT: { label: "차트 바로가기", href: "/chart" },
-  TRADE_ALERT: { label: "매매일지 작성" },
 }
 
 // 데모 모드용 샘플 알림 데이터
@@ -45,13 +41,13 @@ const _demoDate = (daysAgo: number, h: number, m: number) => {
 }
 
 const demoNotifications: NotificationResponse[] = [
-  { id: 1, type: "POSITION_ENTRY" as NotificationType, title: "BTC/USDT 롱 포지션 진입", message: "바이낸스에서 BTC/USDT 롱 포지션이 $97,250에 진입되었습니다. 목표가: $99,500, 손절가: $96,000", read: false, createdAt: _demoDate(0, 14, 30) },
-  { id: 2, type: "RISK_WARNING" as NotificationType, title: "연속 손실 경고", message: "오늘 3회 연속 손실이 발생했습니다. 매매 원칙에 따라 금일 추가 거래를 중단하는 것을 권장합니다.", read: false, createdAt: _demoDate(0, 11, 15) },
-  { id: 3, type: "POSITION_EXIT" as NotificationType, title: "ETH/USDT 숏 포지션 종료", message: "바이낸스에서 ETH/USDT 숏 포지션이 $2,680에 종료되었습니다. 수익: +$340 (+2.1%)", read: true, createdAt: _demoDate(1, 16, 45) },
-  { id: 4, type: "POSITION_ENTRY" as NotificationType, title: "SOL/USDT 롱 포지션 진입", message: "비트겟에서 SOL/USDT 롱 포지션이 $185에 진입되었습니다.", read: true, createdAt: _demoDate(2, 9, 30) },
-  { id: 5, type: "RISK_WARNING" as NotificationType, title: "레버리지 과다 경고", message: "현재 평균 레버리지가 15x로 높은 수준입니다. 리스크 관리를 위해 레버리지를 줄이는 것을 권장합니다.", read: true, createdAt: _demoDate(3, 10, 0) },
-  { id: 6, type: "CHART_ALERT" as NotificationType, title: "BTC/USDT 지지선 도달", message: "BTC/USDT가 주요 지지선 $96,500에 도달했습니다. 반등 가능성을 확인하세요.", read: false, createdAt: _demoDate(0, 10, 0) },
-  { id: 7, type: "TRADE_ALERT" as NotificationType, title: "ETH/USDT 매매 신호 감지", message: "AI 분석 결과 ETH/USDT에서 강한 매수 신호가 감지되었습니다. 설정한 트리거 조건에 부합합니다.", read: true, createdAt: _demoDate(1, 8, 30) },
+  { id: 1, type: "POSITION_ENTRY", title: "BTC/USDT 롱 포지션 진입", message: "바이낸스에서 BTC/USDT 롱 포지션이 $97,250에 진입되었습니다. 목표가: $99,500, 손절가: $96,000", read: false, createdAt: _demoDate(0, 14, 30) },
+  { id: 2, type: "RISK_WARNING", title: "연속 손실 경고", message: "오늘 3회 연속 손실이 발생했습니다. 매매 원칙에 따라 금일 추가 거래를 중단하는 것을 권장합니다.", read: false, createdAt: _demoDate(0, 11, 15) },
+  { id: 3, type: "POSITION_EXIT", title: "ETH/USDT 숏 포지션 종료", message: "바이낸스에서 ETH/USDT 숏 포지션이 $2,680에 종료되었습니다. 수익: +$340 (+2.1%)", read: true, createdAt: _demoDate(1, 16, 45) },
+  { id: 4, type: "POSITION_ENTRY", title: "SOL/USDT 롱 포지션 진입", message: "비트겟에서 SOL/USDT 롱 포지션이 $185에 진입되었습니다.", read: true, createdAt: _demoDate(2, 9, 30) },
+  { id: 5, type: "RISK_WARNING", title: "레버리지 과다 경고", message: "현재 평균 레버리지가 15x로 높은 수준입니다. 리스크 관리를 위해 레버리지를 줄이는 것을 권장합니다.", read: true, createdAt: _demoDate(3, 10, 0) },
+  { id: 6, type: "POSITION_EXIT", title: "BTC/USDT 롱 포지션 종료", message: "바이비트에서 BTC/USDT 롱 포지션이 $98,100에 종료되었습니다. 수익: +$850 (+1.2%)", read: false, createdAt: _demoDate(0, 10, 0) },
+  { id: 7, type: "POSITION_ENTRY", title: "ETH/USDT 숏 포지션 진입", message: "바이낸스에서 ETH/USDT 숏 포지션이 $2,750에 진입되었습니다.", read: true, createdAt: _demoDate(1, 8, 30) },
 ]
 
 export default function InboxPage() {
@@ -73,7 +69,7 @@ export default function InboxPage() {
       return
     }
 
-    const data = await homeApi.getNotifications().catch((err) => {
+    const data = await notificationApi.getAll().catch((err) => {
       console.warn("Notifications API unavailable:", err.message)
       return null
     })
@@ -94,7 +90,7 @@ export default function InboxPage() {
 
   // 읽음 처리
   const handleMarkAsRead = async (id: number) => {
-    await homeApi.markAsRead(id).catch((err) => {
+    await notificationApi.markAsRead(id).catch((err) => {
       console.warn("Failed to mark as read:", err.message)
       return null
     })
@@ -125,7 +121,7 @@ export default function InboxPage() {
   // 알림 삭제 실행
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
-    const result = await homeApi.deleteNotification(deleteTarget.id).catch((err) => {
+    const result = await notificationApi.delete(deleteTarget.id).catch((err) => {
       console.warn("Failed to delete notification:", err.message)
       return null
     })

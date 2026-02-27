@@ -28,9 +28,16 @@ export { homeApi } from './home'
 export type {
   DailyPnlChartData,
   HomeSummaryResponse,
+  HomeNotificationType,
+  HomeNotificationResponse,
+} from './home'
+
+// Notification API (수신함 전용: /api/notifications)
+export { notificationApi } from './notification'
+export type {
   NotificationType,
   NotificationResponse,
-} from './home'
+} from './notification'
 
 // Trading API
 export { journalApi, journalStatsApi } from './trading'
