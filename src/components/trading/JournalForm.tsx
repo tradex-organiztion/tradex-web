@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChevronsRight, Plus, ChevronDown, ChevronUp, X, Search, Upload, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { positionsApi, ordersApi } from '@/lib/api/futures'
 import { journalApi } from '@/lib/api/trading'
-import type { UpdateJournalRequest } from '@/lib/api/trading'
+import { tradingPrincipleApi } from '@/lib/api/tradingPrinciple'
+import type { TradingPrincipleResponse } from '@/lib/api/tradingPrinciple'
+import type { UpdateJournalRequest, JournalResponse } from '@/lib/api/trading'
+import type { OrderResponse } from '@/lib/api/futures'
 import { useAuthStore } from '@/stores'
 import Image from 'next/image'
 
@@ -71,8 +74,8 @@ const recommendedIndicators = ['볼린저 밴드', 'RSI', 'MACD']
 const recommendedTimeframes = ['15분봉']
 const recommendedTechnicalAnalysis = ['15분봉', '15분봉']
 
-// 매매원칙 목록 (mock)
-const TRADING_PRINCIPLES = [
+// 매매원칙 목록 (데모 모드 fallback)
+const DEMO_TRADING_PRINCIPLES = [
   '하루에 3회 이상 연속 손실이 발생하면 그날은 더 이상 거래하지 않습니다.',
   '손절 기준은 진입가 대비 2% 이하로 설정하고, 어떤 경우에도 이를 변경하거나 무시하지 않습니다.',
   '오후 9시 이후에는 신규 포지션을 진입하지 않습니다.',
@@ -364,6 +367,38 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
   const [saveError, setSaveError] = useState<string | null>(null)
   const [aiAnalysisResult, setAiAnalysisResult] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [apiOrders, setApiOrders] = useState<OrderResponse[]>([])
+  const [principles, setPrinciples] = useState<TradingPrincipleResponse[]>([])
+  const [screenshots, setScreenshots] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const screenshotInputRef = useRef<HTMLInputElement>(null)
+
+  // 매매 원칙 API 로드
+  useEffect(() => {
+    if (isDemoMode) {
+      setPrinciples(DEMO_TRADING_PRINCIPLES.map((content, idx) => ({
+        id: idx + 1,
+        content,
+        createdAt: '',
+        updatedAt: '',
+      })))
+      return
+    }
+
+    tradingPrincipleApi.getAll().then((data) => {
+      setPrinciples(data)
+    }).catch((err) => {
+      console.warn('Failed to load trading principles:', err.message)
+      // fallback to demo data
+      setPrinciples(DEMO_TRADING_PRINCIPLES.map((content, idx) => ({
+        id: idx + 1,
+        content,
+        createdAt: '',
+        updatedAt: '',
+      })))
+    })
+  }, [isDemoMode])
 
   // Manual input: additional orders
   const [additionalOrders, setAdditionalOrders] = useState<Array<{
@@ -404,9 +439,64 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     entryReason: '',
     scenario: '',
     review: '',
-    principlesChecked: TRADING_PRINCIPLES.map(() => false),
+    principlesChecked: DEMO_TRADING_PRINCIPLES.map(() => false),
     ...initialData,
   })
+
+  // journalId가 있으면 API에서 상세 데이터 로드
+  useEffect(() => {
+    if (!journalId || isDemoMode) return
+
+    setIsLoading(true)
+    journalApi.getById(journalId).then((data) => {
+      // API 응답을 formData에 매핑
+      const symbolFormatted = data.symbol
+        ? data.symbol.replace(/USDT$/, '/USDT').replace(/BUSD$/, '/BUSD')
+        : ''
+      const pnlValue = data.realizedPnl ?? 0
+      const roiValue = data.roi ?? 0
+      const isPositive = pnlValue >= 0
+
+      setFormData(prev => ({
+        ...prev,
+        date: data.entryTime ? new Date(data.entryTime).toLocaleString('ko-KR') : prev.date,
+        exchange: data.exchangeName ?? prev.exchange,
+        pair: symbolFormatted || prev.pair,
+        leverage: data.leverage ?? prev.leverage,
+        position: data.side === 'SHORT' ? 'Short' : 'Long',
+        entryPrice: data.avgEntryPrice?.toLocaleString() ?? prev.entryPrice,
+        exitPrice: data.avgExitPrice?.toLocaleString() ?? prev.exitPrice,
+        pnl: pnlValue !== 0 ? `${isPositive ? '+' : ''}${pnlValue.toLocaleString()}` : prev.pnl,
+        pnlPercent: roiValue !== 0 ? roiValue.toFixed(2) : prev.pnlPercent,
+        result: pnlValue >= 0 ? 'Win' : 'Lose',
+        entryTime: data.entryTime ? new Date(data.entryTime).toLocaleString('ko-KR') : prev.entryTime,
+        exitTime: data.exitTime ? new Date(data.exitTime).toLocaleString('ko-KR') : prev.exitTime,
+        entryFee: data.openFee?.toLocaleString() ?? prev.entryFee,
+        exitFee: data.closedFee?.toLocaleString() ?? prev.exitFee,
+        // 시나리오/복기
+        scenario: data.entryScenario ?? prev.scenario,
+        review: data.exitReview ?? prev.review,
+        // 태그
+        indicators: data.indicators ?? prev.indicators,
+        timeframes: data.timeframes ?? prev.timeframes,
+        technicalAnalysis: data.technicalAnalyses ?? prev.technicalAnalysis,
+        // TP/SL
+        targetTP: data.plannedTargetPrice?.toString() ?? prev.targetTP,
+        targetSL: data.plannedStopLoss?.toString() ?? prev.targetSL,
+      }))
+
+      // 오더 데이터 별도 저장
+      if (data.orders && data.orders.length > 0) {
+        setApiOrders(data.orders)
+      }
+
+      setInputMode('auto')
+      setIsLoading(false)
+    }).catch((err) => {
+      console.warn('Journal detail fetch error:', err.message)
+      setIsLoading(false)
+    })
+  }, [journalId, isDemoMode])
 
   const hasTradeData = formData.pair && formData.entryPrice
   const isEditMode = !!journalId
@@ -520,9 +610,39 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     }])
   }
 
+  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 입력 초기화 (같은 파일 재선택 가능)
+    e.target.value = ''
+
+    if (!file.type.startsWith('image/')) {
+      setSaveError('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+
+    setIsUploading(true)
+    setSaveError(null)
+
+    try {
+      const url = await journalApi.uploadScreenshot(file)
+      setScreenshots(prev => [...prev, url])
+    } catch (err) {
+      console.warn('Screenshot upload failed:', (err as Error).message)
+      setSaveError('스크린샷 업로드에 실패했습니다.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const removeScreenshot = (index: number) => {
+    setScreenshots(prev => prev.filter((_, i) => i !== index))
+  }
+
   const togglePrincipleCheck = (index: number) => {
     setFormData(prev => {
-      const checked = [...(prev.principlesChecked || TRADING_PRINCIPLES.map(() => false))]
+      const checked = [...(prev.principlesChecked || principles.map(() => false))]
       checked[index] = !checked[index]
       return { ...prev, principlesChecked: checked }
     })
@@ -539,6 +659,14 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
+              <span className="text-body-2-regular text-label-assistive">매매일지 불러오는 중...</span>
+            </div>
+          </div>
+        ) : (
         <div className="px-5 py-8 space-y-6">
           {/* Title Section */}
           <div className="space-y-1">
@@ -656,28 +784,76 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                 )}
               </div>
 
-              {/* Second Order (sub order) */}
-              <OrderCard
-                pair={formData.pair || 'BTC/USDT'}
-                position={formData.position || 'Long'}
-                quantity={formData.quantity || '0.05'}
-                entryPrice={formData.entryPrice || '98,200'}
-                exitPrice={formData.exitPrice || '99,400'}
-                pnl={formData.pnl || '+1,250'}
-                pnlPercent={formData.pnlPercent || '24.5'}
-                result={formData.result || 'Win'}
-                isDetailOpen={false}
-                onToggleDetail={() => {}}
-                detailData={{
-                  entryTime: formData.entryTime || '',
-                  exitTime: formData.exitTime || '',
-                  entryVolume: formData.entryVolume || '',
-                  exitVolume: formData.exitVolume || '',
-                  entryFee: formData.entryFee || '',
-                  exitFee: formData.exitFee || '',
-                  fundingFee: formData.fundingFee || '',
-                }}
-              />
+              {/* API Orders */}
+              {apiOrders.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <h4 className="text-body-2-bold text-label-neutral">오더 내역 ({apiOrders.length})</h4>
+                  {apiOrders.map((order) => {
+                    const orderPnl = order.realizedPnl ?? 0
+                    const isOrderPositive = orderPnl >= 0
+                    return (
+                      <div key={order.orderId} className="border-l-2 border-line-normal pl-3">
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                          <div className="flex">
+                            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">방향</span>
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-caption-medium",
+                              order.side === 'BUY'
+                                ? "bg-element-positive-lighter text-element-positive-default"
+                                : "bg-element-danger-lighter text-element-danger-default"
+                            )}>
+                              {order.side}
+                            </span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">유형</span>
+                            <span className="text-body-2-medium text-label-normal">{order.orderType}</span>
+                          </div>
+                          {order.filledQuantity != null && (
+                            <div className="flex">
+                              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">체결 수량</span>
+                              <span className="text-body-2-medium text-label-normal">{order.filledQuantity.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {order.filledPrice != null && (
+                            <div className="flex">
+                              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">체결 가격</span>
+                              <span className="text-body-2-medium text-label-normal">{order.filledPrice.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {order.cumExecFee != null && (
+                            <div className="flex">
+                              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">수수료</span>
+                              <span className="text-body-2-medium text-label-normal">{order.cumExecFee.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {order.realizedPnl != null && (
+                            <div className="flex">
+                              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">실현 손익</span>
+                              <span className={cn(
+                                "text-body-2-bold",
+                                isOrderPositive ? "text-element-positive-default" : "text-element-danger-default"
+                              )}>
+                                {isOrderPositive ? '+' : ''}{orderPnl.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex">
+                            <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">상태</span>
+                            <span className="text-body-2-medium text-label-normal">{order.status}</span>
+                          </div>
+                          {order.fillTime && (
+                            <div className="flex">
+                              <span className="text-body-2-regular text-label-assistive w-[90px] flex-shrink-0">체결 시간</span>
+                              <span className="text-body-2-medium text-label-normal">{new Date(order.fillTime).toLocaleString('ko-KR')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -1032,10 +1208,42 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
               {/* 차트 스크린샷 */}
               <div className="space-y-2">
                 <label className="text-body-1-bold text-label-normal block">차트 스크린샷</label>
-                <button className="w-[80px] h-[80px] border border-dashed border-line-normal rounded-lg flex flex-col items-center justify-center gap-1 hover:bg-gray-50 transition-colors">
-                  <Upload className="w-5 h-5 text-label-assistive" />
-                  <span className="text-caption-regular text-label-assistive">추가</span>
-                </button>
+                <input
+                  ref={screenshotInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleScreenshotUpload}
+                />
+                <div className="flex flex-wrap gap-2">
+                  {screenshots.map((url, idx) => (
+                    <div key={idx} className="relative w-[80px] h-[80px] rounded-lg overflow-hidden border border-line-normal group">
+                      <Image src={url} alt={`스크린샷 ${idx + 1}`} fill className="object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeScreenshot(idx)}
+                        className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => screenshotInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-[80px] h-[80px] border border-dashed border-line-normal rounded-lg flex flex-col items-center justify-center gap-1 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    {isUploading ? (
+                      <RefreshCw className="w-5 h-5 text-label-assistive animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-label-assistive" />
+                    )}
+                    <span className="text-caption-regular text-label-assistive">
+                      {isUploading ? '업로드중' : '추가'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* 복기 내용 */}
@@ -1056,8 +1264,10 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                   <p className="text-body-2-regular text-label-assistive">이번 매매에서 아래 원칙을 얼마나 지켰는지 체크해보세요.</p>
                 </div>
                 <div className="space-y-3">
-                  {TRADING_PRINCIPLES.map((principle, idx) => (
-                    <label key={idx} className="flex items-start gap-3 cursor-pointer">
+                  {principles.length === 0 ? (
+                    <p className="text-body-2-regular text-label-assistive">등록된 매매 원칙이 없습니다.</p>
+                  ) : principles.map((principle, idx) => (
+                    <label key={principle.id} className="flex items-start gap-3 cursor-pointer">
                       <div
                         onClick={() => togglePrincipleCheck(idx)}
                         className={cn(
@@ -1073,7 +1283,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                           </svg>
                         )}
                       </div>
-                      <span className="text-body-2-regular text-label-normal leading-relaxed">{principle}</span>
+                      <span className="text-body-2-regular text-label-normal leading-relaxed">{principle.content}</span>
                     </label>
                   ))}
                 </div>
@@ -1112,6 +1322,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
             <p className="text-body-2-regular text-label-danger">{saveError}</p>
           )}
         </div>
+        )}
       </div>
 
       {/* Bottom Buttons - Figma: 취소 + 저장 */}

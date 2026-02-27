@@ -99,17 +99,31 @@ export default function JournalPage() {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null)
   const [selectedJournalId, setSelectedJournalId] = useState<number | null>(null)
 
+  // 기간 필터 상태
+  const now = new Date()
+  const [calYear, setCalYear] = useState(now.getFullYear())
+  const [calMonth, setCalMonth] = useState(now.getMonth()) // 0-indexed
+
   // API data
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [isLoading, setIsLoading] = useState(!isDemoMode)
 
   const displayEntries = isDemoMode ? sampleEntries : entries
 
-  // Fetch journals from API
+  /** 해당 월의 startDate/endDate를 yyyy-MM-dd 형식으로 반환 */
+  const getMonthRange = useCallback((y: number, m: number) => {
+    const startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`
+    const lastDay = new Date(y, m + 1, 0).getDate()
+    const endDate = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    return { startDate, endDate }
+  }, [])
+
+  // Fetch journals from API with date range
   const fetchJournals = useCallback(async () => {
     if (isDemoMode) return
     setIsLoading(true)
-    const data = await journalApi.getAll({ page: 0, size: 100 }).catch((err) => {
+    const { startDate, endDate } = getMonthRange(calYear, calMonth)
+    const data = await journalApi.getAll({ page: 0, size: 100, startDate, endDate }).catch((err) => {
       console.warn('Journal fetch error:', err.message)
       return null
     })
@@ -117,14 +131,15 @@ export default function JournalPage() {
       setEntries(data.content.map(toJournalEntry))
     }
     setIsLoading(false)
-  }, [isDemoMode])
+  }, [isDemoMode, calYear, calMonth, getMonthRange])
 
   useEffect(() => {
     let cancelled = false
     if (!isDemoMode) {
       const load = async () => {
         setIsLoading(true)
-        const data = await journalApi.getAll({ page: 0, size: 100 }).catch((err) => {
+        const { startDate, endDate } = getMonthRange(calYear, calMonth)
+        const data = await journalApi.getAll({ page: 0, size: 100, startDate, endDate }).catch((err) => {
           console.warn('Journal fetch error:', err.message)
           return null
         })
@@ -137,7 +152,7 @@ export default function JournalPage() {
       load()
     }
     return () => { cancelled = true }
-  }, [isDemoMode])
+  }, [isDemoMode, calYear, calMonth, getMonthRange])
 
   // Handle redirect query params for initial state
   const initialFromParams = useMemo(() => {
@@ -307,6 +322,10 @@ export default function JournalPage() {
                 onTradeClick={(trade) => {
                   const entry = displayEntries.find(e => e.id === trade.id)
                   if (entry) handleEntryClick(entry)
+                }}
+                onMonthChange={(year, month) => {
+                  setCalYear(year)
+                  setCalMonth(month)
                 }}
               />
             ) : (

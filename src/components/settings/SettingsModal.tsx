@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Check, CreditCard, X as XIcon } from 'lucide-react'
+import { LogOut, Check, CreditCard, X as XIcon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { exchangeApi } from '@/lib/api'
-import type { ExchangeApiKeyResponse } from '@/lib/api'
+import { exchangeApi, subscriptionApi } from '@/lib/api'
+import type { ExchangeApiKeyResponse, SubscriptionResponse, PlanInfoResponse, PaymentHistoryResponse, SubscriptionPlan } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -408,9 +408,11 @@ function NotificationSettings() {
 }
 
 // 구독 관리 탭 - Figma: current plan + plan cards + payment + billing history
-const plans = [
+
+// 데모 모드용 하드코딩 플랜 데이터
+const DEMO_PLANS = [
   {
-    id: 'free',
+    id: 'free' as const,
     name: '무료',
     price: '₩0',
     period: '/월',
@@ -422,7 +424,7 @@ const plans = [
     ],
   },
   {
-    id: 'pro',
+    id: 'pro' as const,
     name: '프로',
     price: '₩29,000',
     period: '/월',
@@ -438,7 +440,7 @@ const plans = [
     ],
   },
   {
-    id: 'premium',
+    id: 'premium' as const,
     name: '프리미엄',
     price: '₩99,000',
     period: '/월',
@@ -453,8 +455,201 @@ const plans = [
   },
 ]
 
+const PLAN_FEATURES: Record<string, string[]> = {
+  FREE: ['기본 차트 분석', '최대 3개 포지션 추적', '주간 리포트', '커뮤니티 접근'],
+  PRO: ['무제한 포지션 추적', '고급 차트 지표', 'AI 매매 원칙 추천', '일일 리포트', '리스크 분석', '우선 고객 지원'],
+  PREMIUM: ['프로 플랜의 모든 기능', '무제한 거래소 연동', '실시간 알림', '맞춤형 전략 백테스팅', 'API 접근', '전담 계정 매니저'],
+}
+
+/** 토스페이먼츠 빌링 인증 요청 */
+async function requestTossBillingAuth(plan?: SubscriptionPlan, mode?: 'change-method') {
+  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
+  if (!clientKey) {
+    throw new Error('토스페이먼츠 클라이언트 키가 설정되지 않았습니다.')
+  }
+
+  const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk')
+  const tossPayments = await loadTossPayments(clientKey)
+  const billingWidget = tossPayments.payment({ customerKey: crypto.randomUUID() })
+
+  const origin = window.location.origin
+  const successUrl = new URL(`${origin}/billing/success`)
+  if (plan) successUrl.searchParams.set('plan', plan)
+  if (mode) successUrl.searchParams.set('mode', mode)
+
+  const failUrl = `${origin}/billing/fail`
+
+  await billingWidget.requestBillingAuth({
+    method: 'CARD',
+    successUrl: successUrl.toString(),
+    failUrl,
+  })
+}
+
+function formatPrice(price: number) {
+  return `₩${price.toLocaleString('ko-KR')}`
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}
+
 function SubscriptionSettings() {
+  const { isDemoMode } = useAuthStore()
   const [isUnsubscribeModalOpen, setIsUnsubscribeModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(!isDemoMode)
+  const [changingPlan, setChangingPlan] = useState<SubscriptionPlan | null>(null)
+
+  // API data
+  const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null)
+  const [apiPlans, setApiPlans] = useState<PlanInfoResponse[] | null>(null)
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryResponse[] | null>(null)
+
+  // Fetch subscription data
+  useEffect(() => {
+    if (isDemoMode) return
+
+    const fetchData = async () => {
+      setIsLoading(true)
+
+      const [subRes, plansRes, historyRes] = await Promise.all([
+        subscriptionApi.getMySubscription().catch((err) => {
+          console.warn('Subscription fetch error:', err.message)
+          return null
+        }),
+        subscriptionApi.getPlans().catch((err) => {
+          console.warn('Plans fetch error:', err.message)
+          return null
+        }),
+        subscriptionApi.getPaymentHistory().catch((err) => {
+          console.warn('Payment history fetch error:', err.message)
+          return null
+        }),
+      ])
+
+      if (subRes) setSubscription(subRes)
+      if (plansRes) setApiPlans(plansRes)
+      if (historyRes) setPaymentHistory(historyRes)
+
+      setIsLoading(false)
+    }
+
+    fetchData()
+  }, [isDemoMode])
+
+  // Handle plan change
+  const handleChangePlan = async (newPlan: SubscriptionPlan) => {
+    if (isDemoMode || changingPlan) return
+
+    // 카드가 등록되어 있지 않으면 빌링 인증부터
+    if (!subscription?.cardNumber && newPlan !== 'FREE') {
+      try {
+        await requestTossBillingAuth(newPlan)
+      } catch (err) {
+        console.warn('Toss billing auth error:', err)
+      }
+      return
+    }
+
+    setChangingPlan(newPlan)
+    try {
+      const updated = await subscriptionApi.changePlan({ newPlan })
+      setSubscription(updated)
+      // 플랜 목록의 current 상태도 갱신
+      if (apiPlans) {
+        setApiPlans(apiPlans.map((p) => ({ ...p, current: p.plan === newPlan })))
+      }
+    } catch (err: unknown) {
+      console.warn('Plan change error:', err)
+    } finally {
+      setChangingPlan(null)
+    }
+  }
+
+  // Handle add/change payment method
+  const handlePaymentMethod = async (mode: 'add' | 'change') => {
+    if (isDemoMode) return
+    try {
+      await requestTossBillingAuth(undefined, 'change-method')
+    } catch (err) {
+      console.warn('Toss billing auth error:', err)
+    }
+  }
+
+  // Handle cancel subscription
+  const handleCancelSubscription = async (reason: string) => {
+    if (isDemoMode) {
+      setIsUnsubscribeModalOpen(false)
+      return
+    }
+
+    try {
+      const updated = await subscriptionApi.cancelSubscription({ reason: reason || undefined })
+      setSubscription(updated)
+      setIsUnsubscribeModalOpen(false)
+    } catch (err: unknown) {
+      console.warn('Cancel subscription error:', err)
+      setIsUnsubscribeModalOpen(false)
+    }
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-label-assistive" />
+      </div>
+    )
+  }
+
+  // Use API data or demo fallback
+  const currentPlanName = subscription?.displayName || '프로 플랜'
+  const currentPrice = subscription ? formatPrice(subscription.price) : '₩29,000'
+  const nextBillingDate = subscription?.nextBillingDate ? formatDate(subscription.nextBillingDate) : '2026.02.28'
+  const currentPlanId = subscription?.currentPlan || 'PRO'
+  const isCanceled = subscription?.status === 'CANCELED'
+
+  // Build plan cards
+  const planCards = apiPlans
+    ? apiPlans.map((p) => ({
+        id: p.plan,
+        name: p.displayName,
+        price: formatPrice(p.price),
+        period: '/월',
+        popular: p.plan === 'PRO',
+        current: p.current,
+        features: PLAN_FEATURES[p.plan] || [],
+      }))
+    : DEMO_PLANS.map((p) => ({
+        id: p.id.toUpperCase() as SubscriptionPlan,
+        name: p.name,
+        price: p.price,
+        period: p.period,
+        popular: p.popular || false,
+        current: p.current || false,
+        features: p.features,
+      }))
+
+  // Payment history
+  const historyItems = paymentHistory
+    ? paymentHistory.map((h) => ({
+        plan: h.planDisplayName,
+        date: formatDate(h.paidAt),
+        amount: formatPrice(h.amount),
+        status: h.status,
+      }))
+    : [
+        { plan: '프로 플랜', date: '2026.01.28', amount: '₩29,000', status: 'COMPLETED' as const },
+        { plan: '프로 플랜', date: '2025.12.28', amount: '₩29,000', status: 'COMPLETED' as const },
+        { plan: '프로 플랜', date: '2025.11.28', amount: '₩29,000', status: 'COMPLETED' as const },
+      ]
+
+  const paymentStatusLabel: Record<string, { text: string; className: string }> = {
+    COMPLETED: { text: '완료', className: 'bg-green-100 text-green-400' },
+    FAILED: { text: '실패', className: 'bg-red-100 text-red-400' },
+    REFUNDED: { text: '환불', className: 'bg-yellow-100 text-yellow-400' },
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -463,10 +658,13 @@ function SubscriptionSettings() {
         <p className="text-body-1-bold text-label-normal">현재 요금제</p>
         <div className="mt-3 flex items-center justify-between px-4 py-4 border border-line-normal rounded-lg">
           <div>
-            <p className="text-body-2-medium text-label-normal">프로 플랜</p>
-            <p className="text-caption-regular text-label-assistive">다음 결제일 : 2026.02.28</p>
+            <p className="text-body-2-medium text-label-normal">
+              {currentPlanName}
+              {isCanceled && <span className="ml-2 text-caption-medium text-label-danger">해지 예정</span>}
+            </p>
+            <p className="text-caption-regular text-label-assistive">다음 결제일 : {nextBillingDate}</p>
           </div>
-          <span className="text-title-1-bold text-label-normal">₩29,000 <span className="text-body-2-regular text-label-assistive">/월</span></span>
+          <span className="text-title-1-bold text-label-normal">{currentPrice} <span className="text-body-2-regular text-label-assistive">/월</span></span>
         </div>
       </div>
 
@@ -476,7 +674,7 @@ function SubscriptionSettings() {
         <p className="text-body-2-regular text-label-neutral mt-1">트레이딩 스타일에 맞는 플랜을 선택하세요.</p>
 
         <div className="grid grid-cols-3 gap-4 mt-4">
-          {plans.map((plan) => (
+          {planCards.map((plan) => (
             <div
               key={plan.id}
               className={cn(
@@ -511,6 +709,10 @@ function SubscriptionSettings() {
               </ul>
 
               <button
+                onClick={() => {
+                  if (!plan.current) handleChangePlan(plan.id as SubscriptionPlan)
+                }}
+                disabled={plan.current || changingPlan === plan.id}
                 className={cn(
                   "mt-5 w-full py-2.5 rounded-lg text-body-2-medium transition-colors",
                   plan.current
@@ -518,7 +720,13 @@ function SubscriptionSettings() {
                     : "border border-line-normal text-label-normal hover:bg-gray-50"
                 )}
               >
-                {plan.current ? '현재 플랜' : '플랜 변경'}
+                {changingPlan === plan.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                ) : plan.current ? (
+                  '현재 플랜'
+                ) : (
+                  '플랜 변경'
+                )}
               </button>
             </div>
           ))}
@@ -529,16 +737,36 @@ function SubscriptionSettings() {
       <div>
         <p className="text-body-1-bold text-label-normal">결제 수단</p>
         <div className="mt-3 flex flex-col gap-3">
-          <div className="flex items-center justify-between px-4 py-3 border border-line-normal rounded-lg">
-            <div className="flex items-center gap-3">
-              <CreditCard className="w-5 h-5 text-label-neutral" />
-              <span className="text-body-2-regular text-label-normal">1234-****-****-1234</span>
+          {subscription?.cardNumber ? (
+            <div className="flex items-center justify-between px-4 py-3 border border-line-normal rounded-lg">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-label-neutral" />
+                <span className="text-body-2-regular text-label-normal">
+                  {subscription.cardCompany ? `${subscription.cardCompany} ` : ''}{subscription.cardNumber}
+                </span>
+              </div>
+              <button
+                onClick={() => handlePaymentMethod('change')}
+                className="px-3 py-1.5 text-caption-medium text-label-normal border border-line-normal rounded-md hover:bg-gray-50 transition-colors"
+              >
+                변경
+              </button>
             </div>
-            <button className="px-3 py-1.5 text-caption-medium text-label-normal border border-line-normal rounded-md hover:bg-gray-50 transition-colors">
-              변경
-            </button>
-          </div>
-          <button className="flex items-center justify-center py-3 border border-line-normal rounded-lg text-body-2-medium text-label-neutral hover:bg-gray-50 transition-colors">
+          ) : isDemoMode ? (
+            <div className="flex items-center justify-between px-4 py-3 border border-line-normal rounded-lg">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-label-neutral" />
+                <span className="text-body-2-regular text-label-normal">1234-****-****-1234</span>
+              </div>
+              <button className="px-3 py-1.5 text-caption-medium text-label-normal border border-line-normal rounded-md hover:bg-gray-50 transition-colors">
+                변경
+              </button>
+            </div>
+          ) : null}
+          <button
+            onClick={() => handlePaymentMethod('add')}
+            className="flex items-center justify-center py-3 border border-line-normal rounded-lg text-body-2-medium text-label-neutral hover:bg-gray-50 transition-colors"
+          >
             + 새 결제 수단 추가
           </button>
         </div>
@@ -548,49 +776,55 @@ function SubscriptionSettings() {
       <div>
         <p className="text-body-1-bold text-label-normal">결제 내역</p>
         <div className="mt-3 border border-line-normal rounded-lg overflow-hidden">
-          {[
-            { plan: '프로 플랜', date: '2026.01.28', amount: '₩29,000' },
-            { plan: '프로 플랜', date: '2025.12.28', amount: '₩29,000' },
-            { plan: '프로 플랜', date: '2025.11.28', amount: '₩29,000' },
-          ].map((item, index, arr) => (
-            <div
-              key={index}
-              className={cn(
-                "flex items-center justify-between px-4 py-3",
-                index < arr.length - 1 && "border-b border-line-normal"
-              )}
-            >
-              <div>
-                <p className="text-body-2-medium text-label-normal">{item.plan}</p>
-                <p className="text-caption-regular text-label-assistive">{item.date}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-caption-medium px-2 py-0.5 bg-green-100 text-green-400 rounded">완료</span>
-                <span className="text-body-2-bold text-label-normal">{item.amount}</span>
-              </div>
+          {historyItems.length > 0 ? (
+            historyItems.map((item, index, arr) => {
+              const statusInfo = paymentStatusLabel[item.status] || paymentStatusLabel.COMPLETED
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex items-center justify-between px-4 py-3",
+                    index < arr.length - 1 && "border-b border-line-normal"
+                  )}
+                >
+                  <div>
+                    <p className="text-body-2-medium text-label-normal">{item.plan}</p>
+                    <p className="text-caption-regular text-label-assistive">{item.date}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={cn("text-caption-medium px-2 py-0.5 rounded", statusInfo.className)}>{statusInfo.text}</span>
+                    <span className="text-body-2-bold text-label-normal">{item.amount}</span>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div className="px-4 py-6 text-center text-body-2-regular text-label-assistive">
+              결제 내역이 없습니다.
             </div>
-          ))}
+          )}
         </div>
       </div>
 
       {/* 구독 해지 */}
-      <div>
-        <button
-          onClick={() => setIsUnsubscribeModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-body-2-medium text-label-neutral border border-line-normal rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <XIcon className="w-4 h-4" />
-          구독 해지
-        </button>
-      </div>
+      {currentPlanId !== 'FREE' && !isCanceled && (
+        <div>
+          <button
+            onClick={() => setIsUnsubscribeModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-body-2-medium text-label-neutral border border-line-normal rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <XIcon className="w-4 h-4" />
+            구독 해지
+          </button>
+        </div>
+      )}
 
       {/* 구독 해지 확인 모달 - Figma L-1 */}
       <UnsubscribeConfirmModal
         open={isUnsubscribeModalOpen}
         onOpenChange={setIsUnsubscribeModalOpen}
-        onConfirm={() => {
-          setIsUnsubscribeModalOpen(false)
-        }}
+        nextBillingDate={nextBillingDate}
+        onConfirm={handleCancelSubscription}
       />
     </div>
   )
@@ -855,8 +1089,21 @@ function LogoutConfirmModal({ open, onOpenChange, onConfirm }: { open: boolean; 
 }
 
 // 구독 해지 확인 모달 - Figma L-1
-function UnsubscribeConfirmModal({ open, onOpenChange, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void }) {
+function UnsubscribeConfirmModal({ open, onOpenChange, nextBillingDate, onConfirm }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  nextBillingDate: string
+  onConfirm: (reason: string) => void
+}) {
   const [reason, setReason] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true)
+    await onConfirm(reason)
+    setIsSubmitting(false)
+    setReason("")
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -864,7 +1111,7 @@ function UnsubscribeConfirmModal({ open, onOpenChange, onConfirm }: { open: bool
         <DialogHeader className="items-center gap-2">
           <DialogTitle className="text-title-2-bold text-label-normal text-center">플랜을 정말 해지하시겠습니까?</DialogTitle>
           <DialogDescription className="text-body-2-regular text-label-neutral text-center">
-            다음 결제일인 2026년 2월 20일에 무료 요금제로 전환됩니다.
+            다음 결제일인 {nextBillingDate}에 무료 요금제로 전환됩니다.
           </DialogDescription>
         </DialogHeader>
         <textarea
@@ -875,7 +1122,13 @@ function UnsubscribeConfirmModal({ open, onOpenChange, onConfirm }: { open: bool
         />
         <DialogFooter className="flex-row gap-3 mt-2">
           <Button variant="secondary" className="flex-1 h-12 border-line-normal rounded-lg" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button className="flex-1 h-12 bg-gray-800 hover:bg-gray-700 text-white rounded-lg" onClick={onConfirm}>해지</Button>
+          <Button
+            className="flex-1 h-12 bg-gray-800 hover:bg-gray-700 text-white rounded-lg"
+            onClick={handleConfirm}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : '해지'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

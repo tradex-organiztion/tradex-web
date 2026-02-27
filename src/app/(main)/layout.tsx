@@ -1,7 +1,8 @@
 'use client'
 
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { Sidebar, Header } from "@/components/layout";
 import { useUIStore } from "@/stores";
 import { cn } from "@/lib/utils";
@@ -25,8 +26,17 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { isAIPanelOpen, isMobile } = useUIStore();
+  const searchParams = useSearchParams();
+  const { isAIPanelOpen, isMobile, openSettings } = useUIStore();
   const isFullscreen = fullscreenPaths.some(p => pathname.startsWith(p));
+
+  // ?settings=subscription 등 쿼리 파라미터로 설정 모달 자동 열기
+  useEffect(() => {
+    const settingsTab = searchParams.get('settings')
+    if (settingsTab && ['account', 'general', 'notification', 'subscription'].includes(settingsTab)) {
+      openSettings(settingsTab as 'account' | 'general' | 'notification' | 'subscription')
+    }
+  }, [searchParams, openSettings]);
 
   return (
     <div className="min-h-screen bg-white">

@@ -1,4 +1,5 @@
-import { get, patch, del } from './client'
+import { get, post, patch, del } from './client'
+import { apiClient } from './client'
 import type { PageResponse } from './futures'
 import type { OrderResponse } from './futures'
 import type { MarketCondition } from './futures'
@@ -148,4 +149,14 @@ export const journalApi = {
   /** 매매일지 삭제 */
   delete: (id: number) =>
     del<void>(`/api/journals/${id}`),
+
+  /** 스크린샷 업로드 (multipart/form-data) */
+  uploadScreenshot: async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await apiClient.post<string>('/api/journals/screenshot', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
 }

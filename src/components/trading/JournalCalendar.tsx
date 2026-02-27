@@ -21,6 +21,7 @@ interface JournalCalendarProps {
   trades?: DayTrades
   onDateClick?: (date: Date) => void
   onTradeClick?: (trade: TradeEntry) => void
+  onMonthChange?: (year: number, month: number) => void
 }
 
 interface CalendarDay {
@@ -32,7 +33,7 @@ interface CalendarDay {
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 
-export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: JournalCalendarProps) {
+export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMonthChange }: JournalCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const year = currentDate.getFullYear()
@@ -86,11 +87,15 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick }: Jour
   }
 
   const goToPrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1))
+    const newDate = new Date(year, month - 1, 1)
+    setCurrentDate(newDate)
+    onMonthChange?.(newDate.getFullYear(), newDate.getMonth())
   }
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1))
+    const newDate = new Date(year, month + 1, 1)
+    setCurrentDate(newDate)
+    onMonthChange?.(newDate.getFullYear(), newDate.getMonth())
   }
 
   const formatDateKey = (day: number, targetMonth?: number, targetYear?: number) => {

@@ -63,45 +63,5 @@ export const chartDataApi = {
     get<BarsResponse>('/api/chart/bars', { params }),
 }
 
-// ============================================================
-// Chart 저장 (localStorage 기반 — 백엔드 미지원)
-// ============================================================
-
-export interface ChartRecord {
-  id: string
-  name: string
-  symbol: string
-  resolution: string
-  content: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface StudyTemplateRecord {
-  name: string
-  content: string
-}
-
-export const chartApi = {
-  getCharts: async (): Promise<ChartRecord[]> => {
-    return []
-  },
-
-  saveChart: async (_data: Omit<ChartRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ id: string }> => {
-    return { id: String(Date.now()) }
-  },
-
-  getChartContent: async (_id: string): Promise<{ content: string }> => {
-    return { content: '' }
-  },
-
-  deleteChart: async (_id: string): Promise<void> => {},
-
-  getStudyTemplates: async (): Promise<StudyTemplateRecord[]> => {
-    return []
-  },
-
-  saveStudyTemplate: async (_data: StudyTemplateRecord): Promise<void> => {},
-
-  deleteStudyTemplate: async (_name: string): Promise<void> => {},
-}
+// Chart 레이아웃 저장/불러오기는 chartLayoutApi (src/lib/api/chartLayout.ts) 사용
+// TradingView save_load_adapter는 src/lib/chart/saveLoadAdapter.ts 참조

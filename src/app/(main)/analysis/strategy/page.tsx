@@ -8,6 +8,8 @@ import { DatePickerCalendar } from '@/components/common'
 import { ExchangeFilter } from '@/components/common/ExchangeFilter'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { strategyApi, type StrategyAnalysisResponse, type StrategyItem } from '@/lib/api/analysis'
+import { journalStatsApi, type JournalStatsResponse, type JournalStatsOptionsResponse, type JournalStatsParams, type TradingStyle } from '@/lib/api/trading'
+import type { MarketCondition } from '@/lib/api/futures'
 
 // 체크박스 컴포넌트 - Figma 기준 16x16, border-radius 4px
 function Checkbox({
@@ -202,6 +204,11 @@ export default function StrategyAnalysisPage() {
   const [apiData, setApiData] = useState<StrategyAnalysisResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  // 커스텀 전략 통계 상태
+  const [customStats, setCustomStats] = useState<JournalStatsResponse | null>(null)
+  const [statsOptions, setStatsOptions] = useState<JournalStatsOptionsResponse | null>(null)
+  const [isCustomLoading, setIsCustomLoading] = useState(false)
+
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -245,8 +252,60 @@ export default function StrategyAnalysisPage() {
     fetchStrategyData()
   }, [fetchStrategyData])
 
+  // 커스텀 전략 필터 옵션 로드
+  useEffect(() => {
+    if (isDemoMode) return
+    journalStatsApi.getStatsOptions().then((data) => {
+      setStatsOptions(data)
+    }).catch((err) => {
+      console.warn('Stats options API error:', err.message)
+    })
+  }, [isDemoMode])
+
+  // 커스텀 전략 통계 조회
+  const fetchCustomStats = useCallback(async () => {
+    if (isDemoMode) {
+      setCustomStats(null)
+      return
+    }
+
+    setIsCustomLoading(true)
+
+    const styleMap: Record<string, TradingStyle> = { '스캘핑': 'SCALPING', '스윙': 'SWING' }
+    const marketMap: Record<string, MarketCondition> = { '상승장': 'UPTREND', '하락장': 'DOWNTREND', '횡보장': 'SIDEWAYS' }
+    const positionMap: Record<string, 'LONG' | 'SHORT'> = { 'Long': 'LONG', 'Short': 'SHORT' }
+
+    const params: JournalStatsParams = {}
+    if (filters.indicators.length > 0) params.indicators = filters.indicators
+    if (filters.timeframe.length > 0) params.timeframes = filters.timeframe
+    if (filters.technical.length > 0) params.technicalAnalyses = filters.technical
+    if (filters.style.length === 1) params.tradingStyle = styleMap[filters.style[0]]
+    if (filters.market.length === 1) params.marketCondition = marketMap[filters.market[0]]
+    if (filters.position.length === 1) params.positionSide = positionMap[filters.position[0]]
+
+    const data = await journalStatsApi.getStats(params).catch((err) => {
+      console.warn('Journal stats API error:', err.message)
+      return null
+    })
+
+    if (data) {
+      setCustomStats(data)
+    }
+    setIsCustomLoading(false)
+  }, [isDemoMode, filters])
+
+  // 초기 커스텀 통계 로드
+  useEffect(() => {
+    fetchCustomStats()
+  }, [fetchCustomStats])
+
   const handleSearch = () => {
     fetchStrategyData()
+  }
+
+  const handleCustomSearch = () => {
+    setShowFilterPanel(false)
+    fetchCustomStats()
   }
 
   // Best/Worst 전략 결정
@@ -255,14 +314,16 @@ export default function StrategyAnalysisPage() {
     ? apiData.strategies[apiData.strategies.length - 1]
     : null
 
-  // 집계 메트릭
-  const totalTrades = apiData?.totalTrades ?? 143
-  const overallWinRate = apiData?.strategies?.length
-    ? (apiData.strategies.reduce((sum, s) => sum + (s.winCount ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1) * 100)
-    : 65.5
-  const overallAvgProfit = apiData?.strategies?.length
-    ? (apiData.strategies.reduce((sum, s) => sum + (s.avgProfit ?? 0) * (s.totalTrades ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1))
-    : 2.8
+  // 커스텀 전략 메트릭 — customStats 우선, 없으면 strategyApi 데이터 가공, 최종 fallback은 mock
+  const totalTrades = customStats?.totalTrades ?? apiData?.totalTrades ?? 143
+  const overallWinRate = customStats?.winRate
+    ?? (apiData?.strategies?.length
+      ? (apiData.strategies.reduce((sum, s) => sum + (s.winCount ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1) * 100)
+      : 65.5)
+  const overallAvgProfit = customStats?.avgRoi
+    ?? (apiData?.strategies?.length
+      ? (apiData.strategies.reduce((sum, s) => sum + (s.avgProfit ?? 0) * (s.totalTrades ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1))
+      : 2.8)
   const overallAvgRr = apiData?.strategies?.length
     ? (apiData.strategies.reduce((sum, s) => sum + (s.avgRrRatio ?? 0) * (s.totalTrades ?? 0), 0) / (apiData.strategies.reduce((sum, s) => sum + (s.totalTrades ?? 0), 0) || 1))
     : 2.3
@@ -372,7 +433,7 @@ export default function StrategyAnalysisPage() {
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">지표</span>
                     <div className="flex flex-wrap gap-3">
-                      {['볼린저 밴드', 'RSI', 'MACD', 'EMA'].map((item) => (
+                      {(statsOptions?.indicators?.length ? statsOptions.indicators : ['볼린저 밴드', 'RSI', 'MACD', 'EMA']).map((item) => (
                         <Checkbox
                           key={item}
                           label={item}
@@ -385,7 +446,7 @@ export default function StrategyAnalysisPage() {
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">시간</span>
                     <div className="flex flex-wrap gap-3">
-                      {['15분봉', '1시간봉', '4시간봉', '일봉'].map((item) => (
+                      {(statsOptions?.timeframes?.length ? statsOptions.timeframes : ['15분봉', '1시간봉', '4시간봉', '일봉']).map((item) => (
                         <Checkbox
                           key={item}
                           label={item}
@@ -411,7 +472,7 @@ export default function StrategyAnalysisPage() {
                   <div className="flex flex-col gap-3">
                     <span className="text-body-1-bold text-label-normal">기술적 분석</span>
                     <div className="flex flex-wrap gap-3">
-                      {['지지/저항선', '피보나치 되돌림', '추세선', '채널'].map((item) => (
+                      {(statsOptions?.technicalAnalyses?.length ? statsOptions.technicalAnalyses : ['지지/저항선', '피보나치 되돌림', '추세선', '채널']).map((item) => (
                         <Checkbox
                           key={item}
                           label={item}
@@ -448,10 +509,16 @@ export default function StrategyAnalysisPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setShowFilterPanel(false)}
-                    className="w-full py-4 bg-gray-100 text-label-disabled text-body-1-medium rounded-lg hover:bg-gray-200 hover:text-label-neutral transition-colors"
+                    onClick={handleCustomSearch}
+                    disabled={isCustomLoading}
+                    className={cn(
+                      "w-full py-4 text-body-1-medium rounded-lg transition-colors",
+                      filters.indicators.length > 0 || filters.timeframe.length > 0 || filters.style.length > 0 || filters.technical.length > 0 || filters.market.length > 0 || filters.position.length > 0
+                        ? "bg-gray-900 text-white hover:bg-gray-800"
+                        : "bg-gray-100 text-label-disabled hover:bg-gray-200 hover:text-label-neutral"
+                    )}
                   >
-                    조회
+                    {isCustomLoading ? '조회중...' : '조회'}
                   </button>
                 </div>
               </div>

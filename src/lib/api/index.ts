@@ -122,7 +122,7 @@ export type {
 } from './analysis'
 
 // Chart API
-export { chartApi, chartDataApi } from './chart'
+export { chartDataApi } from './chart'
 export type {
   ChartExchange,
   SymbolInfoResponse,
@@ -130,3 +130,33 @@ export type {
   BarsResponse,
   BarsParams,
 } from './chart'
+
+// Chart Layout API
+export { chartLayoutApi } from './chartLayout'
+export type {
+  ChartLayoutRequest,
+  ChartLayoutMetaResponse,
+  ChartLayoutContentResponse,
+} from './chartLayout'
+
+// Subscription API (결제)
+export { subscriptionApi } from './subscription'
+export type {
+  SubscriptionPlan,
+  SubscriptionStatus,
+  PaymentStatus,
+  SubscriptionResponse,
+  PlanInfoResponse,
+  PaymentHistoryResponse,
+  BillingKeyIssueRequest,
+  ChangePlanRequest,
+  CancelSubscriptionRequest,
+  PaymentMethodRequest,
+} from './subscription'
+
+// Trading Principle API (매매 원칙)
+export { tradingPrincipleApi } from './tradingPrinciple'
+export type {
+  TradingPrincipleRequest,
+  TradingPrincipleResponse,
+} from './tradingPrinciple'

@@ -9,11 +9,11 @@ import type {
   LineToolsAndGroupsState,
   LineToolsAndGroupsLoadRequestType,
   LineToolsAndGroupsLoadRequestContext,
+  ResolutionString,
 } from '@/charting_library'
+import { chartLayoutApi } from '@/lib/api/chartLayout'
 
 const STORAGE_KEYS = {
-  CHARTS: 'tradex-charts',
-  CHART_CONTENT: 'tradex-chart-content',
   STUDY_TEMPLATES: 'tradex-study-templates',
   STUDY_TEMPLATE_CONTENT: 'tradex-study-template-content',
   DRAWING_TEMPLATES: 'tradex-drawing-templates',
@@ -37,53 +37,66 @@ function setStorage(key: string, value: unknown): void {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
-let nextChartId = Date.now()
-
 export class TradexSaveLoadAdapter implements IExternalSaveLoadAdapter {
   async getAllCharts(): Promise<ChartMetaInfo[]> {
-    return getStorage<ChartMetaInfo[]>(STORAGE_KEYS.CHARTS, [])
+    try {
+      const layouts = await chartLayoutApi.getAll()
+      return layouts.map(l => ({
+        id: l.id,
+        name: l.name,
+        symbol: l.symbol,
+        resolution: (l.resolution || '60') as ResolutionString,
+        timestamp: new Date(l.updatedAt || l.createdAt).getTime(),
+      }))
+    } catch (err) {
+      console.warn('Failed to load chart layouts from server:', (err as Error).message)
+      return []
+    }
   }
 
   async removeChart(id: string | number): Promise<void> {
-    const charts = getStorage<ChartMetaInfo[]>(STORAGE_KEYS.CHARTS, [])
-    setStorage(STORAGE_KEYS.CHARTS, charts.filter(c => c.id !== id))
-
-    const contents = getStorage<Record<string, string>>(STORAGE_KEYS.CHART_CONTENT, {})
-    delete contents[String(id)]
-    setStorage(STORAGE_KEYS.CHART_CONTENT, contents)
+    try {
+      await chartLayoutApi.delete(Number(id))
+    } catch (err) {
+      console.warn('Failed to delete chart layout:', (err as Error).message)
+    }
   }
 
   async saveChart(chartData: ChartData): Promise<string | number> {
-    const charts = getStorage<ChartMetaInfo[]>(STORAGE_KEYS.CHARTS, [])
-    const contents = getStorage<Record<string, string>>(STORAGE_KEYS.CHART_CONTENT, {})
+    try {
+      const payload = {
+        name: chartData.name,
+        symbol: chartData.symbol,
+        resolution: chartData.resolution,
+        content: chartData.content,
+      }
 
-    const id = chartData.id ?? nextChartId++
-    const existing = charts.findIndex(c => c.id === id)
-
-    const meta: ChartMetaInfo = {
-      id,
-      name: chartData.name,
-      symbol: chartData.symbol,
-      resolution: chartData.resolution,
-      timestamp: Date.now(),
+      if (chartData.id) {
+        // 기존 차트 수정
+        await chartLayoutApi.update(Number(chartData.id), payload)
+        return chartData.id
+      } else {
+        // 새 차트 생성
+        const result = await chartLayoutApi.create(payload)
+        // result: Record<string, number> e.g. { "id": 123 }
+        const newId = result.id ?? Object.values(result)[0]
+        return newId
+      }
+    } catch (err) {
+      console.warn('Failed to save chart layout:', (err as Error).message)
+      // fallback: 임시 ID 반환 (저장 실패해도 크래시 방지)
+      return Date.now()
     }
-
-    if (existing >= 0) {
-      charts[existing] = meta
-    } else {
-      charts.push(meta)
-    }
-
-    contents[String(id)] = chartData.content
-    setStorage(STORAGE_KEYS.CHARTS, charts)
-    setStorage(STORAGE_KEYS.CHART_CONTENT, contents)
-
-    return id
   }
 
   async getChartContent(chartId: number | string): Promise<string> {
-    const contents = getStorage<Record<string, string>>(STORAGE_KEYS.CHART_CONTENT, {})
-    return contents[String(chartId)] || ''
+    try {
+      const result = await chartLayoutApi.getContent(Number(chartId))
+      return result.content || ''
+    } catch (err) {
+      console.warn('Failed to load chart content:', (err as Error).message)
+      return ''
+    }
   }
 
   async getAllStudyTemplates(): Promise<StudyTemplateMetaInfo[]> {
