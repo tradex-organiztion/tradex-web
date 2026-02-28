@@ -56,7 +56,7 @@ export const useAIChatStore = create<AIChatState>()(
       activeConversationId: null,
 
       createConversation: (title?: string) => {
-        const id = `conv-${Date.now()}`
+        const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
         const now = new Date().toISOString()
         const conversation: Conversation = {
           id,
