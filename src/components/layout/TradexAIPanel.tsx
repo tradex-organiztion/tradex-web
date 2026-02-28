@@ -10,6 +10,7 @@ import Image from 'next/image'
 import { aiApi, chatSessionApi } from '@/lib/api/ai'
 import { captureChartContext } from '@/lib/chart/chartContext'
 import { executeAICommands } from '@/lib/chart/aiCommandExecutor'
+import { cn } from '@/lib/utils'
 
 // Suggestion prompts matching Figma design - using emoji icons
 const SUGGESTION_PROMPTS = [
@@ -51,6 +52,8 @@ export function TradexAIPanel() {
 
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null)
   const [panelConvId, setPanelConvId] = useState<string | null>(
     activeConversationId
   )
@@ -176,6 +179,40 @@ export function TradexAIPanel() {
       e.preventDefault()
       handleSend()
     }
+  }
+
+  const handleMicClick = () => {
+    // 이미 녹음 중이면 중단
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const SpeechRecognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert('음성 인식은 Chrome/Edge 브라우저에서만 지원됩니다.')
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'ko-KR'       // 한국어 우선, 영어 혼용도 인식
+    recognition.continuous = false   // 말이 끊기면 자동 종료
+    recognition.interimResults = true // 말하는 중 실시간으로 텍스트 표시
+
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((r: SpeechRecognitionResult) => r[0].transcript)
+        .join('')
+      setInput(transcript)
+    }
+
+    recognition.onerror = () => setIsListening(false)
+
+    recognitionRef.current = recognition
+    recognition.start()
   }
 
   const handleExpand = () => {
@@ -395,8 +432,19 @@ export function TradexAIPanel() {
               <ArrowUp className="w-4 h-4 text-white" />
             </Button>
           ) : (
-            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full hover:bg-gray-100">
-              <Mic className="w-5 h-5 text-label-normal" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-9 w-9 shrink-0 rounded-full transition-colors",
+                isListening
+                  ? "bg-red-50 hover:bg-red-100 animate-pulse"
+                  : "hover:bg-gray-100"
+              )}
+              onClick={handleMicClick}
+              title={isListening ? '클릭하여 녹음 중지' : '음성으로 입력'}
+            >
+              <Mic className={cn("w-5 h-5", isListening ? "text-red-500" : "text-label-normal")} />
             </Button>
           )}
         </div>
