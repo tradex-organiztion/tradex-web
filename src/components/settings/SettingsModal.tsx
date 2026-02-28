@@ -243,8 +243,9 @@ function AccountSettings({
         <div className="flex-1">
           <label className="text-body-2-medium text-label-normal mb-2 block">닉네임</label>
           <Input
-            defaultValue={nickname}
-            className="h-[48px]"
+            value={nickname}
+            readOnly
+            className="h-[48px] bg-gray-50 text-label-neutral cursor-default"
           />
         </div>
       </div>

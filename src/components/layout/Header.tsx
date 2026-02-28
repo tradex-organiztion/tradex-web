@@ -96,6 +96,9 @@ export function Header() {
       </button>
 
       <button
+        onClick={() => {
+          window.location.href = '/trading/principles'
+        }}
         className="flex h-7 items-center gap-0.5 rounded border border-gray-300 bg-white px-2 text-body-2-medium text-gray-900 transition-colors hover:bg-gray-50"
       >
         <IconFlag className="size-4" />
