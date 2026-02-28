@@ -10,7 +10,7 @@
 |-------|------|------|--------|
 | 1 | 공통 기반 (레이아웃 + 토큰) | ✅ 완료 | 4/4 |
 | 2 | 인증 페이지 | ✅ 완료 | 11/11 |
-| 3 | 홈 | ✅ 완료 | 5/6 |
+| 3 | 홈 | ✅ 완료 | 6/6 |
 | 4 | Tradex AI | ✅ 완료 | 4/4 |
 | 5 | 매매일지 | ✅ 완료 | 7/7 |
 | 6 | 매매원칙 | ✅ 완료 | 5/5 |
@@ -57,7 +57,7 @@
 | 3-3 | WeeklyProfitChart | ✅ | `src/components/home/WeeklyProfitChart.tsx` | gray 라인, border, shadow 제거 |
 | 3-4 | RiskScoreCard | ✅ | `src/components/home/RiskScoreCard.tsx` | rounded-xl, border, shadow 제거 |
 | 3-5 | TradexAIInsightCard | ✅ | `src/components/home/TradexAIInsightCard.tsx` | 녹색 그라디언트, 다크 텍스트 |
-| 3-6 | 홈_사이드 패널 | ⬜ | 홈 + InboxSidePanel | Phase 10과 함께 작업 |
+| 3-6 | 홈_사이드 패널 | ✅ | `src/components/inbox/InboxSidePanel.tsx` | Phase 10에서 완료 |
 
 ## Phase 4: Tradex AI
 

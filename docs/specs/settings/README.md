@@ -1,403 +1,108 @@
-# 설정 (Settings) 기획/스펙 문서
+# 설정 (Settings) 스펙 문서
 
-> **상태**: `작성중`
-> **최종 수정**: 2024-12-22
-> **담당자**: -
+> **상태**: `✅ 완료`
+> **최종 수정**: 2026-03-01
+> **구현 완료일**: 2026-02-28
 
 ---
 
 ## 1. 개요
 
-### 1.1 목적
-사용자 계정, 앱 환경설정, 알림, 구독을 관리합니다.
-
-### 1.2 사용자 스토리
-- As a 사용자, I want to 프로필 관리, so that 내 정보를 최신 상태로 유지할 수 있다.
-- As a 사용자, I want to 거래소 API 연동, so that 자동으로 매매 데이터를 가져올 수 있다.
-- As a 사용자, I want to 테마 변경, so that 편한 환경에서 사용할 수 있다.
-- As a 사용자, I want to 구독 관리, so that 서비스 이용 상태를 관리할 수 있다.
+`SettingsModal` 컴포넌트 내 4개 탭(계정/기본 설정/알림/구독)으로 구성된 설정 화면입니다. `/settings/*` 경로는 각각 해당 탭을 열어주는 래퍼 페이지입니다.
 
 ---
 
-## 2. 기능 요구사항
+## 2. 구현된 기능
 
-### 2.1 계정 설정 (Account)
+### 2.1 계정 설정 (Account 탭)
+- ✅ 프로필 조회: 닉네임, 이메일 (조회 전용 — 수정 UI 없음)
+- ✅ 비밀번호 변경 (`POST /api/users/change-password`, SMS 인증 포함)
+- ✅ 거래소 API 키 CRUD (Binance, Bybit, Bitget)
+  - 연결 / 수정 / 삭제 (`exchangeApi` 9개 엔드포인트)
+- ✅ 로그아웃 버튼
 
-#### 필수 기능 (Must Have)
-- [ ] 프로필 사진 변경
-- [ ] 닉네임 변경
-- [ ] 비밀번호 변경
-- [ ] 거래소 API 키 연동
-- [ ] 로그아웃
+### 2.2 기본 설정 (Preferences 탭)
+- ✅ 테마 토글 (라이트/다크) — TradingView 차트 테마 연동 포함
+- ✅ 언어 설정 (한국어 전용, UI 표시만)
 
-#### 선택 기능 (Nice to Have)
-- [ ] 계정 삭제
-- [ ] 데이터 내보내기
-- [ ] 2단계 인증
+### 2.3 알림 설정 (Notifications 탭)
+- ✅ 알림 유형별 ON/OFF 토글 (앱 내 알림)
+- ✅ 브라우저 푸시 알림: 미구현 (범위 외)
 
-### 2.2 기본 설정 (Preferences)
-
-#### 필수 기능 (Must Have)
-- [ ] 테마 설정 (시스템/다크/라이트)
-- [ ] 언어 설정 (한국어/영어)
-
-#### 선택 기능 (Nice to Have)
-- [ ] 차트 기본 설정
-- [ ] 시작 페이지 설정
-
-### 2.3 알림 설정 (Notifications)
-
-#### 필수 기능 (Must Have)
-- [ ] 푸시 알림 ON/OFF
-- [ ] 앱 내 알림 ON/OFF
-
-#### 선택 기능 (Nice to Have)
-- [ ] 알림 유형별 설정
-- [ ] 방해 금지 시간 설정
-
-### 2.4 구독 설정 (Subscription)
-
-#### 필수 기능 (Must Have)
-- [ ] 현재 요금제 확인
-- [ ] 전체 요금제 비교
-- [ ] 플랜 변경/결제
-- [ ] 결제 수단 변경
-- [ ] 결제 내역 확인
-- [ ] 구독 해지
-
-#### 선택 기능 (Nice to Have)
-- [ ] 프로모션 코드 적용
-- [ ] 연간 구독 할인
-
-### 2.5 제외 범위 (Out of Scope)
-- 팀/조직 관리
-- 권한 관리
+### 2.4 구독 설정 (Subscription 탭)
+- ✅ 현재 구독 플랜 표시 (`subscriptionApi.getMySubscription()`)
+- ✅ 전체 플랜 목록 (`subscriptionApi.getPlans()`)
+- ✅ 결제 수단 표시 (카드사, 카드번호 마스킹)
+- ✅ 결제 내역 (`subscriptionApi.getPaymentHistory()`)
+- ✅ 구독 해지 모달 (`subscriptionApi.cancelSubscription()`)
+- ✅ 플랜 변경 (`subscriptionApi.changePlan()`)
+- ✅ 결제 수단 추가/변경 → 토스페이먼츠 빌링 플로우
+  - `requestBillingAuth()` → 빌링 성공/실패 콜백 페이지
+  - 성공: `subscriptionApi.issueBillingKey()`
 
 ---
 
-## 3. 화면 설계
+## 3. 화면 목록
 
-### 3.1 화면 목록
-
-| 화면명 | 경로 | 설명 |
+| 화면명 | 경로 | 파일 |
 |--------|------|------|
-| 계정 설정 | `/settings/account` | 계정 관리 |
-| 기본 설정 | `/settings/preferences` | 테마, 언어 |
-| 알림 설정 | `/settings/notifications` | 알림 관리 |
-| 구독 설정 | `/settings/subscription` | 구독 관리 |
-
-### 3.2 화면 구성
-
-#### 설정 메인 (탭 네비게이션)
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 설정                                                        │
-├─────────────────────────────────────────────────────────────┤
-│ [계정] [기본 설정] [알림] [구독]                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│                    (선택된 탭 내용)                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### 계정 설정
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 계정 설정                                                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│ 프로필                                                      │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │  ┌─────┐                                                │ │
-│ │  │ 📷  │  닉네임: trader_kim                           │ │
-│ │  │이미지│  이메일: kim@example.com                     │ │
-│ │  └─────┘                                    [편집]     │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ 보안                                                        │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ 비밀번호 변경                                    [→]   │ │
-│ ├─────────────────────────────────────────────────────────┤ │
-│ │ 2단계 인증                               [OFF]   [→]   │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ 거래소 API 연동                                             │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ Binance                                  [연결됨] [→]   │ │
-│ ├─────────────────────────────────────────────────────────┤ │
-│ │ Upbit                                    [연결]   [→]   │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │                      [로그아웃]                         │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### 기본 설정
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 기본 설정                                                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│ 테마                                                        │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ (●) 시스템 설정에 맞춤                                  │ │
-│ │ ( ) 다크 모드                                           │ │
-│ │ ( ) 라이트 모드                                         │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ 언어                                                        │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ (●) 한국어                                              │ │
-│ │ ( ) English                                             │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### 구독 설정
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 구독 설정                                                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│ 현재 플랜                                                   │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ Pro 플랜                                                │ │
-│ │ ₩29,000/월                                              │ │
-│ │ 다음 결제일: 2024-02-15                                 │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ 플랜 비교                                                   │
-│ ┌───────────────┬───────────────┬───────────────┐          │
-│ │ Free          │ Pro           │ Premium       │          │
-│ │ ₩0            │ ₩29,000/월    │ ₩59,000/월    │          │
-│ │               │               │               │          │
-│ │ • 기본 기능   │ • 전체 기능   │ • 전체 기능   │          │
-│ │ • 차트 5개    │ • 무제한 차트 │ • 무제한 차트 │          │
-│ │               │ • AI 분석     │ • AI 무제한   │          │
-│ │               │   100회/월    │ • 우선 지원   │          │
-│ │               │               │               │          │
-│ │ [현재]        │ [현재 플랜]   │ [업그레이드]  │          │
-│ └───────────────┴───────────────┴───────────────┘          │
-│                                                             │
-│ 결제 관리                                                   │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ 결제 수단                          VISA ****1234  [→]   │ │
-│ ├─────────────────────────────────────────────────────────┤ │
-│ │ 결제 내역                                         [→]   │ │
-│ ├─────────────────────────────────────────────────────────┤ │
-│ │ 구독 해지                                         [→]   │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 3.3 상태별 화면
-- **기본 상태**: 설정 표시
-- **로딩 상태**: 스피너/스켈레톤
-- **저장 중**: 버튼 로딩 상태
-- **에러 상태**: 인라인 에러 메시지
+| 계정 설정 | `/settings/account` | `src/app/(main)/settings/account/page.tsx` |
+| 기본 설정 | `/settings/preferences` | `src/app/(main)/settings/preferences/page.tsx` |
+| 알림 설정 | `/settings/notifications` | `src/app/(main)/settings/notifications/page.tsx` |
+| 구독 설정 | `/settings/subscription` | `src/app/(main)/settings/subscription/page.tsx` |
+| 빌링 성공 | `/billing/success` | `src/app/(main)/billing/success/page.tsx` |
+| 빌링 실패 | `/billing/fail` | `src/app/(main)/billing/fail/page.tsx` |
 
 ---
 
-## 4. 데이터 모델
-
-### 4.1 주요 엔티티
-
-```typescript
-// 사용자 프로필
-interface UserProfile {
-  id: string;
-  email: string;
-  nickname: string;
-  profileImage?: string;
-  provider: 'email' | 'google' | 'apple';
-}
-
-// 사용자 설정
-interface UserPreferences {
-  theme: 'system' | 'dark' | 'light';
-  language: 'ko' | 'en';
-  notifications: {
-    push: boolean;
-    inApp: boolean;
-  };
-}
-
-// 거래소 연동
-interface ExchangeConnection {
-  id: string;
-  exchange: 'binance' | 'upbit' | 'bithumb';
-  isConnected: boolean;
-  connectedAt?: string;
-}
-
-// 구독 정보
-interface Subscription {
-  plan: 'free' | 'pro' | 'premium';
-  status: 'active' | 'cancelled' | 'past_due';
-  currentPeriodEnd: string;
-  paymentMethod?: PaymentMethod;
-}
-
-interface PaymentMethod {
-  type: 'card';
-  brand: string;
-  last4: string;
-}
-
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  interval: 'month' | 'year';
-  features: string[];
-}
-```
-
-### 4.2 API 엔드포인트
+## 4. API 엔드포인트
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| GET | `/users/profile` | 프로필 조회 |
-| PUT | `/users/profile` | 프로필 수정 |
-| PUT | `/users/password` | 비밀번호 변경 |
-| GET | `/users/preferences` | 설정 조회 |
-| PUT | `/users/preferences` | 설정 수정 |
-| GET | `/exchanges` | 거래소 연동 목록 |
-| POST | `/exchanges/:exchange/connect` | 거래소 연결 |
-| DELETE | `/exchanges/:exchange` | 거래소 연결 해제 |
-| GET | `/subscription` | 구독 정보 |
-| GET | `/subscription/plans` | 플랜 목록 |
-| POST | `/subscription/change` | 플랜 변경 |
-| POST | `/subscription/cancel` | 구독 해지 |
-| GET | `/subscription/invoices` | 결제 내역 |
+| GET | `/api/auth/me` | 사용자 프로필 조회 |
+| POST | `/api/users/change-password` | 비밀번호 변경 (SMS 인증) |
+| GET | `/api/exchanges` | 거래소 API 키 목록 |
+| POST | `/api/exchanges` | 거래소 API 키 등록 |
+| PUT | `/api/exchanges/{id}` | 거래소 API 키 수정 |
+| DELETE | `/api/exchanges/{id}` | 거래소 API 키 삭제 |
+| GET | `/api/subscriptions/my` | 내 구독 정보 |
+| GET | `/api/subscriptions/plans` | 플랜 목록 |
+| POST | `/api/subscriptions/billing-key` | 빌링키 발급 |
+| POST | `/api/subscriptions/change-plan` | 플랜 변경 |
+| POST | `/api/subscriptions/cancel` | 구독 해지 |
+| GET | `/api/subscriptions/payment-history` | 결제 내역 |
+| POST | `/api/subscriptions/change-payment` | 결제 수단 변경 |
 
 ---
 
-## 5. 비즈니스 로직
+## 5. 핵심 구현 파일
 
-### 5.1 주요 로직
-1. **테마 적용**: 설정 변경 즉시 적용
-2. **거래소 API 검증**: 연결 시 유효성 체크
-3. **플랜 변경**: 즉시 반영 또는 다음 결제일 반영
-4. **구독 해지**: 현재 기간 종료 시 적용
-
-### 5.2 유효성 검사
-- **닉네임**: 2-20자, 특수문자 제외
-- **비밀번호**: 최소 8자, 영문+숫자+특수문자
-- **API 키**: 유효한 형식 검증
-
-### 5.3 예외 처리
-| 에러 코드 | 상황 | 대응 |
-|----------|------|------|
-| 400 | 유효성 실패 | 필드별 에러 표시 |
-| 401 | 현재 비밀번호 불일치 | 에러 메시지 |
-| 402 | 결제 실패 | 결제 수단 확인 안내 |
+| 파일 | 역할 |
+|------|------|
+| `src/components/settings/SettingsModal.tsx` | 전체 설정 모달 (4개 탭) |
+| `src/lib/api/subscription.ts` | `subscriptionApi` (7개 엔드포인트) |
+| `src/lib/api/exchange.ts` | `exchangeApi` (9개 엔드포인트) |
+| `src/lib/api/user.ts` | `userApi.changePassword()` |
+| `src/app/(main)/billing/success/page.tsx` | 토스페이먼츠 빌링 성공 콜백 |
+| `src/app/(main)/billing/fail/page.tsx` | 토스페이먼츠 빌링 실패 콜백 |
 
 ---
 
-## 6. 컴포넌트 설계
+## 6. 주요 의사결정
 
-### 6.1 컴포넌트 구조
-
-```
-components/features/settings/
-├── account/
-│   ├── ProfileForm.tsx
-│   ├── PasswordChangeForm.tsx
-│   ├── ExchangeConnectionList.tsx
-│   └── ExchangeConnectModal.tsx
-├── preferences/
-│   ├── ThemeSelector.tsx
-│   └── LanguageSelector.tsx
-├── notifications/
-│   └── NotificationToggle.tsx
-├── subscription/
-│   ├── CurrentPlan.tsx
-│   ├── PlanComparison.tsx
-│   ├── PaymentMethodForm.tsx
-│   └── InvoiceList.tsx
-└── hooks/
-    ├── useProfile.ts
-    ├── usePreferences.ts
-    └── useSubscription.ts
-```
+| 항목 | 결정 |
+|------|------|
+| 닉네임/프로필 이미지 수정 | 미구현 (조회 전용 확정, 백엔드 API 없음) |
+| 결제 시스템 | 토스페이먼츠 (빌링키 방식 정기결제) |
+| 구독 플랜 | Free / Pro / Enterprise |
+| 알림 채널 | 앱 내 알림만 (푸시/이메일 미지원) |
+| 지원 언어 | 한국어 전용 (i18n 미적용) |
 
 ---
 
-## 7. 상태 관리
+## 7. 변경 이력
 
-### 7.1 로컬 상태
-- 폼 입력값
-- 모달 열림 상태
-
-### 7.2 전역 상태 (Zustand)
-```typescript
-interface UIStore {
-  theme: 'system' | 'dark' | 'light';
-  language: 'ko' | 'en';
-  setTheme: (theme: Theme) => void;
-  setLanguage: (lang: Language) => void;
-}
-```
-
-### 7.3 서버 상태 (TanStack Query)
-- 프로필/설정 쿼리
-- 구독 정보 쿼리
-
----
-
-## 8. 의존성
-
-### 8.1 내부 의존성
-- `lib/api/users.ts`
-- `lib/api/subscription.ts`
-- `stores/useUIStore.ts`
-
-### 8.2 외부 의존성
-- `react-hook-form`: 폼 관리
-- `next-themes`: 테마 관리 (선택)
-
----
-
-## 9. 테스트 계획
-
-### 9.1 단위 테스트
-- [ ] 유효성 검사
-- [ ] 테마 토글
-
-### 9.2 통합 테스트
-- [ ] 프로필 수정
-- [ ] 비밀번호 변경
-
-### 9.3 E2E 테스트
-- [ ] 전체 설정 변경 플로우
-- [ ] 구독 변경 플로우
-
----
-
-## 10. 변경 이력
-
-| 버전 | 날짜 | 변경 내용 | 작성자 |
-|------|------|----------|--------|
-| 0.1 | 2024-12-22 | 초안 작성 | - |
-
----
-
-## 11. 미결 사항 / 질문
-
-- [ ] 결제 시스템 연동 방식 (Stripe? PG?)
-- [ ] 지원 거래소 목록 확정
-- [ ] 구독 플랜 가격 확정
-
----
-
-## 12. 참고 자료
-
-- [User Flow - 설정](../../USER_FLOW.md#4-설정-settings)
-- [Architecture](../../ARCHITECTURE.md)
+| 버전 | 날짜 | 변경 내용 |
+|------|------|----------|
+| 1.0 | 2026-03-01 | 실제 구현 기준으로 전면 재작성 |
+| 0.1 | 2024-12-22 | 초안 작성 |

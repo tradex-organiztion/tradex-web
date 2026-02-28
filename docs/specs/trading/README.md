@@ -1,355 +1,89 @@
-# 매매 관리 (Trading) 기획/스펙 문서
+# 매매 관리 (Trading) 스펙 문서
 
-> **상태**: `작성중`
-> **최종 수정**: 2024-12-22
-> **담당자**: -
+> **상태**: `✅ 완료`
+> **최종 수정**: 2026-03-01
+> **구현 완료일**: 2026-02-19
 
 ---
 
 ## 1. 개요
 
-### 1.1 목적
-매매 원칙 설정 및 매매일지 관리를 통해 체계적인 트레이딩 습관을 형성합니다.
-
-### 1.2 사용자 스토리
-- As a 트레이더, I want to 매매 원칙 등록, so that 일관된 매매를 할 수 있다.
-- As a 트레이더, I want to AI 매매 원칙 추천, so that 더 나은 원칙을 세울 수 있다.
-- As a 트레이더, I want to 매매일지 작성, so that 매매를 복기하고 개선할 수 있다.
-- As a 트레이더, I want to 매매일지 필터링, so that 특정 조건의 매매를 분석할 수 있다.
+매매 원칙 관리와 매매일지 작성/조회를 제공합니다. 거래소 포지션/주문 데이터 자동 연동, 캘린더/리스트 뷰, AI 분석 연동 기능이 구현되어 있습니다.
 
 ---
 
-## 2. 기능 요구사항
+## 2. 구현된 기능
 
-### 2.1 매매 원칙 (Principles)
+### 2.1 매매 원칙
+- ✅ 원칙 목록 조회 (`GET /api/trading/principles`)
+- ✅ 원칙 등록/수정/삭제 (CRUD)
+- ✅ AI 원칙 추천 배지 표시
+- ✅ TradingPrinciples 사이드 패널 (`PrinciplesSidePanel`)
+- ✅ 원칙 없는 경우 빈 상태 UI
 
-#### 필수 기능 (Must Have)
-- [ ] 매매 원칙 목록 조회
-- [ ] 매매 원칙 등록
-- [ ] 매매 원칙 수정/삭제
-- [ ] AI 매매 원칙 추천
-- [ ] 원칙별 알림 설정
-
-#### 선택 기능 (Nice to Have)
-- [ ] 원칙 템플릿
-- [ ] 원칙 공유
-
-### 2.2 매매일지 (Journal)
-
-#### 필수 기능 (Must Have)
-- [ ] 매매일지 목록 조회
-- [ ] 매매기록 추가 (포지션, 진입가, 청산가)
-- [ ] 진입 근거 입력
-- [ ] 매매 복기 입력
-- [ ] 필터링 (기간, 포지션, 수익/손실)
-- [ ] Tradex AI 연동 분석
-
-#### 선택 기능 (Nice to Have)
-- [ ] 자동 매매기록 연동 (거래소 API)
-- [ ] 차트 스크린샷 첨부
-- [ ] 태그 시스템
-
-### 2.3 제외 범위 (Out of Scope)
-- 자동 매매 실행
-- 타 사용자 일지 열람
+### 2.2 매매일지
+- ✅ 일지 목록: 캘린더 뷰 / 리스트 뷰 토글
+- ✅ 일지 작성 (`/trading/journal/new`)
+  - 거래소 포지션 자동 연동 (`positionsApi`)
+  - 거래소 주문 자동 연동 (`ordersApi`)
+  - 수동 입력 지원
+  - 사전 시나리오 / 매매 후 복기 모드
+  - 오더 추가 기능
+- ✅ 일지 상세/수정 (`/trading/journal/[id]`)
+- ✅ 필터링: 기간, 포지션, 수익/손실
+- ✅ 캘린더: 날짜별 매매 카드 (Closed P&L USDT 표시)
+- ✅ 차트 스크린샷 첨부 (`journalApi.uploadScreenshot()`)
 
 ---
 
-## 3. 화면 설계
+## 3. 화면 목록
 
-### 3.1 화면 목록
-
-| 화면명 | 경로 | 설명 |
+| 화면명 | 경로 | 파일 |
 |--------|------|------|
-| 매매 원칙 목록 | `/trading/principles` | 원칙 목록 |
-| 원칙 등록 | `/trading/principles/new` | 새 원칙 등록 |
-| 원칙 상세 | `/trading/principles/[id]` | 원칙 상세/수정 |
-| 매매일지 목록 | `/trading/journal` | 일지 목록 |
-| 일지 작성 | `/trading/journal/new` | 새 일지 작성 |
-| 일지 상세 | `/trading/journal/[id]` | 일지 상세/수정 |
-
-### 3.2 화면 구성
-
-#### 매매 원칙 목록
-```
-┌─────────────────────────────────────────┐
-│ 매매 원칙                  [+ 원칙 추가]│
-├─────────────────────────────────────────┤
-│ [AI 원칙 추천받기]                      │
-├─────────────────────────────────────────┤
-│                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ 손절 5% 규칙                 [ON]   │ │
-│ │ 손실이 5%에 도달하면 무조건 청산    │ │
-│ │ 알림: 활성화                  [···] │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ 분할 매수 규칙               [ON]   │ │
-│ │ 한 번에 전체 자금 투입 금지         │ │
-│ │ 알림: 비활성화                [···] │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-#### 매매일지 목록
-```
-┌─────────────────────────────────────────┐
-│ 매매일지                   [+ 일지 추가]│
-├─────────────────────────────────────────┤
-│ 기간: [1주일 ▼] 포지션: [전체 ▼]       │
-│ 수익: [전체 ▼]                          │
-├─────────────────────────────────────────┤
-│                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ BTC/USDT          롱     +5.2%     │ │
-│ │ 진입: $42,000 → 청산: $44,200      │ │
-│ │ 2024-01-15                    [→]  │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ ETH/USDT          숏     -2.1%     │ │
-│ │ 진입: $2,300 → 청산: $2,348        │ │
-│ │ 2024-01-14                    [→]  │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│        총 수익: +3.1% (₩156,000)        │
-└─────────────────────────────────────────┘
-```
-
-#### 매매일지 작성
-```
-┌─────────────────────────────────────────┐
-│ 매매일지 작성                           │
-├─────────────────────────────────────────┤
-│                                         │
-│ 종목                                    │
-│ ┌─────────────────────────────────────┐ │
-│ │ BTC/USDT                            │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ 포지션                                  │
-│ [롱] [숏]                               │
-│                                         │
-│ 진입 정보                               │
-│ ┌──────────────┐ ┌──────────────┐       │
-│ │ 진입가       │ │ 수량         │       │
-│ └──────────────┘ └──────────────┘       │
-│                                         │
-│ 청산 정보                               │
-│ ┌──────────────┐ ┌──────────────┐       │
-│ │ 청산가       │ │ 손익         │       │
-│ └──────────────┘ └──────────────┘       │
-│                                         │
-│ 진입 근거                               │
-│ ┌─────────────────────────────────────┐ │
-│ │                                     │ │
-│ │ 상승 추세선 지지 확인               │ │
-│ │ RSI 과매도 구간 진입                │ │
-│ │                                     │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ 매매 복기                               │
-│ ┌─────────────────────────────────────┐ │
-│ │                                     │ │
-│ │ 진입 타이밍은 좋았으나...           │ │
-│ │                                     │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ [AI에게 분석 요청하기]                  │
-│                                         │
-│ [취소]                         [저장]   │
-└─────────────────────────────────────────┘
-```
-
-### 3.3 상태별 화면
-- **기본 상태**: 목록/폼 표시
-- **로딩 상태**: 스켈레톤 UI
-- **빈 상태**: 시작 가이드
-- **에러 상태**: 재시도 버튼
+| 매매 원칙 목록 | `/trading/principles` | `src/app/(main)/trading/principles/page.tsx` |
+| 매매일지 목록 | `/trading/journal` | `src/app/(main)/trading/journal/page.tsx` |
+| 일지 작성 | `/trading/journal/new` | `src/app/(main)/trading/journal/new/page.tsx` |
+| 일지 상세/수정 | `/trading/journal/[id]` | `src/app/(main)/trading/journal/[id]/page.tsx` |
 
 ---
 
-## 4. 데이터 모델
-
-### 4.1 주요 엔티티
-
-```typescript
-// 매매 원칙
-interface TradingPrinciple {
-  id: string;
-  userId: string;
-  title: string;
-  description: string;
-  isActive: boolean;
-  notificationEnabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 매매일지
-interface TradeJournal {
-  id: string;
-  userId: string;
-  symbol: string;
-  position: 'long' | 'short';
-  entryPrice: number;
-  exitPrice: number;
-  quantity: number;
-  profitLoss: number;
-  profitLossPercent: number;
-  entryReason: string;
-  review: string;
-  tags?: string[];
-  screenshots?: string[];
-  aiAnalysis?: string;
-  tradeDate: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 필터
-interface JournalFilter {
-  period: '1d' | '1w' | '1m' | '3m' | '1y' | 'all';
-  position?: 'long' | 'short';
-  profitType?: 'profit' | 'loss';
-}
-```
-
-### 4.2 API 엔드포인트
+## 4. API 엔드포인트
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| GET | `/trading/principles` | 원칙 목록 |
-| POST | `/trading/principles` | 원칙 등록 |
-| PUT | `/trading/principles/:id` | 원칙 수정 |
-| DELETE | `/trading/principles/:id` | 원칙 삭제 |
-| POST | `/trading/principles/ai-recommend` | AI 추천 |
-| GET | `/trading/journals` | 일지 목록 (필터) |
-| POST | `/trading/journals` | 일지 등록 |
-| GET | `/trading/journals/:id` | 일지 상세 |
-| PUT | `/trading/journals/:id` | 일지 수정 |
-| DELETE | `/trading/journals/:id` | 일지 삭제 |
-| POST | `/trading/journals/:id/ai-analyze` | AI 분석 |
+| GET | `/api/trading/principles` | 원칙 목록 |
+| POST | `/api/trading/principles` | 원칙 등록 |
+| PUT | `/api/trading/principles/{id}` | 원칙 수정 |
+| DELETE | `/api/trading/principles/{id}` | 원칙 삭제 |
+| GET | `/api/trading/journals` | 일지 목록 (필터) |
+| POST | `/api/trading/journals` | 일지 등록 |
+| GET | `/api/trading/journals/{id}` | 일지 상세 |
+| PUT | `/api/trading/journals/{id}` | 일지 수정 |
+| DELETE | `/api/trading/journals/{id}` | 일지 삭제 |
+| POST | `/api/trading/journals/{id}/screenshot` | 스크린샷 업로드 |
+| GET | `/api/trading/journals/stats` | 일지 통계 |
+| GET | `/api/futures/positions` | 포지션 목록 |
+| GET | `/api/futures/orders` | 주문 목록 |
 
 ---
 
-## 5. 비즈니스 로직
+## 5. 핵심 구현 파일
 
-### 5.1 주요 로직
-1. **손익 계산**: (청산가 - 진입가) × 수량 (숏은 반대)
-2. **수익률 계산**: (손익 / 진입금액) × 100
-3. **AI 원칙 추천**: 기존 매매 패턴 분석 후 추천
-4. **원칙 알림**: 매매 입력 시 원칙 위반 체크
-
-### 5.2 유효성 검사
-- **원칙 제목**: 1-100자
-- **원칙 설명**: 최대 500자
-- **진입/청산가**: 양수
-- **수량**: 양수
-
-### 5.3 예외 처리
-| 에러 코드 | 상황 | 대응 |
-|----------|------|------|
-| 400 | 유효성 검사 실패 | 필드별 에러 표시 |
-| 404 | 리소스 없음 | 목록으로 리다이렉트 |
+| 파일 | 역할 |
+|------|------|
+| `src/lib/api/trading.ts` | `journalApi`, `journalStatsApi` |
+| `src/lib/api/tradingPrinciple.ts` | `tradingPrincipleApi` |
+| `src/lib/api/futures.ts` | `positionsApi`, `ordersApi` |
+| `src/components/trading/JournalForm.tsx` | 일지 작성/수정 폼 |
+| `src/components/trading/JournalList.tsx` | 일지 리스트 뷰 |
+| `src/components/trading/JournalCalendar.tsx` | 일지 캘린더 뷰 |
+| `src/components/trading/PrinciplesSidePanel.tsx` | 원칙 사이드 패널 |
 
 ---
 
-## 6. 컴포넌트 설계
+## 6. 변경 이력
 
-### 6.1 컴포넌트 구조
-
-```
-components/features/trading/
-├── principles/
-│   ├── PrincipleList.tsx
-│   ├── PrincipleCard.tsx
-│   ├── PrincipleForm.tsx
-│   └── AIPrincipleRecommend.tsx
-├── journal/
-│   ├── JournalList.tsx
-│   ├── JournalCard.tsx
-│   ├── JournalForm.tsx
-│   ├── JournalFilter.tsx
-│   └── JournalSummary.tsx
-└── hooks/
-    ├── usePrinciples.ts
-    ├── useJournals.ts
-    └── useJournalFilter.ts
-```
-
----
-
-## 7. 상태 관리
-
-### 7.1 로컬 상태
-- 폼 입력값
-- 필터 값
-
-### 7.2 전역 상태 (Zustand)
-```typescript
-interface TradingStore {
-  journalFilter: JournalFilter;
-  setJournalFilter: (filter: JournalFilter) => void;
-}
-```
-
-### 7.3 서버 상태 (TanStack Query)
-- 원칙/일지 목록 쿼리
-- CRUD 뮤테이션
-
----
-
-## 8. 의존성
-
-### 8.1 내부 의존성
-- `lib/api/trading.ts`
-- `components/layout/TradexAI`
-
-### 8.2 외부 의존성
-- `react-hook-form`: 폼 관리
-- `zod`: 유효성 검사
-
----
-
-## 9. 테스트 계획
-
-### 9.1 단위 테스트
-- [ ] 손익 계산
-- [ ] 수익률 계산
-- [ ] 필터 로직
-
-### 9.2 통합 테스트
-- [ ] 원칙 CRUD
-- [ ] 일지 CRUD
-- [ ] 필터링
-
-### 9.3 E2E 테스트
-- [ ] 원칙 등록 → 알림 발생
-- [ ] 일지 작성 → AI 분석 요청
-
----
-
-## 10. 변경 이력
-
-| 버전 | 날짜 | 변경 내용 | 작성자 |
-|------|------|----------|--------|
-| 0.1 | 2024-12-22 | 초안 작성 | - |
-
----
-
-## 11. 미결 사항 / 질문
-
-- [ ] 거래소 API 연동 범위
-- [ ] 태그 시스템 필요 여부
-- [ ] AI 분석 비용 정책
-
----
-
-## 12. 참고 자료
-
-- [User Flow - 매매 등록](../../USER_FLOW.md#34-매매-등록)
-- [User Flow - 매매일지](../../USER_FLOW.md#36-주식-알림-수신--매매일지-관리)
-- [Architecture](../../ARCHITECTURE.md)
+| 버전 | 날짜 | 변경 내용 |
+|------|------|----------|
+| 1.0 | 2026-03-01 | 실제 구현 기준으로 전면 재작성 |
+| 0.1 | 2024-12-22 | 초안 작성 |
