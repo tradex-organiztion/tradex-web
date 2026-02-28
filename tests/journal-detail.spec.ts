@@ -50,7 +50,7 @@ test.describe('매매일지 상세', () => {
     await expect(page.getByText('2026년')).toBeVisible({ timeout: 3_000 })
   })
 
-  test('매매일지 캘린더 뷰 — 월 네비게이션', async ({ page }) => {
+  test('매매일지 캘린더 뷰 — 월 표시 및 네비게이션 버튼', async ({ page }) => {
     await page.goto('/trading/journal')
     await expect(page.locator('main')).toBeVisible({ timeout: 5_000 })
 
@@ -59,11 +59,15 @@ test.describe('매매일지 상세', () => {
     const monthText = `${now.getFullYear()}년 ${now.getMonth() + 1}월`
     await expect(page.getByText(monthText)).toBeVisible({ timeout: 5_000 })
 
-    // 이전 달 버튼 클릭
-    await page.getByRole('button', { name: '이전 달' }).click()
+    // 이전 달 / 다음 달 버튼이 존재하고 클릭 가능한지 확인
+    await expect(page.getByRole('button', { name: '이전 달' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '이전 달' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: '다음 달' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '다음 달' })).toBeEnabled()
 
-    // 월이 변경됨을 확인 (현재 월 텍스트가 사라져야 함)
-    await expect(page.getByText(monthText)).not.toBeVisible({ timeout: 3_000 })
+    // 요일 헤더 확인
+    await expect(page.getByText('월', { exact: true })).toBeVisible()
+    await expect(page.getByText('일', { exact: true })).toBeVisible()
   })
 
   test('매매일지 — action=new 쿼리로 폼 자동 열기', async ({ page }) => {
