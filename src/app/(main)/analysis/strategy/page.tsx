@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Check, SlidersHorizontal } from 'lucide-react'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { DatePickerCalendar } from '@/components/common'
 import { ExchangeFilter } from '@/components/common/ExchangeFilter'
@@ -555,7 +554,7 @@ export default function StrategyAnalysisPage() {
             <div className="flex gap-5">
               <div className="flex-1 flex items-start gap-8">
                 <div className="flex items-center gap-2 shrink-0">
-                  <Image src="/icons/strategy/icon-face-smile.svg" alt="" width={20} height={20} />
+                  <img src="/icons/strategy/icon-face-smile.svg" alt="" width="20" height="20" />
                   <span className="text-body-1-bold text-label-normal">전략의 강점</span>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -569,7 +568,7 @@ export default function StrategyAnalysisPage() {
                     '최대 8회 연속 승리를 기록하여 일관성이 있습니다.',
                   ]).map((text, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <Image src="/icons/strategy/icon-system-success.svg" alt="" width={20} height={20} className="shrink-0" />
+                      <img src="/icons/strategy/icon-system-success.svg" alt="" width="20" height="20" className="shrink-0" />
                       <span className="text-body-1-regular text-label-normal">{text}</span>
                     </div>
                   ))}
@@ -578,7 +577,7 @@ export default function StrategyAnalysisPage() {
 
               <div className="flex-1 flex items-start gap-8">
                 <div className="flex items-center gap-2 shrink-0">
-                  <Image src="/icons/strategy/icon-face-sad.svg" alt="" width={20} height={20} />
+                  <img src="/icons/strategy/icon-face-sad.svg" alt="" width="20" height="20" />
                   <span className="text-body-1-bold text-label-normal">취약 구간</span>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -590,7 +589,7 @@ export default function StrategyAnalysisPage() {
                     '최대 4회 연속 손실이 발생할 수 있으니 지금 관리에 주의하세요.',
                   ]).map((text, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <Image src="/icons/strategy/icon-system-success.svg" alt="" width={20} height={20} className="shrink-0" />
+                      <img src="/icons/strategy/icon-system-success.svg" alt="" width="20" height="20" className="shrink-0" />
                       <span className="text-body-1-regular text-label-normal">{text}</span>
                     </div>
                   ))}
@@ -604,37 +603,37 @@ export default function StrategyAnalysisPage() {
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <MetricCard
-                  icon={<Image src="/icons/strategy/metric-total-trades.svg" alt="" width={24} height={24} />}
+                  icon={<img src="/icons/strategy/metric-total-trades.svg" alt="" width="24" height="24" />}
                   label="총 거래"
                   value={`${totalTrades}회`}
                   isFirst
                 />
                 <MetricCard
-                  icon={<Image src="/icons/strategy/metric-win-rate.svg" alt="" width={24} height={24} />}
+                  icon={<img src="/icons/strategy/metric-win-rate.svg" alt="" width="24" height="24" />}
                   label="승률"
                   value={`${fmt(overallWinRate)}%`}
                 />
                 <MetricCard
-                  icon={<Image src="/icons/strategy/metric-avg-profit.svg" alt="" width={24} height={24} />}
+                  icon={<img src="/icons/strategy/metric-avg-profit.svg" alt="" width="24" height="24" />}
                   label="평균 수익"
                   value={`${overallAvgProfit >= 0 ? '+' : ''}${fmt(overallAvgProfit)}%`}
                 />
               </div>
               <div className="flex items-center gap-3">
                 <MetricCard
-                  icon={<Image src="/icons/strategy/metric-avg-rr.svg" alt="" width={24} height={24} />}
+                  icon={<img src="/icons/strategy/metric-avg-rr.svg" alt="" width="24" height="24" />}
                   label="평균 R/R"
                   value={fmt(overallAvgRr)}
                 />
                 <MetricCard
-                  icon={<Image src="/icons/strategy/metric-cumulative.svg" alt="" width={24} height={24} />}
+                  icon={<img src="/icons/strategy/metric-cumulative.svg" alt="" width="24" height="24" />}
                   label="누적 수익"
                   value={apiData
                     ? `${fmt(overallAvgProfit * totalTrades, 0)}%`
                     : '+$43,759(18.3%)'}
                 />
                 <MetricCard
-                  icon={<Image src="/icons/strategy/metric-streak.svg" alt="" width={24} height={24} />}
+                  icon={<img src="/icons/strategy/metric-streak.svg" alt="" width="24" height="24" />}
                   label="최대 연속 기록(승/패)"
                   value="+8/-4회"
                 />
@@ -645,7 +644,7 @@ export default function StrategyAnalysisPage() {
             <div className="flex gap-3">
               <div className="flex-1 bg-white rounded-lg py-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
-                  <Image src="/icons/strategy/chart-profit-curve.svg" alt="" width={20} height={20} />
+                  <img src="/icons/strategy/chart-profit-curve.svg" alt="" width="20" height="20" />
                   <span className="text-body-1-bold text-label-normal">수익 곡선</span>
                 </div>
                 <div className="relative flex">
@@ -741,7 +740,7 @@ export default function StrategyAnalysisPage() {
               {/* 승패 분포 */}
               <div className="w-[360px] shrink-0 bg-white rounded-lg px-4 py-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
-                  <Image src="/icons/strategy/chart-win-loss.svg" alt="" width={20} height={20} />
+                  <img src="/icons/strategy/chart-win-loss.svg" alt="" width="20" height="20" />
                   <span className="text-body-1-bold text-label-normal">승패 분포</span>
                 </div>
                 <div className="flex-1 flex items-center justify-center">

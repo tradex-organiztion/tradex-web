@@ -45,7 +45,7 @@ export default function MainLayout({
 
       <main
         className={cn(
-          'pt-16 transition-all duration-300 min-h-screen',
+          'pt-16 transition-[padding-left,padding-right] duration-300 min-h-screen',
           isFullscreen ? 'bg-white' : 'bg-gray-50',
           isMobile ? 'pl-0' : 'pl-[200px]',
           isAIPanelOpen && !isMobile && 'pr-[400px]'
