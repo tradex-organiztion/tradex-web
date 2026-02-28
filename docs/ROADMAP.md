@@ -311,8 +311,8 @@
 ### 산출물
 
 - `app/(main)/inbox/` - 수신함 페이지 (API 연동 완료)
-- `app/(main)/settings/` - 설정 페이지들 (Figma 디자인 대기)
-- `components/settings/` - 설정 컴포넌트 (미구현)
+- `app/(main)/settings/` - 설정 페이지들 (SettingsModal 오버레이 방식으로 구현)
+- `components/settings/SettingsModal.tsx` - 4개 탭 설정 모달 (계정/기본/알림/구독)
 - `lib/api/notification.ts` - 알림 API
 
 ### 의존성
@@ -367,10 +367,10 @@
 | 주차 | 차단 요소 | 결정 필요 항목 | 상태 |
 |------|----------|----------------|------|
 | Week 2 | 소셜 로그인 | #1 소셜 로그인 제공자 | ✅ 해결 (Google, Kakao) |
-| Week 4 | AI 모델 | #3 AI 모델 | ⬜ 미정 |
-| Week 5 | 차트 라이브러리 | #7 차트 라이브러리 | ⬜ 미정 |
-| Week 6 | 거래소 연동 | #5 지원 거래소, #6 실시간 데이터 방식 | ⬜ 미정 |
-| Week 8 | 결제 | #9 결제 시스템, #10 구독 플랜 구성 | ⬜ 미정 |
+| Week 4 | AI 모델 | #3 AI 모델 | ✅ 해결 (백엔드 결정, 프론트 SSE 스트리밍 연동) |
+| Week 5 | 차트 라이브러리 | #7 차트 라이브러리 | ✅ 해결 (TradingView Charting Library v30) |
+| Week 6 | 거래소 연동 | #5 지원 거래소, #6 실시간 데이터 방식 | ✅ 해결 (Binance/Bybit/Bitget, Binance WebSocket) |
+| Week 8 | 결제 | #9 결제 시스템, #10 구독 플랜 구성 | ✅ 해결 (토스페이먼츠, Free/Pro/Enterprise) |
 
 ---
 
