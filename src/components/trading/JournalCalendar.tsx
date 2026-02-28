@@ -35,6 +35,7 @@ const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 
 export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMonthChange }: JournalCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [openPopoverKey, setOpenPopoverKey] = useState<string | null>(null)
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -89,12 +90,14 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
   const goToPrevMonth = () => {
     const newDate = new Date(year, month - 1, 1)
     setCurrentDate(newDate)
+    setOpenPopoverKey(null)
     onMonthChange?.(newDate.getFullYear(), newDate.getMonth())
   }
 
   const goToNextMonth = () => {
     const newDate = new Date(year, month + 1, 1)
     setCurrentDate(newDate)
+    setOpenPopoverKey(null)
     onMonthChange?.(newDate.getFullYear(), newDate.getMonth())
   }
 
@@ -167,7 +170,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
 
       {/* Calendar Table */}
       <div className="flex flex-col flex-1">
-        {/* Weekday Headers - Figma: padding 2px 8px, justify-content center, flex 1 0 0 */}
+        {/* Weekday Headers */}
         <div className="grid grid-cols-7 border-b border-gray-300">
           {WEEKDAYS.map((day) => (
             <div
@@ -191,6 +194,8 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
             const isLastCol = colIndex === 6
 
             const isTodayCell = calendarDay.isCurrentMonth && isToday(calendarDay.day)
+            const dateKey = formatDateKey(calendarDay.day)
+            const isPopoverOpen = openPopoverKey === dateKey
 
             return (
               <div
@@ -219,7 +224,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
                   )}
                 </div>
 
-                {/* Trade entries - Figma: colored left bar + pair + profit */}
+                {/* Trade entries */}
                 {calendarDay.isCurrentMonth && dayTrades.length > 0 && (
                   <div className="flex flex-col gap-1 mt-1">
                     {dayTrades.slice(0, 2).map((trade) => {
@@ -234,7 +239,6 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
                           }}
                         >
                           <div className="flex items-center gap-2">
-                            {/* Colored left bar */}
                             <div className={cn(
                               "w-[3px] h-3 rounded-full shrink-0",
                               isPositive ? "bg-green-400" : "bg-red-400"
@@ -254,9 +258,63 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
                         </div>
                       )
                     })}
+
+                    {/* 더보기 버튼 + 팝오버 */}
                     {dayTrades.length > 2 && (
-                      <div className="text-caption-regular text-gray-500 px-1">
-                        +{dayTrades.length - 2}개 더보기
+                      <div className="relative">
+                        <button
+                          className="text-caption-regular text-gray-500 px-1 hover:text-gray-700 transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenPopoverKey(isPopoverOpen ? null : dateKey)
+                          }}
+                        >
+                          +{dayTrades.length - 2}개 더보기
+                        </button>
+
+                        {isPopoverOpen && (
+                          <>
+                            {/* 바깥 클릭 시 닫기 */}
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setOpenPopoverKey(null)}
+                            />
+                            {/* 팝오버 */}
+                            <div className={cn(
+                              "absolute left-0 z-20 bg-white border border-gray-200 rounded-lg shadow-emphasize min-w-[160px] py-1",
+                              isLastRow ? "bottom-full mb-1" : "top-full mt-1"
+                            )}>
+                              {dayTrades.slice(2).map((trade) => {
+                                const isPositive = trade.profit >= 0
+                                return (
+                                  <div
+                                    key={trade.id}
+                                    className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setOpenPopoverKey(null)
+                                      onTradeClick?.(trade)
+                                    }}
+                                  >
+                                    <div className={cn(
+                                      "w-[3px] h-3 rounded-full shrink-0",
+                                      isPositive ? "bg-green-400" : "bg-red-400"
+                                    )} />
+                                    <span className="text-caption-medium text-label-normal truncate">
+                                      {trade.pair.includes('/') ? trade.pair : `${trade.pair.replace('USDT', '')}/USDT`}
+                                    </span>
+                                    <span className={cn(
+                                      "text-caption-bold whitespace-nowrap ml-auto",
+                                      isPositive ? "text-green-400" : "text-red-400"
+                                    )}>
+                                      {formatProfit(trade.profit)}
+                                    </span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
