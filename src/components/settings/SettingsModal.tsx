@@ -235,7 +235,7 @@ function AccountSettings({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      {/* 닉네임 - Figma: avatar + input */}
+      {/* 닉네임 - 단순 조회용 */}
       <div className="flex items-start gap-6">
         {/* Avatar */}
         <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
@@ -244,12 +244,8 @@ function AccountSettings({
           </svg>
         </div>
         <div className="flex-1">
-          <label className="text-body-2-medium text-label-normal mb-2 block">닉네임</label>
-          <Input
-            value={nickname}
-            readOnly
-            className="h-[48px] bg-gray-50 text-label-neutral cursor-default"
-          />
+          <p className="text-body-2-medium text-label-normal mb-1">닉네임</p>
+          <p className="text-body-1-regular text-label-neutral">{nickname}</p>
         </div>
       </div>
 
