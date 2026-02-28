@@ -195,10 +195,10 @@ export default function InboxPage() {
               const typeConfig = notificationTypeConfig[notification.type]
               const actionConfig = notificationActionConfig[notification.type]
               return (
-                <button
+                <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className="w-full text-left border-b border-line-normal py-4 hover:bg-gray-50/50 transition-colors"
+                  className="w-full text-left border-b border-line-normal py-4 hover:bg-gray-50/50 transition-colors cursor-pointer"
                 >
                   <div className="flex flex-col gap-3">
                     {/* Row 1: 뱃지 + 날짜/더보기 */}
@@ -245,7 +245,7 @@ export default function InboxPage() {
                       )}
                     </div>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
