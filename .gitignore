@@ -37,6 +37,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Screenshots & temp files
+/.figma-screenshots/
+/browser-screenshots/
+/figma-screenshots/
+/public/figma-ref/
+/tmp/
+*.png
+!public/**/*.png
+!src/**/*.png
+
 # Playwright
 node_modules/
 /test-results/
