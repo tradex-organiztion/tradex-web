@@ -185,6 +185,7 @@ export function SettingsModal() {
                 onExchangeAdd={() => setIsExchangeModalOpen(true)}
                 onExchangeRemove={(id) => handleRemoveExchange(Number(id))}
                 onLogout={() => setIsLogoutModalOpen(true)}
+                isLocalUser={isDemoMode || user?.socialProvider === 'LOCAL'}
               />
             )}
             {settingsTab === 'general' && <GeneralSettings />}
@@ -222,6 +223,7 @@ function AccountSettings({
   onExchangeAdd,
   onExchangeRemove,
   onLogout,
+  isLocalUser,
 }: {
   nickname: string
   exchanges: { id: string; name: string; active: boolean }[]
@@ -229,6 +231,7 @@ function AccountSettings({
   onExchangeAdd: () => void
   onExchangeRemove: (id: string) => void
   onLogout: () => void
+  isLocalUser: boolean
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -250,21 +253,23 @@ function AccountSettings({
         </div>
       </div>
 
-      {/* 비밀번호 - Figma: title + description + button */}
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-body-1-bold text-label-normal">비밀번호</p>
-            <p className="text-body-2-regular text-label-neutral mt-1">계정 보안을 위해 정기적으로 비밀번호를 변경하세요.</p>
+      {/* 비밀번호 - 이메일 로컬 계정만 표시 */}
+      {isLocalUser && (
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-body-1-bold text-label-normal">비밀번호</p>
+              <p className="text-body-2-regular text-label-neutral mt-1">계정 보안을 위해 정기적으로 비밀번호를 변경하세요.</p>
+            </div>
+            <button
+              onClick={onPasswordChange}
+              className="px-4 py-2 text-body-2-medium text-label-normal border border-line-normal rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            >
+              비밀번호 변경
+            </button>
           </div>
-          <button
-            onClick={onPasswordChange}
-            className="px-4 py-2 text-body-2-medium text-label-normal border border-line-normal rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-          >
-            비밀번호 변경
-          </button>
         </div>
-      </div>
+      )}
 
       {/* 거래소 API 연동 - Figma: title + description + exchange list */}
       <div>

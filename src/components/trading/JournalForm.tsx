@@ -1228,10 +1228,12 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
                       </button>
                     </div>
                   ))}
+                  {/* 스크린샷 업로드는 저장된 일지(editMode)에서만 가능 */}
                   <button
                     type="button"
                     onClick={() => screenshotInputRef.current?.click()}
-                    disabled={isUploading}
+                    disabled={isUploading || !isEditMode}
+                    title={!isEditMode ? '일지 저장 후 업로드 가능합니다' : undefined}
                     className="w-[80px] h-[80px] border border-dashed border-line-normal rounded-lg flex flex-col items-center justify-center gap-1 hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
                     {isUploading ? (
