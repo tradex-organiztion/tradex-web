@@ -346,6 +346,7 @@ export default function JournalPage() {
       {isFormOpen && (
         <div className="fixed right-0 top-0 bottom-0 w-full border-l border-line-normal shadow-emphasize z-40 md:w-[549px]">
           <JournalForm
+            key={selectedJournalId ?? 'new'}
             journalId={selectedJournalId}
             initialData={selectedEntry ? {
               date: selectedEntry.date,
