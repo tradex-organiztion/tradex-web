@@ -196,13 +196,12 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
               <div
                 key={index}
                 className={cn(
-                  "flex flex-col bg-white px-2 py-1 cursor-pointer hover:bg-gray-50 transition-colors min-h-[100px]",
+                  "flex flex-col bg-white px-2 py-1 min-h-[100px]",
                   "border-gray-300",
                   "border-t-[0.4px] border-l-[0.4px]",
                   isLastCol && "border-r-[0.4px]",
                   isLastRow && "border-b-[0.4px]"
                 )}
-                onClick={() => calendarDay.isCurrentMonth && onDateClick?.(new Date(year, month, calendarDay.day))}
               >
                 {/* Day number - right aligned */}
                 <div className="flex justify-end p-0.5">
