@@ -49,17 +49,15 @@
 
 | 모듈 | 스펙 문서 | 상태 | 비고 |
 |------|----------|------|------|
-| **Auth** | [specs/auth/README.md](./specs/auth/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Home** | [specs/home/README.md](./specs/home/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Tradex AI** | [specs/ai/README.md](./specs/ai/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Inbox** | [specs/inbox/README.md](./specs/inbox/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Trading** | [specs/trading/README.md](./specs/trading/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Chart** | [specs/chart/README.md](./specs/chart/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Analysis** | [specs/analysis/README.md](./specs/analysis/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Portfolio** | [specs/portfolio/README.md](./specs/portfolio/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-| **Settings** | [specs/settings/README.md](./specs/settings/README.md) | 📝 작성중 | 구현 완료, 문서만 미정리 |
-
-> ⚠️ 스펙 문서들은 구현 과정에서 별도 관리되지 않아 내용이 현행화되지 않은 상태입니다. 코드가 실제 스펙입니다.
+| **Auth** | [specs/auth/README.md](./specs/auth/README.md) | ✅ 완료 | 2026-03-01 현행화 |
+| **Home** | [specs/home/README.md](./specs/home/README.md) | ✅ 완료 | 2026-03-01 현행화 |
+| **Tradex AI** | [specs/ai/README.md](./specs/ai/README.md) | ✅ 완료 | 2026-03-01 현행화, 음성 입력 반영 |
+| **Inbox** | [specs/inbox/README.md](./specs/inbox/README.md) | ✅ 완료 | 2026-03-01 현행화 |
+| **Trading** | [specs/trading/README.md](./specs/trading/README.md) | ✅ 완료 | 2026-03-01 현행화 |
+| **Chart** | [specs/chart/README.md](./specs/chart/README.md) | ✅ 완료 | 2026-03-01 현행화, TradingView v30 반영 |
+| **Analysis** | [specs/analysis/README.md](./specs/analysis/README.md) | ✅ 완료 | 2026-03-01 현행화 |
+| **Portfolio** | [specs/portfolio/README.md](./specs/portfolio/README.md) | ✅ 완료 | 2026-03-01 현행화 |
+| **Settings** | [specs/settings/README.md](./specs/settings/README.md) | ✅ 완료 | 2026-03-01 현행화, 토스페이먼츠 반영 |
 
 ---
 
