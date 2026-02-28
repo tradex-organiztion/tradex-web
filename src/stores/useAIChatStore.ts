@@ -139,6 +139,16 @@ export const useAIChatStore = create<AIChatState>()(
         conversations: state.conversations.slice(0, 50), // Keep last 50 conversations
         activeConversationId: state.activeConversationId,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        // Deduplicate conversations by id (handles legacy persisted duplicates)
+        const seen = new Set<string>()
+        state.conversations = state.conversations.filter((c) => {
+          if (seen.has(c.id)) return false
+          seen.add(c.id)
+          return true
+        })
+      },
     }
   )
 )
