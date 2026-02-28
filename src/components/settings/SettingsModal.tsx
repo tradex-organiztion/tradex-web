@@ -1017,18 +1017,18 @@ function ExchangeAddModal({ open, onOpenChange, onAdded, isDemoMode }: {
           <div>
             <label className="text-body-2-medium text-label-normal mb-1.5 block">거래소 선택</label>
             <div className="grid grid-cols-2 gap-2">
-              {['Binance', 'Bybit', 'OKX', 'Bitget'].map((exchange) => (
+              {([['BINANCE', 'Binance'], ['BYBIT', 'Bybit'], ['BITGET', 'Bitget']] as const).map(([value, label]) => (
                 <button
-                  key={exchange}
-                  onClick={() => setSelectedExchange(exchange)}
+                  key={value}
+                  onClick={() => setSelectedExchange(value)}
                   className={cn(
                     "flex items-center justify-center gap-2 px-4 py-3 border rounded-lg transition-colors",
-                    selectedExchange === exchange
+                    selectedExchange === value
                       ? "border-gray-900 bg-gray-50"
                       : "border-line-normal hover:border-line-focused hover:bg-gray-50"
                   )}
                 >
-                  <span className="text-body-2-medium text-label-normal">{exchange}</span>
+                  <span className="text-body-2-medium text-label-normal">{label}</span>
                 </button>
               ))}
             </div>
