@@ -102,27 +102,30 @@ export function TVChartContainer({ symbol, className }: TVChartContainerProps) {
           setWidgetInstance(tvWidget)
           setIsReady(true)
 
-          // Add theme toggle button to the top toolbar
-          const themeBtn = tvWidget.createButton()
-          let isDark = false
-          themeBtn.textContent = '🌙'
-          themeBtn.title = '다크 모드'
-          themeBtn.style.cssText = 'font-size: 18px; cursor: pointer; padding: 0 6px;'
-          themeBtn.addEventListener('click', () => {
-            isDark = !isDark
-            tvWidget.changeTheme(isDark ? 'dark' : 'light').then(() => {
-              // Re-apply custom candle colors after theme change
-              tvWidget.applyOverrides({
-                'mainSeriesProperties.candleStyle.upColor': '#13C34E',
-                'mainSeriesProperties.candleStyle.downColor': '#FF0015',
-                'mainSeriesProperties.candleStyle.borderUpColor': '#13C34E',
-                'mainSeriesProperties.candleStyle.borderDownColor': '#FF0015',
-                'mainSeriesProperties.candleStyle.wickUpColor': '#13C34E',
-                'mainSeriesProperties.candleStyle.wickDownColor': '#FF0015',
+          // Add theme toggle button to the top toolbar (wait for header to be ready)
+          tvWidget.headerReady().then(() => {
+            if (cancelled) return
+            const themeBtn = tvWidget.createButton()
+            let isDark = false
+            themeBtn.textContent = '🌙'
+            themeBtn.title = '다크 모드'
+            themeBtn.style.cssText = 'font-size: 18px; cursor: pointer; padding: 0 6px;'
+            themeBtn.addEventListener('click', () => {
+              isDark = !isDark
+              tvWidget.changeTheme(isDark ? 'dark' : 'light').then(() => {
+                // Re-apply custom candle colors after theme change
+                tvWidget.applyOverrides({
+                  'mainSeriesProperties.candleStyle.upColor': '#13C34E',
+                  'mainSeriesProperties.candleStyle.downColor': '#FF0015',
+                  'mainSeriesProperties.candleStyle.borderUpColor': '#13C34E',
+                  'mainSeriesProperties.candleStyle.borderDownColor': '#FF0015',
+                  'mainSeriesProperties.candleStyle.wickUpColor': '#13C34E',
+                  'mainSeriesProperties.candleStyle.wickDownColor': '#FF0015',
+                })
               })
+              themeBtn.textContent = isDark ? '☀️' : '🌙'
+              themeBtn.title = isDark ? '라이트 모드' : '다크 모드'
             })
-            themeBtn.textContent = isDark ? '☀️' : '🌙'
-            themeBtn.title = isDark ? '라이트 모드' : '다크 모드'
           })
         }
       })
