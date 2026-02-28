@@ -626,7 +626,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
     setSaveError(null)
 
     try {
-      const url = await journalApi.uploadScreenshot(file)
+      const url = await journalApi.uploadScreenshot(journalId!, file)
       setScreenshots(prev => [...prev, url])
     } catch (err) {
       console.warn('Screenshot upload failed:', (err as Error).message)

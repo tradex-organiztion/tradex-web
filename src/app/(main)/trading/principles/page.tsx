@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { MoreVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { tradingPrincipleApi } from '@/lib/api'
@@ -91,27 +91,24 @@ export default function TradingPrinciplesPage() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Fetch principles
-  const fetchPrinciples = useCallback(async () => {
-    if (isDemoMode) {
-      setPrinciples(DEMO_PRINCIPLES)
-      setIsLoading(false)
-      return
-    }
-
-    const data = await tradingPrincipleApi.getAll().catch((err) => {
-      console.warn('Principles fetch error:', err.message)
-      return null
-    })
-
-    if (data) {
-      setPrinciples(data)
-    }
-    setIsLoading(false)
-  }, [isDemoMode])
-
   useEffect(() => {
-    fetchPrinciples()
-  }, [fetchPrinciples])
+    async function load() {
+      if (isDemoMode) {
+        setPrinciples(DEMO_PRINCIPLES)
+        setIsLoading(false)
+        return
+      }
+
+      const data = await tradingPrincipleApi.getAll().catch((err: Error) => {
+        console.warn('Principles fetch error:', err.message)
+        return null
+      })
+
+      if (data) setPrinciples(data)
+      setIsLoading(false)
+    }
+    load()
+  }, [isDemoMode])
 
   // Close menu on outside click
   useEffect(() => {

@@ -6,7 +6,7 @@ import { LogOut, Check, CreditCard, X as XIcon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { exchangeApi, subscriptionApi } from '@/lib/api'
+import { exchangeApi, subscriptionApi, authApi, userApi } from '@/lib/api'
 import type { ExchangeApiKeyResponse, SubscriptionResponse, PlanInfoResponse, PaymentHistoryResponse, SubscriptionPlan } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -831,14 +831,119 @@ function SubscriptionSettings() {
   )
 }
 
-// 비밀번호 변경 모달 - Figma: 휴대폰 인증 + 기존/새 비밀번호 + 완료 버튼
+// 눈 아이콘
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+// 비밀번호 변경 모달 - SMS 인증(RESET_PASSWORD) → 새 비밀번호 설정
 function PasswordChangeModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [showOldPassword, setShowOldPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [smsCode, setSmsCode] = useState('')
+  const [smsVerified, setSmsVerified] = useState(false)
+  const [isSendingSms, setIsSendingSms] = useState(false)
+  const [isVerifyingSms, setIsVerifyingSms] = useState(false)
+
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPw, setShowCurrentPw] = useState(false)
+  const [showNewPw, setShowNewPw] = useState(false)
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
+
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleClose = () => {
+    // 상태 초기화
+    setPhoneNumber('')
+    setSmsCode('')
+    setSmsVerified(false)
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setError('')
+    onOpenChange(false)
+  }
+
+  const handleSendSms = async () => {
+    if (!phoneNumber.trim()) {
+      setError('휴대폰 번호를 입력해주세요.')
+      return
+    }
+    setError('')
+    setIsSendingSms(true)
+    const result = await authApi.sendSms({ phoneNumber: phoneNumber.trim(), type: 'RESET_PASSWORD' }).catch((err) => {
+      console.warn('Send SMS error:', err.message)
+      return null
+    })
+    setIsSendingSms(false)
+    if (!result) setError('인증번호 발송에 실패했습니다. 다시 시도해주세요.')
+  }
+
+  const handleVerifySms = async () => {
+    if (!smsCode.trim()) {
+      setError('인증번호를 입력해주세요.')
+      return
+    }
+    setError('')
+    setIsVerifyingSms(true)
+    const result = await authApi.verifySms({ phoneNumber: phoneNumber.trim(), code: smsCode.trim(), type: 'RESET_PASSWORD' }).catch((err) => {
+      console.warn('Verify SMS error:', err.message)
+      return null
+    })
+    setIsVerifyingSms(false)
+    if (result) {
+      setSmsVerified(true)
+    } else {
+      setError('인증번호가 올바르지 않습니다.')
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!smsVerified) {
+      setError('휴대폰 인증을 완료해주세요.')
+      return
+    }
+    if (!currentPassword) {
+      setError('기존 비밀번호를 입력해주세요.')
+      return
+    }
+    if (newPassword.length < 8) {
+      setError('새 비밀번호는 8자 이상이어야 합니다.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError('새 비밀번호가 일치하지 않습니다.')
+      return
+    }
+    setError('')
+    setIsSubmitting(true)
+    const result = await userApi.changePassword({
+      phoneNumber: phoneNumber.trim(),
+      currentPassword,
+      newPassword,
+    }).catch((err) => {
+      console.warn('Change password error:', err.message)
+      return null
+    })
+    setIsSubmitting(false)
+    if (result) {
+      handleClose()
+    } else {
+      setError('비밀번호 변경에 실패했습니다. 기존 비밀번호를 확인해주세요.')
+    }
+  }
+
+  const isFormReady = smsVerified && currentPassword && newPassword && confirmPassword
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent showCloseButton={false} className="p-8 rounded-xl shadow-emphasize max-w-md">
         <DialogHeader className="items-center">
           <DialogTitle className="text-title-2-bold text-label-normal text-center">비밀번호 변경</DialogTitle>
@@ -848,15 +953,35 @@ function PasswordChangeModal({ open, onOpenChange }: { open: boolean; onOpenChan
           <div>
             <label className="text-body-2-medium text-label-normal mb-2 block">휴대폰 번호</label>
             <div className="flex gap-2">
-              <Input placeholder="휴대폰 번호를 입력해주세요." className="h-[50px] flex-1" />
-              <button className="px-4 py-2.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors shrink-0">
-                인증번호
+              <Input
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="휴대폰 번호를 입력해주세요."
+                className="h-[50px] flex-1"
+                disabled={smsVerified}
+              />
+              <button
+                onClick={handleSendSms}
+                disabled={isSendingSms || smsVerified}
+                className="px-4 py-2.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors shrink-0 disabled:opacity-50"
+              >
+                {isSendingSms ? '발송중...' : '인증번호'}
               </button>
             </div>
             <div className="flex gap-2 mt-2">
-              <Input placeholder="인증 번호를 입력해주세요." className="h-[50px] flex-1" />
-              <button className="px-4 py-2.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors shrink-0">
-                확인
+              <Input
+                value={smsCode}
+                onChange={(e) => setSmsCode(e.target.value)}
+                placeholder="인증 번호를 입력해주세요."
+                className={cn('h-[50px] flex-1', smsVerified && 'border-line-positive')}
+                disabled={smsVerified}
+              />
+              <button
+                onClick={handleVerifySms}
+                disabled={isVerifyingSms || smsVerified}
+                className="px-4 py-2.5 border border-line-normal rounded-lg text-body-2-medium text-label-normal hover:bg-gray-50 transition-colors shrink-0 disabled:opacity-50"
+              >
+                {smsVerified ? '인증완료' : isVerifyingSms ? '확인중...' : '확인'}
               </button>
             </div>
           </div>
@@ -866,19 +991,14 @@ function PasswordChangeModal({ open, onOpenChange }: { open: boolean; onOpenChan
             <label className="text-body-2-medium text-label-normal mb-2 block">기존 비밀번호</label>
             <div className="relative">
               <Input
-                type={showOldPassword ? 'text' : 'password'}
+                type={showCurrentPw ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="영문, 숫자, 기호 포함 8~16자"
                 className="h-[50px] pr-12"
               />
-              <button
-                type="button"
-                onClick={() => setShowOldPassword(!showOldPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+              <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral">
+                <EyeIcon />
               </button>
             </div>
           </div>
@@ -888,19 +1008,14 @@ function PasswordChangeModal({ open, onOpenChange }: { open: boolean; onOpenChan
             <label className="text-body-2-medium text-label-normal mb-2 block">새 비밀번호</label>
             <div className="relative">
               <Input
-                type={showNewPassword ? 'text' : 'password'}
+                type={showNewPw ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="영문, 숫자, 기호 포함 8~16자"
                 className="h-[50px] pr-12"
               />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+              <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral">
+                <EyeIcon />
               </button>
             </div>
           </div>
@@ -910,30 +1025,33 @@ function PasswordChangeModal({ open, onOpenChange }: { open: boolean; onOpenChan
             <label className="text-body-2-medium text-label-normal mb-2 block">새 비밀번호 확인</label>
             <div className="relative">
               <Input
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPw ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="다시 한번 입력해주세요."
                 className="h-[50px] pr-12"
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+              <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-label-assistive hover:text-label-neutral">
+                <EyeIcon />
               </button>
             </div>
           </div>
+
+          {error && <p className="text-caption-regular text-label-danger">{error}</p>}
         </div>
 
         {/* 완료 버튼 */}
         <Button
-          disabled
-          className="w-full h-12 mt-6 bg-gray-100 text-label-disabled rounded-lg disabled:opacity-100"
+          onClick={handleSubmit}
+          disabled={!isFormReady || isSubmitting}
+          className={cn(
+            'w-full h-12 mt-6 rounded-lg text-body-2-medium transition-colors',
+            isFormReady && !isSubmitting
+              ? 'bg-gray-900 text-white hover:bg-gray-800'
+              : 'bg-gray-100 text-label-disabled'
+          )}
         >
-          완료
+          {isSubmitting ? '변경 중...' : '완료'}
         </Button>
       </DialogContent>
     </Dialog>

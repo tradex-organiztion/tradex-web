@@ -154,6 +154,12 @@ export type {
   PaymentMethodRequest,
 } from './subscription'
 
+// User API
+export { userApi } from './user'
+export type {
+  ChangePasswordByPhoneRequest,
+} from './user'
+
 // Trading Principle API (매매 원칙)
 export { tradingPrincipleApi } from './tradingPrinciple'
 export type {

@@ -95,7 +95,7 @@ export interface RefreshTokenResponse {
 // SMS 인증 관련
 // ============================================================
 
-export type SmsVerificationType = 'SIGNUP' | 'FIND_EMAIL'
+export type SmsVerificationType = 'SIGNUP' | 'FIND_EMAIL' | 'RESET_PASSWORD'
 
 /**
  * SMS 인증코드 발송 요청

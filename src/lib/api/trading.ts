@@ -151,10 +151,10 @@ export const journalApi = {
     del<void>(`/api/journals/${id}`),
 
   /** 스크린샷 업로드 (multipart/form-data) */
-  uploadScreenshot: async (file: File): Promise<string> => {
+  uploadScreenshot: async (journalId: number, file: File): Promise<string> => {
     const formData = new FormData()
     formData.append('file', file)
-    const response = await apiClient.post<string>('/api/journals/screenshot', formData, {
+    const response = await apiClient.post<string>(`/api/journals/${journalId}/screenshot`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return response.data
