@@ -17,13 +17,13 @@ export default function BillingSuccessPage() {
     const plan = searchParams.get('plan') as SubscriptionPlan | null
     const mode = searchParams.get('mode') // 'change-method' | null
 
-    if (!authKey || !customerKey) {
-      setStatus('error')
-      setErrorMessage('필수 파라미터가 누락되었습니다.')
-      return
-    }
-
     const processBilling = async () => {
+      if (!authKey || !customerKey) {
+        setStatus('error')
+        setErrorMessage('필수 파라미터가 누락되었습니다.')
+        return
+      }
+
       try {
         if (mode === 'change-method') {
           // 결제 수단 변경

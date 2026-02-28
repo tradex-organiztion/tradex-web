@@ -568,7 +568,7 @@ function SubscriptionSettings() {
   }
 
   // Handle add/change payment method
-  const handlePaymentMethod = async (mode: 'add' | 'change') => {
+  const handlePaymentMethod = async (_mode: 'add' | 'change') => {
     if (isDemoMode) return
     try {
       await requestTossBillingAuth(undefined, 'change-method')

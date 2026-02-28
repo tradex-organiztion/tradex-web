@@ -41,12 +41,12 @@ export function Header() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    if (isDemoMode) {
-      setUnreadCount(3)
-      return
-    }
-
     const fetchUnread = () => {
+      if (isDemoMode) {
+        setUnreadCount(3)
+        return
+      }
+
       homeApi.getUnreadCount().then((count) => {
         setUnreadCount(count)
       }).catch((err) => {

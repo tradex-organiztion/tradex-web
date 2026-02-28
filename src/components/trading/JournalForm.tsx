@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronsRight, Plus, ChevronDown, ChevronUp, X, Search, Upload, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { positionsApi, ordersApi } from '@/lib/api/futures'
+import { positionsApi } from '@/lib/api/futures'
 import { journalApi } from '@/lib/api/trading'
 import { tradingPrincipleApi } from '@/lib/api/tradingPrinciple'
 import type { TradingPrincipleResponse } from '@/lib/api/tradingPrinciple'
-import type { UpdateJournalRequest, JournalResponse } from '@/lib/api/trading'
+import type { UpdateJournalRequest } from '@/lib/api/trading'
 import type { OrderResponse } from '@/lib/api/futures'
 import { useAuthStore } from '@/stores'
 import Image from 'next/image'
@@ -94,7 +94,7 @@ const _fmt = (d: Date, h: number, m: number) => {
 const _yesterday = new Date(_now)
 _yesterday.setDate(_yesterday.getDate() - 1)
 
-const autoImportTrades = [
+const _autoImportTrades = [
   { id: 'auto-1', pair: 'BTC/USDT', position: 'Long' as const, leverage: 20, entryPrice: '98,200', exitPrice: '99,400', pnl: '+1,250', time: _fmt(_now, 14, 30) },
   { id: 'auto-2', pair: 'ETH/USDT', position: 'Short' as const, leverage: 10, entryPrice: '3,450', exitPrice: '3,520', pnl: '-420', time: _fmt(_now, 15, 20) },
   { id: 'auto-3', pair: 'SOL/USDT', position: 'Long' as const, leverage: 5, entryPrice: '185.20', exitPrice: '190.50', pnl: '+530', time: _fmt(_yesterday, 9, 15) },
@@ -224,7 +224,7 @@ function TagSelector({
 }
 
 // 주문 데이터 표시 컴포넌트
-function OrderCard({
+function _OrderCard({
   pair,
   position,
   quantity,
@@ -362,7 +362,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
   const [activeTab, setActiveTab] = useState<TabType>('pre-scenario')
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [inputMode, setInputMode] = useState<InputMode>(initialData ? 'auto' : 'manual')
-  const [showAutoImport, setShowAutoImport] = useState(false)
+  const [_showAutoImport, _setShowAutoImport] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [aiAnalysisResult, setAiAnalysisResult] = useState<string | null>(null)
@@ -501,7 +501,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
   const hasTradeData = formData.pair && formData.entryPrice
   const isEditMode = !!journalId
 
-  const handleAutoImport = (trade: typeof autoImportTrades[0]) => {
+  const _handleAutoImport = (trade: typeof _autoImportTrades[0]) => {
     setFormData(prev => ({
       ...prev,
       pair: trade.pair,
@@ -513,7 +513,7 @@ export function JournalForm({ journalId, initialData, onClose, onSave }: Journal
       date: trade.time,
       result: trade.pnl.startsWith('+') ? 'Win' : 'Lose',
     }))
-    setShowAutoImport(false)
+    _setShowAutoImport(false)
   }
 
   const handleCreateNew = async () => {

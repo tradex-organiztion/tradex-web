@@ -634,9 +634,8 @@ export default function RiskPatternPage() {
     setIsLoading(false)
   }, [isDemoMode, selectedExchange, startDate, endDate])
 
-  useEffect(() => {
-    fetchRiskData()
-  }, [fetchRiskData])
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
+  useEffect(() => { fetchRiskData() }, [fetchRiskData])
 
   const handleSearch = () => {
     fetchRiskData()

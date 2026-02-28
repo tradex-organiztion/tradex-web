@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Calendar, List, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -134,23 +134,21 @@ export default function JournalPage() {
   }, [isDemoMode, calYear, calMonth, getMonthRange])
 
   useEffect(() => {
+    if (isDemoMode) return
     let cancelled = false
-    if (!isDemoMode) {
-      const load = async () => {
-        setIsLoading(true)
-        const { startDate, endDate } = getMonthRange(calYear, calMonth)
-        const data = await journalApi.getAll({ page: 0, size: 100, startDate, endDate }).catch((err) => {
-          console.warn('Journal fetch error:', err.message)
-          return null
-        })
-        if (cancelled) return
-        if (data && data.content) {
-          setEntries(data.content.map(toJournalEntry))
-        }
-        setIsLoading(false)
+    void (async () => {
+      setIsLoading(true)
+      const { startDate, endDate } = getMonthRange(calYear, calMonth)
+      const data = await journalApi.getAll({ page: 0, size: 100, startDate, endDate }).catch((err) => {
+        console.warn('Journal fetch error:', err.message)
+        return null
+      })
+      if (cancelled) return
+      if (data && data.content) {
+        setEntries(data.content.map(toJournalEntry))
       }
-      load()
-    }
+      setIsLoading(false)
+    })()
     return () => { cancelled = true }
   }, [isDemoMode, calYear, calMonth, getMonthRange])
 
@@ -170,13 +168,19 @@ export default function JournalPage() {
   }, [searchParams, displayEntries])
 
   // Apply initial params once
+  const initialApplied = useRef(false)
   useEffect(() => {
+    if (initialApplied.current) return
     if (initialFromParams.isOpen) {
-      setIsFormOpen(true)
-      setSelectedEntry(initialFromParams.entry)
-      if (initialFromParams.entry) {
-        setSelectedJournalId(Number(initialFromParams.entry.id) || null)
-      }
+      initialApplied.current = true
+      // Use microtask to avoid synchronous setState in effect
+      queueMicrotask(() => {
+        setIsFormOpen(true)
+        setSelectedEntry(initialFromParams.entry)
+        if (initialFromParams.entry) {
+          setSelectedJournalId(Number(initialFromParams.entry.id) || null)
+        }
+      })
     }
   }, [initialFromParams])
 
@@ -192,7 +196,7 @@ export default function JournalPage() {
     setIsFormOpen(true)
   }
 
-  const handleDelete = async (entry: JournalEntry) => {
+  const _handleDelete = async (entry: JournalEntry) => {
     if (isDemoMode) return
     const id = Number(entry.id)
     if (!id) return

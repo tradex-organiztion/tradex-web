@@ -11,7 +11,7 @@ import { aiApi, chatSessionApi } from '@/lib/api/ai'
 
 export default function TradexAIChatPage() {
   const searchParams = useSearchParams()
-  const router = useRouter()
+  const _router = useRouter()
   const conversationId = searchParams.get('id')
   const initialQuery = searchParams.get('q') || ''
   const messagesEndRef = useRef<HTMLDivElement>(null)

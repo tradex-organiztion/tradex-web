@@ -1,4 +1,4 @@
-import { get, post, patch, del } from './client'
+import { get, patch, del } from './client'
 import { apiClient } from './client'
 import type { PageResponse } from './futures'
 import type { OrderResponse } from './futures'

@@ -42,7 +42,7 @@ interface SymbolCache {
 const cache: Record<string, SymbolCache> = {}
 const CACHE_TTL = 60 * 60 * 1000
 
-function countDecimals(value: string): number {
+function _countDecimals(value: string): number {
   if (!value || value === '0') return 2
   const parts = value.split('.')
   if (parts.length < 2) return 0

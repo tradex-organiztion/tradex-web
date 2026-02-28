@@ -248,9 +248,8 @@ export default function StrategyAnalysisPage() {
     setIsLoading(false)
   }, [isDemoMode, selectedExchange, startDate, endDate])
 
-  useEffect(() => {
-    fetchStrategyData()
-  }, [fetchStrategyData])
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
+  useEffect(() => { fetchStrategyData() }, [fetchStrategyData])
 
   // 커스텀 전략 필터 옵션 로드
   useEffect(() => {
@@ -294,10 +293,8 @@ export default function StrategyAnalysisPage() {
     setIsCustomLoading(false)
   }, [isDemoMode, filters])
 
-  // 초기 커스텀 통계 로드
-  useEffect(() => {
-    fetchCustomStats()
-  }, [fetchCustomStats])
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
+  useEffect(() => { fetchCustomStats() }, [fetchCustomStats])
 
   const handleSearch = () => {
     fetchStrategyData()

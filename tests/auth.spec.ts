@@ -27,7 +27,7 @@ test.describe('인증 플로우', () => {
 
     // 에러 메시지 또는 로그인 페이지에 남아있음
     // API가 오래 걸릴 수 있으므로 충분한 timeout
-    const errorOrStay = await Promise.race([
+    await Promise.race([
       page.getByText('올바르지 않습니다').waitFor({ timeout: 15_000 }).then(() => 'error'),
       page.getByText('실패했습니다').waitFor({ timeout: 15_000 }).then(() => 'error'),
       page.getByText('연결할 수 없습니다').waitFor({ timeout: 15_000 }).then(() => 'error'),

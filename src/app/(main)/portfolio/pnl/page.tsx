@@ -149,8 +149,10 @@ function PnLAreaChart({ data }: { data: { day: string; value: number }[] }) {
 
   // Use cumulative values for the area chart
   const values = data.map(d => d.value)
-  let cumulative = 0
-  const cumulativeValues = values.map(v => { cumulative += v; return cumulative })
+  const cumulativeValues = values.reduce<number[]>((acc, v) => {
+    acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + v)
+    return acc
+  }, [])
 
   const chartW = 700
   const chartH = 200

@@ -81,7 +81,7 @@ export function TradexAIPanel() {
     return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
   }, [])
 
-  const handleNewConversation = useCallback(() => {
+  const _handleNewConversation = useCallback(() => {
     const localId = createConversation('사이드 패널 대화')
     setPanelConvId(localId)
 

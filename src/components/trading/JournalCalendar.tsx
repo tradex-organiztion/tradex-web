@@ -120,7 +120,7 @@ export function JournalCalendar({ trades = {}, onDateClick, onTradeClick, onMont
   const displayTrades = Object.keys(trades).length > 0 ? trades : sampleTrades
 
   // Format day label - show "X월 1일" for first day of each month
-  const formatDayLabel = (calendarDay: CalendarDay): string => {
+  const _formatDayLabel = (calendarDay: CalendarDay): string => {
     if (calendarDay.isCurrentMonth && calendarDay.day === 1) {
       return `${month + 1}월 ${calendarDay.day}일`
     }

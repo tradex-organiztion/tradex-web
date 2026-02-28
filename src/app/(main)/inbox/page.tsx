@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Bell, MoreVertical } from "lucide-react"
-import { PageHeader } from "@/components/common"
 import { Button } from "@/components/ui"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
@@ -84,9 +83,8 @@ export default function InboxPage() {
     setIsLoading(false)
   }
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- initial data fetch
+  useEffect(() => { fetchNotifications() }, [])
 
   // 읽음 처리
   const handleMarkAsRead = async (id: number) => {
